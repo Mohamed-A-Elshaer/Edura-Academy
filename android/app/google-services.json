@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "527573069071",
+    "project_id": "mashrooa-takharog",
+    "storage_bucket": "mashrooa-takharog.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:527573069071:android:43d24f0c53b05a44aae27a",
+        "android_client_info": {
+          "package_name": "com.example.mashrooa_takharog"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "527573069071-bvp2tjfsrhfmdadhm1fn7nm8auvrru9q.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mashrooa_takharog",
+            "certificate_hash": "3ed3716d54bee0411a1548bf97740ec1e5672b49"
+          }
+        },
+        {
+          "client_id": "527573069071-g3lmqb4iqqmkthu0pdd3mdsqokvinr9u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHCbXlO8uXMZkTcLIWTqaBuEec95eZSZY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "527573069071-g3lmqb4iqqmkthu0pdd3mdsqokvinr9u.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "527573069071-7ia58mt2t78b6a61q99pa5df3q32embf.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mashrooaTakharog"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
