@@ -49,3 +49,7 @@ profile picture.
 
 -Refined & edited the categories component in the homepage(to be discussed).
 
+
+(Mohamed-Day 5)
+
+-First Design for the "MyCourses" student's screen.
