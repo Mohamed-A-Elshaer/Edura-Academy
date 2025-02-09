@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/screens/BookmarksScreen.dart';
 import 'package:mashrooa_takharog/screens/HomeScreen.dart';
+import 'package:mashrooa_takharog/screens/MyCoursesScreen.dart';
 import 'package:mashrooa_takharog/screens/ProfileScreen.dart';
 
 class NavigatorScreen extends StatefulWidget {
@@ -13,7 +14,7 @@ class _MyNavigatorScreenState extends State<NavigatorScreen> {
   int currentIndex = 0;
   final List<Widget?> _screens = [
    Homepage(),
-    null,
+    MyCoursesScreen(),
     BookmarksScreen(),
     null,
     null,
