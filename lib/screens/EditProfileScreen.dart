@@ -158,14 +158,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (nickNameController.text.isNotEmpty) updatedData['nickName'] = nickNameController.text;
     if (dobController.text.isNotEmpty) updatedData['dob'] = dobController.text;
     if (newEmail.isNotEmpty && newEmail != user.email) updatedData['email'] = newEmail;
-    if (newPhone.isNotEmpty) updatedData['phone'] = phoneController.text;
+    if (newPhone.isNotEmpty) {
+      updatedData['phone'] = newPhone.startsWith('+2') ? newPhone.substring(2) : newPhone;
+    }
+
     if (selectedGender != 'Gender') updatedData['gender'] = selectedGender;
 
     try {
       if (updatedData.isNotEmpty) {
         await firestore.collection(collection).doc(docId).update(updatedData);
 
-        // 🔹 Ensure email update in Firebase Authentication
+
         if (newEmail.isNotEmpty && newEmail != user.email) {
           try {
             await user.updateEmail(newEmail);
@@ -213,7 +216,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (user == null) return;
 
     String newEmail = emailController.text.trim();
-    String newPhone = phoneController.text.trim().isNotEmpty ? '+2${phoneController.text.trim()}' : "";
+    String newPhone = phoneController.text.trim();
+    String formattedPhone = newPhone.isNotEmpty ? '+2$newPhone' : "";
     bool isDataEntered = fullNameController.text.isNotEmpty ||
         nickNameController.text.isNotEmpty ||
         dobController.text.isNotEmpty ||
@@ -282,7 +286,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
 
         // Trigger phone verification before updating the phone number
-        await _verifyAndUpdatePhoneNumber(newPhone, collection, userDoc.id, newEmail);
+        await _verifyAndUpdatePhoneNumber(formattedPhone, collection, userDoc.id, newEmail);
         return; // Stop execution until phone is verified
       }
 
