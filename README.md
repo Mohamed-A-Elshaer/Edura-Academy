@@ -52,4 +52,11 @@ profile picture.
 
 (Mohamed-Day 5)
 
--First Design for the "MyCourses" student's screen.
+1-First Design for the "MyCourses" student's screen.
+2-Changing Profile picture feature has been added to the application (it can be changed only from the profile tab in the bottom navigation bar-to be added to the fill your profile page soon).
+
+
+(Mohamed-Day 6)
+
+-Fixed some bugs&logic problems for the profile picture feature-still to be mantained.
+
