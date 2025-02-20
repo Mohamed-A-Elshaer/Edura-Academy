@@ -30,20 +30,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   void _navigateBasedOnUserType(BuildContext context) async {
     User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return;
-    }
+    if (user == null) return;
 
-    String userEmail = user.email ?? "";
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
     try {
-
-      var studentSnapshot = await firestore.collection('students')
-          .where('email', isEqualTo: userEmail)
-          .get();
-
-      if (studentSnapshot.docs.isNotEmpty) {
+      // ✅ Fetch user by UID instead of email
+      var studentSnapshot = await firestore.collection('students').doc(user.uid).get();
+      if (studentSnapshot.exists) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => NavigatorScreen()),
@@ -51,12 +45,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         return;
       }
 
-
-      var instructorSnapshot = await firestore.collection('instructors')
-          .where('email', isEqualTo: userEmail)
-          .get();
-
-      if (instructorSnapshot.docs.isNotEmpty) {
+      var instructorSnapshot = await firestore.collection('instructors').doc(user.uid).get();
+      if (instructorSnapshot.exists) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => InstructorNavigatorScreen()),
@@ -64,9 +54,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         return;
       }
     } catch (e) {
-      print("Error checking user role: $e");
+      print("❌ Error checking user role: $e");
     }
   }
+
 
   Future<void> _verifyAndUpdatePhoneNumber(String formattedPhone, String collection, String docId, String newEmail) async {
     try {
@@ -161,26 +152,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (newPhone.isNotEmpty) {
       updatedData['phone'] = newPhone.startsWith('+2') ? newPhone.substring(2) : newPhone;
     }
-
     if (selectedGender != 'Gender') updatedData['gender'] = selectedGender;
 
     try {
       if (updatedData.isNotEmpty) {
         await firestore.collection(collection).doc(docId).update(updatedData);
 
-
+        // Update email in Firebase Authentication
         if (newEmail.isNotEmpty && newEmail != user.email) {
           try {
             await user.updateEmail(newEmail);
-            print(" Firebase Auth email updated successfully!");
+            print("✅ Firebase Auth email updated successfully!");
           } on FirebaseAuthException catch (e) {
             if (e.code == 'requires-recent-login') {
-              print(" User needs to re-authenticate to update email.");
+              print("⚠️ User needs to re-authenticate to update email.");
             } else {
-              print(" Error updating email in Firebase Auth: $e");
+              print("❌ Error updating email in Firebase Auth: $e");
             }
           }
         }
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Waiting for update...'), duration: Duration(seconds: 2)),
         );
@@ -196,11 +187,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile updated successfully!'), duration: Duration(seconds: 2)),
         );
+
+        // ✅ Force FirebaseAuth to refresh the user
+        await FirebaseAuth.instance.currentUser?.reload();
+        user = FirebaseAuth.instance.currentUser; // Refresh user session
+        print("🔄 Updated email: ${user?.email}"); // Debugging log
+
+        // ✅ Navigate after updating the user
+        Future.delayed(Duration(seconds: 1), () {
+          _navigateBasedOnUserType(context);
+        });
       }
     } catch (e) {
-      print("Error updating profile: $e");
+      print("❌ Error updating profile: $e");
     }
   }
+
 
 
 
@@ -242,16 +244,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     try {
       // Determine if the user is a student or instructor
-      QuerySnapshot studentQuery = await firestore.collection('students').where('email', isEqualTo: user.email).get();
-      if (studentQuery.docs.isNotEmpty) {
+      String userId = user.uid;  // ✅ استخدم الـ UID لأنه ثابت
+      DocumentSnapshot? userDoc;
+      String? collection;
+
+// ✅ جلب الوثيقة مباشرة باستخدام الـ UID
+      DocumentSnapshot studentDoc = await firestore.collection('students').doc(userId).get();
+      if (studentDoc.exists) {
         collection = 'students';
-        userDoc = studentQuery.docs.first;
+        userDoc = studentDoc;
       }
 
-      QuerySnapshot instructorQuery = await firestore.collection('instructors').where('email', isEqualTo: user.email).get();
-      if (instructorQuery.docs.isNotEmpty) {
+      DocumentSnapshot instructorDoc = await firestore.collection('instructors').doc(userId).get();
+      if (instructorDoc.exists) {
         collection = 'instructors';
-        userDoc = instructorQuery.docs.first;
+        userDoc = instructorDoc;
       }
 
       if (collection == null || userDoc == null) {
