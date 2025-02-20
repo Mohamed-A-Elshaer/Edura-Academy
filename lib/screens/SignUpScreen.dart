@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import 'package:mashrooa_takharog/screens/FillYourProfile.dart';
 import 'package:mashrooa_takharog/screens/SignInScreen.dart';
 import 'package:mashrooa_takharog/screens/StudentOrInstructor.dart';
@@ -9,6 +10,7 @@ import 'package:mashrooa_takharog/screens/TermsAndCondScreen.dart';
 import 'package:mashrooa_takharog/widgets/CustomCheckBox.dart';
 import 'package:mashrooa_takharog/widgets/Loading.dart';
 import 'package:mashrooa_takharog/widgets/customElevatedBtn.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../auth/auth_service.dart';
 import '../widgets/customTextField.dart';
 
@@ -38,6 +40,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String? verificationId;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  //final supaAuth=SupaAuthService();
 
   @override
   void dispose() {
@@ -93,6 +96,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
       });
     }
   }
+
+
+
+
+
+  Future<void> addUserToSupabase() async {
+
+
+    final supabase = Supabase.instance.client;
+    try {
+      final response = await supabase.auth.signUp(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      print("User registered: ${response.user?.id}");
+    } catch (e) {
+      print("Error during registration: $e");
+    }
+  }
+
+
 
 
 
@@ -165,6 +190,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 final String password = _passwordController.text.trim();
                 final UserCredential userCredential =
                 await _auth.createUserWithEmailAndPassword(email: email, password: password);
+              //  await supaAuth.signUpWithEmailPasswordSupabase(email, password);
 
                 await userCredential.user!.linkWithCredential(phoneCredential);
 
@@ -174,6 +200,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   'email': email,
                   'phone': formattedPhone,
                 });
+
+                await addUserToSupabase();
 
                 Navigator.of(context).pop();
                 navigateToNextScreen();

@@ -12,7 +12,8 @@ import '../screens/StudentNavigatorScreen.dart';
 class AuthService{
 final FirebaseAuth auth =FirebaseAuth.instance;
 
-//sign in
+
+//sign in(firebase)
 Future<UserCredential> signInWithEmailPassword(String email,password) async{
 
   try{
@@ -25,6 +26,9 @@ Future<UserCredential> signInWithEmailPassword(String email,password) async{
 
 
 }
+
+
+
 
   Future<void> signInWithGoogle(BuildContext context, String userType) async {
     final FirebaseAuth firebaseAuth = FirebaseAuth.instance;

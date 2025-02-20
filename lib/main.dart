@@ -5,10 +5,19 @@ import 'package:mashrooa_takharog/firebase_options.dart';
 import 'package:mashrooa_takharog/providers/ThemeProvider.dart';
 import 'package:mashrooa_takharog/screens/splashScreen.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+
+const supabaseUrl = 'https://svexcgcxhvauionpnyxx.supabase.co';
+const supabaseKey = String.fromEnvironment('SUPABASE_KEY');
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Supabase.initialize(
+      url: supabaseUrl,
+      anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2ZXhjZ2N4aHZhdWlvbnBueXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkxMTIxMTAsImV4cCI6MjA1NDY4ODExMH0.8DGmOsov_xqhXqxNF9QlVLJn2k0L-vxOr-IBlSnRepI"
+  );
   runApp(ChangeNotifierProvider(create: (BuildContext context) { return ThemeProvider(); },
   child: const MyApp()));
 }

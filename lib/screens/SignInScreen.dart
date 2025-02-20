@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/auth/auth_service.dart';
+import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import 'package:mashrooa_takharog/screens/ForgotPasswordScreen.dart';
 import 'package:mashrooa_takharog/screens/HomeScreen.dart';
 import 'package:mashrooa_takharog/screens/InstructorNavigatorScreen.dart';
@@ -31,6 +32,7 @@ class SignInScreen extends StatefulWidget{
 }
 
 class _SignInScreenState extends State<SignInScreen> {
+  final SupaAuthService supaAuth=SupaAuthService();
   final TextEditingController _emailController=TextEditingController();
   final TextEditingController _passwordController=TextEditingController();
   bool isPasswordVisible = false;
@@ -67,6 +69,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
     try {
       final user = await authService.signInWithEmailPassword(_emailController.text, _passwordController.text);
+      await supaAuth.signInWithEmailPasswordSupabase(_emailController.text, _passwordController.text);
 
       if (user!= null) {
 
