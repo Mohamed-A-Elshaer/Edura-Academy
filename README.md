@@ -62,7 +62,7 @@ profile picture.
 -Fixed some bugs&logic problems for the profile picture feature-still to be mantained.
 
 
-(Mohamed-Day 7)
+(Mohamed-Day 7&8)
 
--(Reviews Screen + Write a Review + Payment Method + Payment's Congratulations + Course is completed)screens has been designed (UI mainly + some logic has been handled. Some components still to be worked on for a better experience).
+-(Reviews Screen + Write a Review + Payment Method + Payment's Congratulations + Course is completed + Curriculum)screens has been designed (UI mainly + some logic has been handled. Some components still to be worked on for a better experience).
 
