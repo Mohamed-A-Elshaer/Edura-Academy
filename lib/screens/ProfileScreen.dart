@@ -36,7 +36,7 @@ final supaAuth=SupaAuthService();
     super.initState();
     _fetchUserData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchProfileAvatar(); // تحميل الصورة عند فتح الشاشة
+      _fetchProfileAvatar();
     });
   }
   Future<void> _fetchUserData() async {
