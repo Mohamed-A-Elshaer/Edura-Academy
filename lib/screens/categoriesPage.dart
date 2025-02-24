@@ -20,19 +20,22 @@ class Categoriespage extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: ListView(
           children: [
-
-            _buildRow(context, 'assets/images/cook.png', 'assets/images/02.png',100),
-            _buildRow(context, 'assets/images/03.png', 'assets/images/04.png',100),
-            _buildRow(context, 'assets/images/05.png', 'assets/images/06.png',100),
-            _buildRow(context, 'assets/images/07.png', 'assets/images/08.png',100),
+            _buildRow(
+                context, 'assets/images/cook.png', 'assets/images/02.png', 100),
+            _buildRow(
+                context, 'assets/images/03.png', 'assets/images/04.png', 100),
+            _buildRow(
+                context, 'assets/images/05.png', 'assets/images/06.png', 100),
+            _buildRow(
+                context, 'assets/images/07.png', 'assets/images/08.png', 100),
           ],
         ),
       ),
     );
   }
 
-  
-  Widget _buildRow(BuildContext context, String asset1, String asset2,double height) {
+  Widget _buildRow(
+      BuildContext context, String asset1, String asset2, double height) {
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Row(
@@ -40,7 +43,7 @@ class Categoriespage extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: () {
-              _navigateToNewPage(context); 
+              _navigateToNewPage(context);
             },
             child: Image.asset(
               asset1,
@@ -50,7 +53,7 @@ class Categoriespage extends StatelessWidget {
           ),
           GestureDetector(
             onTap: () {
-              _navigateToNewPage(context); 
+              _navigateToNewPage(context);
             },
             child: Image.asset(
               asset2,
@@ -63,26 +66,25 @@ class Categoriespage extends StatelessWidget {
     );
   }
 
-  
   void _navigateToNewPage(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EmptyPage(), 
+        builder: (context) => EmptyPage(),
       ),
     );
   }
 }
 
-
 class EmptyPage extends StatelessWidget {
+  const EmptyPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('.....'),
       ),
-      
     );
   }
 }

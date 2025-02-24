@@ -3,7 +3,7 @@ import 'package:mashrooa_takharog/screens/HomeScreen.dart';
 import 'package:mashrooa_takharog/screens/StudentNavigatorScreen.dart';
 
 class TopMentorsPage extends StatefulWidget {
-  const TopMentorsPage({Key? key}) : super(key: key);
+  const TopMentorsPage({super.key});
 
   @override
   State<TopMentorsPage> createState() => _TopMentorsPageState();
@@ -11,7 +11,7 @@ class TopMentorsPage extends StatefulWidget {
 
 class _TopMentorsPageState extends State<TopMentorsPage> {
   bool _isSearching = false;
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   String _searchText = '';
 
   final List<Map<String, String>> mentors = [
@@ -27,12 +27,14 @@ class _TopMentorsPageState extends State<TopMentorsPage> {
     if (_searchText.isEmpty) {
       return mentors;
     }
-    return mentors.where((mentor) =>
-    mentor['name']!.toLowerCase().contains(_searchText.toLowerCase()) ||
-        mentor['specialty']!.toLowerCase().contains(_searchText.toLowerCase())
-    ).toList();
+    return mentors
+        .where((mentor) =>
+            mentor['name']!.toLowerCase().contains(_searchText.toLowerCase()) ||
+            mentor['specialty']!
+                .toLowerCase()
+                .contains(_searchText.toLowerCase()))
+        .toList();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -41,35 +43,38 @@ class _TopMentorsPageState extends State<TopMentorsPage> {
       appBar: AppBar(
         leading: _isSearching
             ? IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () {
-            setState(() {
-              _isSearching = false;
-              _searchText = '';
-              _searchController.clear();
-            });
-          },
-        )
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = false;
+                    _searchText = '';
+                    _searchController.clear();
+                  });
+                },
+              )
             : IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => NavigatorScreen()));
-          },
-        ),
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => NavigatorScreen()));
+                },
+              ),
         title: _isSearching
             ? TextField(
-          controller: _searchController,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: "Search mentors...",
-            border: InputBorder.none,
-          ),
-          onChanged: (value) {
-            setState(() {
-              _searchText = value;
-            });
-          },
-        )
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: "Search mentors...",
+                  border: InputBorder.none,
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchText = value;
+                  });
+                },
+              )
             : const Text('Top Mentors'),
         actions: [
           if (!_isSearching)
@@ -112,7 +117,7 @@ class _TopMentorsPageState extends State<TopMentorsPage> {
           );
         },
       ),
-     /* bottomNavigationBar: BottomNavigationBar(
+      /* bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() {

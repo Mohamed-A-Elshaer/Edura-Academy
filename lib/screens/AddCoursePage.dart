@@ -9,6 +9,8 @@ class VideoItem {
 }
 
 class AddCoursePage extends StatefulWidget {
+  const AddCoursePage({super.key});
+
   @override
   _AddCoursePageState createState() => _AddCoursePageState();
 }
@@ -24,11 +26,13 @@ class _AddCoursePageState extends State<AddCoursePage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>InstructorNavigatorScreen()));
-
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => InstructorNavigatorScreen()));
           },
         ),
-        title: Text(
+        title: const Text(
           'Create New Course',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -58,7 +62,7 @@ class _AddCoursePageState extends State<AddCoursePage> {
                             Icons.title,
                           ),
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         Row(
                           children: [
                             Expanded(
@@ -71,7 +75,7 @@ class _AddCoursePageState extends State<AddCoursePage> {
                                 keyboardType: TextInputType.number,
                               ),
                             ),
-                            SizedBox(width: 16),
+                            const SizedBox(width: 16),
                             Expanded(
                               child: TextFormField(
                                 decoration: _inputDecoration(
@@ -83,7 +87,7 @@ class _AddCoursePageState extends State<AddCoursePage> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         TextFormField(
                           decoration: _inputDecoration(
                             'Description',
@@ -95,29 +99,33 @@ class _AddCoursePageState extends State<AddCoursePage> {
                       ],
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   _buildCard(
                     title: 'Course Content',
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        ...videos
-                            .map((video) => VideoItemWidget(
-                                  video: video,
-                                  onDelete: () {
-                                    setState(() {
-                                      videos.remove(video);
-                                    });
-                                  },
-                                ))
-                            .toList(),
-                        SizedBox(height: 16),
+                        ...videos.map((video) => VideoItemWidget(
+                              video: video,
+                              onDelete: () {
+                                setState(() {
+                                  videos.remove(video);
+                                });
+                              },
+                            )),
+                        const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: _addNewVideo,
-                          icon: Icon(Icons.add_circle_outline,color: Colors.white,),
-                          label: Text('Add New Video',style: TextStyle(color: Colors.white),),
+                          icon: const Icon(
+                            Icons.add_circle_outline,
+                            color: Colors.white,
+                          ),
+                          label: const Text(
+                            'Add New Video',
+                            style: TextStyle(color: Colors.white),
+                          ),
                           style: ElevatedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                             backgroundColor: Colors.blue[700],
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -127,17 +135,17 @@ class _AddCoursePageState extends State<AddCoursePage> {
                       ],
                     ),
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: Colors.green[700],
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Publish Course',
                       style: TextStyle(
                         color: Colors.white,
@@ -174,8 +182,8 @@ class _AddCoursePageState extends State<AddCoursePage> {
                 color: Colors.blue[900],
               ),
             ),
-            Divider(),
-            SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
             child,
           ],
         ),
@@ -197,7 +205,7 @@ class _AddCoursePageState extends State<AddCoursePage> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.blue, width: 2),
+        borderSide: const BorderSide(color: Colors.blue, width: 2),
       ),
       filled: true,
       fillColor: Colors.white,
@@ -223,6 +231,7 @@ class VideoItemWidget extends StatelessWidget {
   final VoidCallback onDelete;
 
   const VideoItemWidget({
+    super.key,
     required this.video,
     required this.onDelete,
   });
@@ -230,19 +239,19 @@ class VideoItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
-        leading: Icon(Icons.play_circle_outline, color: Colors.blue),
+        leading: const Icon(Icons.play_circle_outline, color: Colors.blue),
         title: Text(
           video.title,
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(video.videoUrl),
         trailing: IconButton(
-          icon: Icon(Icons.delete_outline, color: Colors.red),
+          icon: const Icon(Icons.delete_outline, color: Colors.red),
           onPressed: onDelete,
         ),
       ),
@@ -253,7 +262,7 @@ class VideoItemWidget extends StatelessWidget {
 class AddVideoDialog extends StatelessWidget {
   final Function(VideoItem) onAdd;
 
-  const AddVideoDialog({required this.onAdd});
+  const AddVideoDialog({super.key, required this.onAdd});
 
   @override
   Widget build(BuildContext context) {
@@ -261,24 +270,24 @@ class AddVideoDialog extends StatelessWidget {
     final urlController = TextEditingController();
 
     return AlertDialog(
-      title: Text('Add New Video'),
+      title: const Text('Add New Video'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
             controller: titleController,
-            decoration: InputDecoration(labelText: 'Video Title'),
+            decoration: const InputDecoration(labelText: 'Video Title'),
           ),
           TextField(
             controller: urlController,
-            decoration: InputDecoration(labelText: 'Video URL'),
+            decoration: const InputDecoration(labelText: 'Video URL'),
           ),
         ],
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel'),
+          child: const Text('Cancel'),
         ),
         TextButton(
           onPressed: () {
@@ -291,7 +300,7 @@ class AddVideoDialog extends StatelessWidget {
               Navigator.pop(context);
             }
           },
-          child: Text('Add'),
+          child: const Text('Add'),
         ),
       ],
     );

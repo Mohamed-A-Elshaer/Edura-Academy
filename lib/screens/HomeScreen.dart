@@ -1,4 +1,3 @@
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -11,8 +10,6 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'categoriesPage.dart';
 import '../widgets/coursecard.dart';
 import '../widgets/mentor.dart';
-import 'ProfileScreen.dart';
-
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -25,9 +22,10 @@ class HomepageState extends State<Homepage> {
   int currentIndex = 0;
   String? nickname = "Loading...";
   final PageController _pageController = PageController(viewportFraction: 0.9);
-  final PageController _coursePageController = PageController(viewportFraction: 0.6);
- static int selectedCardIndex = -1;
-  int selectedcategoryindex=-1;
+  final PageController _coursePageController =
+      PageController(viewportFraction: 0.6);
+  static int selectedCardIndex = -1;
+  int selectedcategoryindex = -1;
   final List<Map<String, String>> mentors = [
     {"name": "Ahmed Abdullah", "imagePath": "assets/images/mentor.jpg"},
     {"name": "Osama Ahmed", "imagePath": "assets/images/mentor.jpg"},
@@ -40,7 +38,8 @@ class HomepageState extends State<Homepage> {
     {
       "discount": "25% OFF*",
       "title": "Today's Special",
-      "description": "Get a discount for every course order only valid for today!",
+      "description":
+          "Get a discount for every course order only valid for today!",
       "backgroundColor": Colors.blue,
     },
     {
@@ -57,20 +56,19 @@ class HomepageState extends State<Homepage> {
     },
   ];
 
- static  final List<Map<String, dynamic>> categories = [
+  static final List<Map<String, dynamic>> categories = [
     {"title": "All"},
     {"title": "Graphic Design"},
     {"title": "Arts & Humanities"},
     {"title": "Cooking"},
     {"title": "SEO & Marketing"},
-   {"title": "Web Development"},
-   {"title": "Finance and Accounting"},
+    {"title": "Web Development"},
+    {"title": "Finance and Accounting"},
     {"title": "Personal Development"},
     {"title": "Office Productivity"},
   ];
 
   final List<Map<String, dynamic>> newcategories = [
-
     {"title": "Graphic Design"},
     {"title": "Cooking"},
     {"title": "SEO & Marketing"},
@@ -80,8 +78,6 @@ class HomepageState extends State<Homepage> {
     {"title": "Personal Development"},
     {"title": "Office productivity"},
   ];
-
-
 
   static final List<Map<String, dynamic>> coursecardList = [
     {
@@ -171,16 +167,16 @@ class HomepageState extends State<Homepage> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-
-
-        final doc = await FirebaseFirestore.instance.collection('students').doc(user.uid).get();
+        final doc = await FirebaseFirestore.instance
+            .collection('students')
+            .doc(user.uid)
+            .get();
         if (doc.exists) {
           print('Document data: ${doc.data()}');
           setState(() {
             nickname = doc.data()?['nickName'] ?? "No Nickname";
           });
         } else {
-
           setState(() {
             nickname = "No Nickname Found";
           });
@@ -195,7 +191,6 @@ class HomepageState extends State<Homepage> {
       });
     }
   }
-
 
   void _filterCourses(int index) {
     setState(() {
@@ -212,8 +207,6 @@ class HomepageState extends State<Homepage> {
     });
   }
 
-
-
   @override
   void dispose() {
     _pageController.dispose();
@@ -221,15 +214,14 @@ class HomepageState extends State<Homepage> {
     super.dispose();
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title:  Text(
+        title: Text(
           "Hi, ${nickname ?? "Loading..."}",
-          style: TextStyle(color: Color(0xff232546)),
+          style: const TextStyle(color: Color(0xff232546)),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -238,11 +230,11 @@ class HomepageState extends State<Homepage> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color:Color(0xff0961F5),
+                color: const Color(0xff0961F5),
                 width: 2.0,
               ),
             ),
-            child: CircleAvatar(
+            child: const CircleAvatar(
               backgroundColor: Colors.white,
               child: Icon(
                 Icons.notifications,
@@ -250,7 +242,6 @@ class HomepageState extends State<Homepage> {
               ),
             ),
           ),
-
           const SizedBox(width: 16),
         ],
       ),
@@ -269,12 +260,18 @@ class HomepageState extends State<Homepage> {
                   ),
                   const SizedBox(height: 16),
                   TextField(
-                    onTap: (){
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>SearchPage()));
-                      },
+                    onTap: () {
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const SearchPage()));
+                    },
                     decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(vertical: 20.0),
-                      prefixIcon: Icon(Icons.search_outlined,),
+                      contentPadding:
+                          const EdgeInsets.symmetric(vertical: 20.0),
+                      prefixIcon: const Icon(
+                        Icons.search_outlined,
+                      ),
                       suffixIcon: Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: Container(
@@ -304,7 +301,6 @@ class HomepageState extends State<Homepage> {
               ),
             ),
           ),
-
 
           SliverToBoxAdapter(
             child: SizedBox(
@@ -348,7 +344,11 @@ class HomepageState extends State<Homepage> {
               ),
             ),
           ),
-SliverToBoxAdapter(child: SizedBox(height: 8,),),
+          const SliverToBoxAdapter(
+            child: SizedBox(
+              height: 8,
+            ),
+          ),
 
           SliverToBoxAdapter(
             child: Center(
@@ -364,7 +364,6 @@ SliverToBoxAdapter(child: SizedBox(height: 8,),),
             ),
           ),
 
-
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
             sliver: SliverToBoxAdapter(
@@ -374,7 +373,7 @@ SliverToBoxAdapter(child: SizedBox(height: 8,),),
                     'Categories',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  const    Spacer(),
+                  const Spacer(),
                   const Text(
                     'SEE ALL',
                     style: TextStyle(color: Colors.blue, fontSize: 14),
@@ -415,8 +414,7 @@ SliverToBoxAdapter(child: SizedBox(height: 8,),),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
-                          color: Colors.white
-                      ),
+                          color: Colors.white),
                       child: Center(
                         child: Text(
                           data['title'] ?? '',
@@ -433,7 +431,6 @@ SliverToBoxAdapter(child: SizedBox(height: 8,),),
               ),
             ),
           ),
-
 
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
@@ -464,9 +461,6 @@ SliverToBoxAdapter(child: SizedBox(height: 8,),),
                 ],
               ),
             ),
-
-
-
           ),
 
           SliverToBoxAdapter(
@@ -478,7 +472,7 @@ SliverToBoxAdapter(child: SizedBox(height: 8,),),
                 itemBuilder: (context, index) {
                   final data = categories[index];
                   return GestureDetector(
-                    onTap: () =>_filterCourses(index),
+                    onTap: () => _filterCourses(index),
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 8),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -504,49 +498,46 @@ SliverToBoxAdapter(child: SizedBox(height: 8,),),
               ),
             ),
           ),
-          SliverToBoxAdapter(
-            child: SizedBox(height: 11,),
+          const SliverToBoxAdapter(
+            child: SizedBox(
+              height: 11,
+            ),
           ),
 
           SliverToBoxAdapter(
               child: SizedBox(
-                height: 300,
-                child: filteredCourses.isEmpty
-                    ? Center(
-                  child: Text(
-                    "No courses available!",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            height: 300,
+            child: filteredCourses.isEmpty
+                ? const Center(
+                    child: Text(
+                      "No courses available!",
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  )
+                : ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: filteredCourses.length,
+                    itemBuilder: (context, index) {
+                      final course = filteredCourses[index];
+                      return Container(
+                        margin: const EdgeInsets.only(left: 2),
+                        width: MediaQuery.of(context).size.width * 0.8,
+                        child: CourseCard(
+                          title: course['title'],
+                          price: course['price'],
+                          rating: course['rating'],
+                          students: course['students'],
+                          imagePath: course['imagePath'],
+                          category: course['category'],
+                        ),
+                      );
+                    },
                   ),
-                )
-                    :ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: filteredCourses.length,
-                  itemBuilder: (context, index) {
-                    final course = filteredCourses[index];
-                    return Container(
-                      margin: const EdgeInsets.only(left: 2),
-                      width: MediaQuery.of(context).size.width * 0.8,
-                      child: CourseCard(
-                        title: course['title'],
-                        price: course['price'],
-                        rating: course['rating'],
-                        students: course['students'],
-                        imagePath: course['imagePath'],
-                        category: course['category'],
-                      ),
-                    );
-                  },
-                ),
-              )
-
-
-
-          ),
+          )),
           const SliverToBoxAdapter(
             child: SizedBox(height: 20),
           ),
-
-
 
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
@@ -577,36 +568,27 @@ SliverToBoxAdapter(child: SizedBox(height: 8,),),
                 ],
               ),
             ),
-
-
-
           ),
 
           SliverToBoxAdapter(
-              child:  SizedBox(
-                height: 122,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: mentors.length,
-                  itemBuilder: (context, index) {
-                    final mentor = mentors[index];
-                    return Container(
-                      width: MediaQuery.of(context).size.width * 0.3,
-                      margin: const EdgeInsets.only(right: 8),
-                      child: MentorCard(
-                        name: mentor['name']!,
-                        imagePath: mentor['imagePath']!,
-                      ),
-                    );
-                  },
-                ),
-              )
-          ),
-
-
-
-
-
+              child: SizedBox(
+            height: 122,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: mentors.length,
+              itemBuilder: (context, index) {
+                final mentor = mentors[index];
+                return Container(
+                  width: MediaQuery.of(context).size.width * 0.3,
+                  margin: const EdgeInsets.only(right: 8),
+                  child: MentorCard(
+                    name: mentor['name']!,
+                    imagePath: mentor['imagePath']!,
+                  ),
+                );
+              },
+            ),
+          )),
         ],
       ),
       /*   bottomNavigationBar: BottomNavigationBar(

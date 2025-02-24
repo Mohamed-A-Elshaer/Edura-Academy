@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/screens/SignUpScreen.dart';
 
-class TermsAndCondScreen extends StatelessWidget{
+class TermsAndCondScreen extends StatelessWidget {
   final String termsAndConditions = '''
 Terms and Conditions
 Effective Date: 11/01/2025
@@ -84,24 +84,43 @@ Email: ....
 Acknowledgment
 By using Edura, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.
 ''';
+
+  const TermsAndCondScreen({super.key});
   @override
   Widget build(BuildContext context) {
-   return Scaffold(
-  backgroundColor: Color(0xffF5F9FF),
-       appBar: AppBar(
-         leading: IconButton(onPressed: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>SignUpScreen()));},
-             icon: Icon(CupertinoIcons.arrow_left,color: Colors.black,)),
-         title: Text('Terms & conditions',style: TextStyle(color: Color(0xff202244),fontFamily: 'Jost',fontSize: 21,fontWeight: FontWeight.w600),),
-         backgroundColor:Color(0xffF5F9FF) ,
-
-       ),
-     body: SingleChildScrollView(child: Padding(
-       padding: const EdgeInsets.all(12.0),
-       child: Text(termsAndConditions,style: TextStyle(fontSize: 13,color:Color(0xff545454),fontWeight: FontWeight.w700),),
-     )),
-
-   );
+    return Scaffold(
+      backgroundColor: const Color(0xffF5F9FF),
+      appBar: AppBar(
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pushReplacement(context,
+                  MaterialPageRoute(builder: (context) => SignUpScreen()));
+            },
+            icon: const Icon(
+              CupertinoIcons.arrow_left,
+              color: Colors.black,
+            )),
+        title: const Text(
+          'Terms & conditions',
+          style: TextStyle(
+              color: Color(0xff202244),
+              fontFamily: 'Jost',
+              fontSize: 21,
+              fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: const Color(0xffF5F9FF),
+      ),
+      body: SingleChildScrollView(
+          child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Text(
+          termsAndConditions,
+          style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xff545454),
+              fontWeight: FontWeight.w700),
+        ),
+      )),
+    );
   }
-
-
 }

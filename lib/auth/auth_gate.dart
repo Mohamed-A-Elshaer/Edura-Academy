@@ -6,18 +6,19 @@ import 'package:mashrooa_takharog/screens/InstructorNavigatorScreen.dart';
 import 'package:mashrooa_takharog/screens/instructor_courses_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../screens/FillYourProfile.dart';
 import '../screens/StudentNavigatorScreen.dart';
 import '../screens/splashScreen.dart';
 
 class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
       future: checkUserLoggedIn(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasData && snapshot.data == true) {
@@ -30,7 +31,8 @@ class AuthGate extends StatelessWidget {
                   return FutureBuilder<String?>(
                     future: _getUserType(user.uid),
                     builder: (context, userTypeSnapshot) {
-                      if (userTypeSnapshot.connectionState == ConnectionState.done) {
+                      if (userTypeSnapshot.connectionState ==
+                          ConnectionState.done) {
                         final userType = userTypeSnapshot.data;
                         if (userType == 'student') {
                           return NavigatorScreen();
@@ -40,14 +42,14 @@ class AuthGate extends StatelessWidget {
                           return SplashScreen();
                         }
                       }
-                      return Center(child: CircularProgressIndicator());
+                      return const Center(child: CircularProgressIndicator());
                     },
                   );
                 } else {
                   return SplashScreen();
                 }
               }
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             },
           );
         } else {
@@ -72,12 +74,18 @@ class AuthGate extends StatelessWidget {
 
   Future<String?> _getUserType(String userId) async {
     try {
-      final studentDoc = await FirebaseFirestore.instance.collection('students').doc(userId).get();
+      final studentDoc = await FirebaseFirestore.instance
+          .collection('students')
+          .doc(userId)
+          .get();
       if (studentDoc.exists) {
         return 'student';
       }
 
-      final instructorDoc = await FirebaseFirestore.instance.collection('instructors').doc(userId).get();
+      final instructorDoc = await FirebaseFirestore.instance
+          .collection('instructors')
+          .doc(userId)
+          .get();
       if (instructorDoc.exists) {
         return 'instructor';
       }

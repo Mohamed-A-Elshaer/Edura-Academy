@@ -9,9 +9,8 @@ import 'package:provider/provider.dart';
 import '../providers/ThemeProvider.dart';
 import 'InstructorNavigatorScreen.dart';
 
-class ThemeModePage extends StatelessWidget{
-
-
+class ThemeModePage extends StatelessWidget {
+  const ThemeModePage({super.key});
 
   void _navigateBasedOnUserType(BuildContext context) async {
     User? user = FirebaseAuth.instance.currentUser;
@@ -23,8 +22,8 @@ class ThemeModePage extends StatelessWidget{
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
     try {
-
-      var studentSnapshot = await firestore.collection('students')
+      var studentSnapshot = await firestore
+          .collection('students')
           .where('email', isEqualTo: userEmail)
           .get();
 
@@ -36,8 +35,8 @@ class ThemeModePage extends StatelessWidget{
         return;
       }
 
-
-      var instructorSnapshot = await firestore.collection('instructors')
+      var instructorSnapshot = await firestore
+          .collection('instructors')
           .where('email', isEqualTo: userEmail)
           .get();
 
@@ -58,13 +57,12 @@ class ThemeModePage extends StatelessWidget{
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
-     appBar: AppBar(
-       leading: IconButton(
-         icon: const Icon(Icons.arrow_back),
-         onPressed: () =>  _navigateBasedOnUserType(context)
-       ),
-       title: const Text('Dark Mode'),
-     ),
+      appBar: AppBar(
+        leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => _navigateBasedOnUserType(context)),
+        title: const Text('Dark Mode'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -83,9 +81,6 @@ class ThemeModePage extends StatelessWidget{
           ],
         ),
       ),
-
-   );
+    );
   }
-
-
 }

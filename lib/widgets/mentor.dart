@@ -5,6 +5,7 @@ class MentorCard extends StatelessWidget {
   final String imagePath;
 
   const MentorCard({
+    super.key,
     required this.name,
     required this.imagePath,
   });

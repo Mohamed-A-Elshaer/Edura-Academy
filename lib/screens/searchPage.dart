@@ -19,62 +19,40 @@ class _SearchPageState extends State<SearchPage> {
   // Example course and mentor data
   final List<Map<String, String>> courses = [
     {
-
       'category': 'Graphic Design',
       'title': 'Graphic Design Advanced',
-
     },
     {
-
       'category': 'Graphic Design',
       'title': 'Advance Diploma in Graphic Design',
-
     },
     {
-
       'category': 'Web Development',
       'title': 'Web Developement Full Diploma',
-
     },
     {
-
       'category': 'Arts & Humanities',
       'title': 'Introdution to Arts',
-
     },
     {
-
       'category': 'Personal Development',
       'title': 'How to Discover More About Yourself',
-
     },
     {
-
       'category': 'SEO & Marketing',
       'title': 'Introduction to Stocks',
-
     },
     {
-
       'category': 'Office Productivity',
       'title': 'How to Manage Your Time Effectively',
-
     },
     {
-
       'category': 'SEO & Marketing',
       'title': 'Introduction to Social Marketing',
-
-
-
     },
     {
-
       'category': 'Cooking',
       'title': 'Healthy Cooking for a Healthy Family.',
-
-
-
     },
   ];
 
@@ -120,16 +98,15 @@ class _SearchPageState extends State<SearchPage> {
       } else {
         searchResults = [
           ...courses.where((course) =>
-          course['title']!.toLowerCase().contains(query.toLowerCase()) ||
+              course['title']!.toLowerCase().contains(query.toLowerCase()) ||
               course['category']!.toLowerCase().contains(query.toLowerCase())),
           ...mentors.where((mentor) =>
-          mentor['name']!.toLowerCase().contains(query.toLowerCase()) ||
+              mentor['name']!.toLowerCase().contains(query.toLowerCase()) ||
               mentor['specialty']!.toLowerCase().contains(query.toLowerCase())),
         ];
       }
     });
   }
-
 
   Future<void> _clearSearchHistory() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -143,7 +120,7 @@ class _SearchPageState extends State<SearchPage> {
     _saveSearchHistory(query);
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => SearchCoursesPage()),
+      MaterialPageRoute(builder: (context) => const SearchCoursesPage()),
     );
   }
 
@@ -155,7 +132,8 @@ class _SearchPageState extends State<SearchPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>NavigatorScreen()));
+            Navigator.pushReplacement(context,
+                MaterialPageRoute(builder: (context) => NavigatorScreen()));
           },
         ),
         title: const Text('Search'),
@@ -199,7 +177,9 @@ class _SearchPageState extends State<SearchPage> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Recent Searches", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text("Recent Searches",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   Wrap(
                     spacing: 8,
                     children: searchHistory.map((query) {
@@ -221,77 +201,89 @@ class _SearchPageState extends State<SearchPage> {
             Expanded(
               child: searchResults.isEmpty && currentQuery.isNotEmpty
                   ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 10),
-                  const Text("No matching results found"),
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: () => _goToSearchResultsPage(currentQuery),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.search, color: Colors.blue),
-                          const SizedBox(width: 10),
-                          Text(
-                            "Search for \"$currentQuery\"",
-                            style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              )
-                  : ListView.builder(
-                itemCount: searchResults.length + 1,
-                itemBuilder: (context, index) {
-                  if (index < searchResults.length) {
-                    bool isCourse = searchResults[index].containsKey('title');
-                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ListTile(
-                          leading: Icon(
-                            isCourse ? Icons.school : Icons.person, // Use appropriate icon
-                            color: Colors.blue,
-                          ),
-                          title: Text(searchResults[index]['title'] ?? searchResults[index]['name']!),
-                          subtitle: Text(searchResults[index]['category'] ?? searchResults[index]['specialty']!),
-                        ),
-                        const Divider(),
-                      ],
-                    );
-                  } else {
-                    // The "Search for [query]" option
-                    return GestureDetector(
-                      onTap: () => _goToSearchResultsPage(currentQuery),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        margin: const EdgeInsets.only(top: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.search, color: Colors.blue),
-                            const SizedBox(width: 10),
-                            Text(
-                              "Search for \"$currentQuery\"",
-                              style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                        const SizedBox(height: 10),
+                        const Text("No matching results found"),
+                        const SizedBox(height: 10),
+                        GestureDetector(
+                          onTap: () => _goToSearchResultsPage(currentQuery),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade100,
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                          ],
+                            child: Row(
+                              children: [
+                                const Icon(Icons.search, color: Colors.blue),
+                                const SizedBox(width: 10),
+                                Text(
+                                  "Search for \"$currentQuery\"",
+                                  style: const TextStyle(
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                    );
-                  }
-                },
-              ),
+                      ],
+                    )
+                  : ListView.builder(
+                      itemCount: searchResults.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index < searchResults.length) {
+                          bool isCourse =
+                              searchResults[index].containsKey('title');
+                          return Column(
+                            children: [
+                              ListTile(
+                                leading: Icon(
+                                  isCourse
+                                      ? Icons.school
+                                      : Icons.person, // Use appropriate icon
+                                  color: Colors.blue,
+                                ),
+                                title: Text(searchResults[index]['title'] ??
+                                    searchResults[index]['name']!),
+                                subtitle: Text(searchResults[index]
+                                        ['category'] ??
+                                    searchResults[index]['specialty']!),
+                              ),
+                              const Divider(),
+                            ],
+                          );
+                        } else {
+                          // The "Search for [query]" option
+                          return GestureDetector(
+                            onTap: () => _goToSearchResultsPage(currentQuery),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 16),
+                              margin: const EdgeInsets.only(top: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.search, color: Colors.blue),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    "Search for \"$currentQuery\"",
+                                    style: const TextStyle(
+                                        color: Colors.blue,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
             ),
           ],
         ),

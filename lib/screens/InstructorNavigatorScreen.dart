@@ -6,15 +6,19 @@ import 'package:mashrooa_takharog/screens/ProfileScreen.dart';
 import 'package:mashrooa_takharog/screens/instructor_courses_screen.dart';
 
 class InstructorNavigatorScreen extends StatefulWidget {
+  const InstructorNavigatorScreen({super.key});
+
   @override
-  _MyInstructorNavigatorScreenState createState() => _MyInstructorNavigatorScreenState();
+  _MyInstructorNavigatorScreenState createState() =>
+      _MyInstructorNavigatorScreenState();
 }
 
-class _MyInstructorNavigatorScreenState extends State<InstructorNavigatorScreen> {
+class _MyInstructorNavigatorScreenState
+    extends State<InstructorNavigatorScreen> {
   int currentIndex = 0;
   final List<Widget?> _screens = [
     InstructorHomeScreen(),
-    InstructorCoursesScreen(),
+    const InstructorCoursesScreen(),
     ProfileScreen()
   ];
 
@@ -27,7 +31,6 @@ class _MyInstructorNavigatorScreenState extends State<InstructorNavigatorScreen>
           setState(() {
             currentIndex = index;
           });
-
         },
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
@@ -35,8 +38,14 @@ class _MyInstructorNavigatorScreenState extends State<InstructorNavigatorScreen>
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.school), label: 'My Courses',),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile',),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.school),
+            label: 'My Courses',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
         ],
       ),
     );

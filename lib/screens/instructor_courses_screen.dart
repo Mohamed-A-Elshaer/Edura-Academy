@@ -35,7 +35,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'My Courses',
           style: TextStyle(
             color: Colors.black87,
@@ -46,7 +46,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.add_circle_outline, color: Colors.blue),
+            icon: const Icon(Icons.add_circle_outline, color: Colors.blue),
             onPressed: () => _showAddCourseDialog(),
           ),
         ],
@@ -54,13 +54,13 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
       body: courses.isEmpty
           ? _buildEmptyState()
           : ListView.builder(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               itemCount: courses.length,
               itemBuilder: (context, index) {
                 return _buildCourseCard(courses[index]);
               },
             ),
-     /* bottomNavigationBar: BottomNavigationBar(
+      /* bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: 1,
         onTap: (index) {
@@ -94,7 +94,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
             size: 80,
             color: Colors.grey[400],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             'No courses yet',
             style: TextStyle(
@@ -103,13 +103,13 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
               fontWeight: FontWeight.w500,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           ElevatedButton.icon(
             onPressed: _showAddCourseDialog,
-            icon: Icon(Icons.add),
-            label: Text('Add Your First Course'),
+            icon: const Icon(Icons.add),
+            label: const Text('Add Your First Course'),
             style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -122,7 +122,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
 
   Widget _buildCourseCard(Course course) {
     return Card(
-      margin: EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
       ),
@@ -131,7 +131,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
             child: Image.asset(
               course.imageUrl,
               height: 180,
@@ -140,7 +140,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
             ),
           ),
           Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -150,18 +150,18 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
                     Expanded(
                       child: Text(
                         course.title,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                     PopupMenuButton(
-                      icon: Icon(Icons.more_vert),
+                      icon: const Icon(Icons.more_vert),
                       onSelected: (value) =>
                           _handleMenuSelection(value, course),
                       itemBuilder: (context) => [
-                        PopupMenuItem(
+                        const PopupMenuItem(
                           value: 'edit',
                           child: Row(
                             children: [
@@ -171,7 +171,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
                             ],
                           ),
                         ),
-                        PopupMenuItem(
+                        const PopupMenuItem(
                           value: 'videos',
                           child: Row(
                             children: [
@@ -181,7 +181,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
                             ],
                           ),
                         ),
-                        PopupMenuItem(
+                        const PopupMenuItem(
                           value: 'delete',
                           child: Row(
                             children: [
@@ -196,7 +196,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   course.description,
                   style: TextStyle(
@@ -204,7 +204,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
                     fontSize: 16,
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Row(
                   children: [
                     _buildInfoChip(
@@ -212,7 +212,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
                       course.duration,
                       Colors.blue,
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 16),
                     _buildInfoChip(
                       Icons.video_library,
                       '${course.videosCount} videos',
@@ -230,7 +230,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
 
   Widget _buildInfoChip(IconData icon, String label, Color color) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
@@ -239,7 +239,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 16, color: color),
-          SizedBox(width: 4),
+          const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(color: color),
@@ -315,12 +315,12 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete Course'),
+        title: const Text('Delete Course'),
         content: Text('Are you sure you want to delete "${course.title}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
@@ -329,7 +329,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
               });
               Navigator.pop(context);
             },
-            child: Text(
+            child: const Text(
               'Delete',
               style: TextStyle(color: Colors.red),
             ),
@@ -363,7 +363,8 @@ class CourseDialog extends StatefulWidget {
   final String? initialDescription;
   final Function(String title, String description) onSave;
 
-  CourseDialog({
+  const CourseDialog({
+    super.key,
     this.initialTitle,
     this.initialDescription,
     required this.onSave,
@@ -394,15 +395,15 @@ class _CourseDialogState extends State<CourseDialog> {
         children: [
           TextField(
             controller: _titleController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Course Title',
               border: OutlineInputBorder(),
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           TextField(
             controller: _descriptionController,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Description',
               border: OutlineInputBorder(),
             ),
@@ -413,7 +414,7 @@ class _CourseDialogState extends State<CourseDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel'),
+          child: const Text('Cancel'),
         ),
         ElevatedButton(
           onPressed: () {
@@ -423,7 +424,7 @@ class _CourseDialogState extends State<CourseDialog> {
             );
             Navigator.pop(context);
           },
-          child: Text('Save'),
+          child: const Text('Save'),
         ),
       ],
     );

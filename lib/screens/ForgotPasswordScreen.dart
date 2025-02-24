@@ -7,9 +7,9 @@ import 'package:mashrooa_takharog/screens/StudentOrInstructor.dart';
 import 'package:mashrooa_takharog/widgets/customElevatedBtn.dart';
 import 'package:mashrooa_takharog/widgets/customTextField.dart';
 
-import 'forgotpasswordpage.dart';
-
 class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
+
   @override
   _ForgotPasswordScreenState createState() => _ForgotPasswordScreenState();
 }
@@ -24,8 +24,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
-            Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (context) => StudentOrInstructor()));
+            Navigator.pushReplacement(context,
+                MaterialPageRoute(builder: (context) => StudentOrInstructor()));
           },
           icon: const Icon(CupertinoIcons.arrow_left, color: Colors.black),
         ),
@@ -114,7 +114,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                padding: const EdgeInsets.all(8.0), // Ensure padding for tap area
+                padding:
+                    const EdgeInsets.all(8.0), // Ensure padding for tap area
                 child: IgnorePointer(
                   child: CustomTextField(
                     isPrefix: true,
@@ -142,7 +143,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               onPressed: () {
                 if (_selectedOption == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Please select an option')),
+                    const SnackBar(content: Text('Please select an option')),
                   );
                 } else {
                   if (_selectedOption == 'email') {

@@ -59,7 +59,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         smsCode: otpCode,
       );
 
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
 
       if (userCredential.user != null) {
         Navigator.pushReplacement(
@@ -86,12 +87,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     }
   }
 
-
   String _maskPhoneNumber(String phoneNumber) {
-
     String visiblePart = phoneNumber.substring(phoneNumber.length - 3);
-    return '(+20) ***-***-*${visiblePart}';
+    return '(+20) ***-***-*$visiblePart';
   }
+
   @override
   Widget build(BuildContext context) {
     String maskedPhoneNumber = _maskPhoneNumber(widget.phoneNumber);
@@ -102,7 +102,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => EnterYourPhoneResetEmail()),
+              MaterialPageRoute(
+                  builder: (context) => EnterYourPhoneResetEmail()),
             );
           },
         ),
@@ -119,9 +120,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-             Text(
+            Text(
               'Code has been sent to $maskedPhoneNumber',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),
@@ -156,7 +157,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               height: 30,
             ),
             ElevatedButton(
-              onPressed: isCodeComplete() && !isLoading ? verifyOtpAndNavigate : null,
+              onPressed:
+                  isCodeComplete() && !isLoading ? verifyOtpAndNavigate : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue.shade900,
                 minimumSize: const Size(double.infinity, 60),
@@ -167,12 +169,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               child: isLoading
                   ? const CircularProgressIndicator(color: Colors.white)
                   : const Text(
-                'Verify',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.white,
-                ),
-              ),
+                      'Verify',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
+                    ),
             ),
             const SizedBox(height: 30),
             NumericKeypad(

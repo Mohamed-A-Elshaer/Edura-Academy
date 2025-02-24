@@ -9,7 +9,8 @@ import '../widgets/customTextField.dart';
 import 'InstructorNavigatorScreen.dart';
 import 'StudentNavigatorScreen.dart';
 
-class EditProfileScreen extends StatefulWidget{
+class EditProfileScreen extends StatefulWidget {
+  const EditProfileScreen({super.key});
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -21,7 +22,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   TextEditingController dobController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
-  String selectedGender='Gender';
+  String selectedGender = 'Gender';
   DateTime dateTime = DateTime.now();
   String? emailError, phoneError;
   String? verificationId;
@@ -36,7 +37,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     try {
       // ✅ Fetch user by UID instead of email
-      var studentSnapshot = await firestore.collection('students').doc(user.uid).get();
+      var studentSnapshot =
+          await firestore.collection('students').doc(user.uid).get();
       if (studentSnapshot.exists) {
         Navigator.pushReplacement(
           context,
@@ -45,7 +47,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         return;
       }
 
-      var instructorSnapshot = await firestore.collection('instructors').doc(user.uid).get();
+      var instructorSnapshot =
+          await firestore.collection('instructors').doc(user.uid).get();
       if (instructorSnapshot.exists) {
         Navigator.pushReplacement(
           context,
@@ -58,11 +61,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-
-  Future<void> _verifyAndUpdatePhoneNumber(String formattedPhone, String collection, String docId, String newEmail) async {
+  Future<void> _verifyAndUpdatePhoneNumber(String formattedPhone,
+      String collection, String docId, String newEmail) async {
     try {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Waiting for phone verification...'), duration: Duration(seconds: 7)),
+        const SnackBar(
+            content: Text('Waiting for phone verification...'),
+            duration: Duration(seconds: 7)),
       );
 
       await _auth.verifyPhoneNumber(
@@ -70,7 +75,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         verificationCompleted: (PhoneAuthCredential credential) async {
           try {
             await _auth.currentUser!.updatePhoneNumber(credential);
-            await _updateFirestoreAndAuth(collection, docId, newEmail, formattedPhone);
+            await _updateFirestoreAndAuth(
+                collection, docId, newEmail, formattedPhone);
           } catch (e) {
             print('Error auto-verifying phone number: $e');
           }
@@ -82,7 +88,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           });
         },
         codeSent: (String verificationId, int? resendToken) {
-          _showOtpDialog(verificationId, formattedPhone, collection, docId, newEmail);
+          _showOtpDialog(
+              verificationId, formattedPhone, collection, docId, newEmail);
         },
         codeAutoRetrievalTimeout: (String verificationId) {
           setState(() {
@@ -98,8 +105,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-
-  void _showOtpDialog(String verificationId, String formattedPhone, String collection, String docId, String newEmail) {
+  void _showOtpDialog(String verificationId, String formattedPhone,
+      String collection, String docId, String newEmail) {
     final TextEditingController otpController = TextEditingController();
 
     showDialog(
@@ -115,7 +122,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           TextButton(
             onPressed: () async {
               try {
-                final PhoneAuthCredential phoneCredential = PhoneAuthProvider.credential(
+                final PhoneAuthCredential phoneCredential =
+                    PhoneAuthProvider.credential(
                   verificationId: verificationId,
                   smsCode: otpController.text,
                 );
@@ -123,7 +131,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 await _auth.currentUser!.updatePhoneNumber(phoneCredential);
                 Navigator.of(context).pop();
 
-                await _updateFirestoreAndAuth(collection, docId, newEmail, formattedPhone);
+                await _updateFirestoreAndAuth(
+                    collection, docId, newEmail, formattedPhone);
               } catch (e) {
                 print('OTP verification failed: $e');
                 setState(() {
@@ -139,18 +148,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-
-  Future<void> _updateFirestoreAndAuth(String collection, String docId, String newEmail, String newPhone) async {
+  Future<void> _updateFirestoreAndAuth(
+      String collection, String docId, String newEmail, String newPhone) async {
     User? user = _auth.currentUser;
     if (user == null) return;
 
     Map<String, dynamic> updatedData = {};
-    if (fullNameController.text.isNotEmpty) updatedData['fullName'] = fullNameController.text;
-    if (nickNameController.text.isNotEmpty) updatedData['nickName'] = nickNameController.text;
+    if (fullNameController.text.isNotEmpty)
+      updatedData['fullName'] = fullNameController.text;
+    if (nickNameController.text.isNotEmpty)
+      updatedData['nickName'] = nickNameController.text;
     if (dobController.text.isNotEmpty) updatedData['dob'] = dobController.text;
-    if (newEmail.isNotEmpty && newEmail != user.email) updatedData['email'] = newEmail;
+    if (newEmail.isNotEmpty && newEmail != user.email)
+      updatedData['email'] = newEmail;
     if (newPhone.isNotEmpty) {
-      updatedData['phone'] = newPhone.startsWith('+2') ? newPhone.substring(2) : newPhone;
+      updatedData['phone'] =
+          newPhone.startsWith('+2') ? newPhone.substring(2) : newPhone;
     }
     if (selectedGender != 'Gender') updatedData['gender'] = selectedGender;
 
@@ -173,7 +186,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Waiting for update...'), duration: Duration(seconds: 2)),
+          const SnackBar(
+              content: Text('Waiting for update...'),
+              duration: Duration(seconds: 2)),
         );
 
         setState(() {
@@ -185,7 +200,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully!'), duration: Duration(seconds: 2)),
+          const SnackBar(
+              content: Text('Profile updated successfully!'),
+              duration: Duration(seconds: 2)),
         );
 
         // ✅ Force FirebaseAuth to refresh the user
@@ -194,7 +211,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         print("🔄 Updated email: ${user?.email}"); // Debugging log
 
         // ✅ Navigate after updating the user
-        Future.delayed(Duration(seconds: 1), () {
+        Future.delayed(const Duration(seconds: 1), () {
           _navigateBasedOnUserType(context);
         });
       }
@@ -203,17 +220,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-
-
-
-
-
-
-
-
   Future<void> _updateProfile() async {
-
-
     User? user = _auth.currentUser;
     if (user == null) return;
 
@@ -226,7 +233,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         newEmail.isNotEmpty ||
         newPhone.isNotEmpty ||
         selectedGender != 'Gender';
-
 
     if (!isDataEntered) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -244,18 +250,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     try {
       // Determine if the user is a student or instructor
-      String userId = user.uid;  // ✅ استخدم الـ UID لأنه ثابت
+      String userId = user.uid; // ✅ استخدم الـ UID لأنه ثابت
       DocumentSnapshot? userDoc;
       String? collection;
 
 // ✅ جلب الوثيقة مباشرة باستخدام الـ UID
-      DocumentSnapshot studentDoc = await firestore.collection('students').doc(userId).get();
+      DocumentSnapshot studentDoc =
+          await firestore.collection('students').doc(userId).get();
       if (studentDoc.exists) {
         collection = 'students';
         userDoc = studentDoc;
       }
 
-      DocumentSnapshot instructorDoc = await firestore.collection('instructors').doc(userId).get();
+      DocumentSnapshot instructorDoc =
+          await firestore.collection('instructors').doc(userId).get();
       if (instructorDoc.exists) {
         collection = 'instructors';
         userDoc = instructorDoc;
@@ -266,11 +274,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         return;
       }
 
-
       // Prevent updating to an already existing email
       if (newEmail.isNotEmpty && newEmail != user.email) {
-        QuerySnapshot existingEmail = await firestore.collection('students').where('email', isEqualTo: newEmail).get();
-        existingEmail = existingEmail.docs.isEmpty ? await firestore.collection('instructors').where('email', isEqualTo: newEmail).get() : existingEmail;
+        QuerySnapshot existingEmail = await firestore
+            .collection('students')
+            .where('email', isEqualTo: newEmail)
+            .get();
+        existingEmail = existingEmail.docs.isEmpty
+            ? await firestore
+                .collection('instructors')
+                .where('email', isEqualTo: newEmail)
+                .get()
+            : existingEmail;
 
         if (existingEmail.docs.isNotEmpty) {
           setState(() {
@@ -282,8 +297,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       // Prevent updating to an already existing phone number
       if (newPhone.isNotEmpty && newPhone != userDoc.get('phone')) {
-        QuerySnapshot existingPhone = await firestore.collection('students').where('phone', isEqualTo: newPhone).get();
-        existingPhone = existingPhone.docs.isEmpty ? await firestore.collection('instructors').where('phone', isEqualTo: newPhone).get() : existingPhone;
+        QuerySnapshot existingPhone = await firestore
+            .collection('students')
+            .where('phone', isEqualTo: newPhone)
+            .get();
+        existingPhone = existingPhone.docs.isEmpty
+            ? await firestore
+                .collection('instructors')
+                .where('phone', isEqualTo: newPhone)
+                .get()
+            : existingPhone;
 
         if (existingPhone.docs.isNotEmpty) {
           setState(() {
@@ -293,22 +316,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
 
         // Trigger phone verification before updating the phone number
-        await _verifyAndUpdatePhoneNumber(formattedPhone, collection, userDoc.id, newEmail);
+        await _verifyAndUpdatePhoneNumber(
+            formattedPhone, collection, userDoc.id, newEmail);
         return; // Stop execution until phone is verified
       }
 
       // Update only modified fields
-      await _updateFirestoreAndAuth(collection, userDoc.id, newEmail, newPhone.isNotEmpty ? newPhone : userDoc.get('phone'));
-
+      await _updateFirestoreAndAuth(collection, userDoc.id, newEmail,
+          newPhone.isNotEmpty ? newPhone : userDoc.get('phone'));
     } catch (e) {
       print("Error updating profile: $e");
     }
   }
-
-
-
-
-
 
   Future<Null> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -317,13 +336,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         initialDatePickerMode: DatePickerMode.day,
         firstDate: DateTime(1920),
         lastDate: DateTime(2101));
-    if (picked != null && picked != dateTime)
+    if (picked != null && picked != dateTime) {
       setState(() {
         dateTime = picked;
-        dobController.text = DateFormat('dd-MM-yyyy').format(picked);;
+        dobController.text = DateFormat('dd-MM-yyyy').format(picked);
       });
+    }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -331,12 +350,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       backgroundColor: const Color(0xffF5F9FF),
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => _navigateBasedOnUserType(context)
-        ),
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => _navigateBasedOnUserType(context)),
         title: const Text('Edit Profile'),
       ),
-
       body: Center(
         child: SingleChildScrollView(
           child: Transform(
@@ -345,23 +362,53 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               children: [
                 CircleAvatar(
                   radius: 50,
-                  child: Image.asset('assets/images/ProfilePic.png',height: 65,),),
-                SizedBox(height: 40,),
-                CustomTextField(hintText: 'Full Name', isPrefix: false,hpad: 20,  isSuffix: false,controller: fullNameController,
-                 ),
-                SizedBox(height: 20,),
-                CustomTextField(hintText: 'Nick Name', isPrefix: false,hpad: 20,  isSuffix: false, controller: nickNameController,
-                 ),
-                SizedBox(height: 20,),
-                CustomTextField(hintText: 'Date of Birth', isPrefix: true, prefix: Icon(Icons.calendar_month_outlined), isSuffix: false,onTap: () => _selectDate(context),controller: dobController,readOnly: true,),
-                SizedBox(height: 20,),
+                  child: Image.asset(
+                    'assets/images/ProfilePic.png',
+                    height: 65,
+                  ),
+                ),
+                const SizedBox(
+                  height: 40,
+                ),
+                CustomTextField(
+                  hintText: 'Full Name',
+                  isPrefix: false,
+                  hpad: 20,
+                  isSuffix: false,
+                  controller: fullNameController,
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                CustomTextField(
+                  hintText: 'Nick Name',
+                  isPrefix: false,
+                  hpad: 20,
+                  isSuffix: false,
+                  controller: nickNameController,
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                CustomTextField(
+                  hintText: 'Date of Birth',
+                  isPrefix: true,
+                  prefix: const Icon(Icons.calendar_month_outlined),
+                  isSuffix: false,
+                  onTap: () => _selectDate(context),
+                  controller: dobController,
+                  readOnly: true,
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CustomTextField(
                       hintText: 'Email',
                       isPrefix: true,
-                      prefix: Icon(Icons.email_outlined),
+                      prefix: const Icon(Icons.email_outlined),
                       isSuffix: false,
                       controller: emailController,
                     ),
@@ -370,22 +417,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         padding: const EdgeInsets.only(left: 20.0, top: 5),
                         child: Text(
                           emailError!,
-                          style: const TextStyle(color: Colors.red, fontSize: 14),
+                          style:
+                              const TextStyle(color: Colors.red, fontSize: 14),
                         ),
                       ),
                   ],
                 ),
-
-
-
-                SizedBox(height: 20,),
+                const SizedBox(
+                  height: 20,
+                ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CustomTextField(
                       hintText: 'Phone',
                       isPrefix: true,
-                      prefix: Icon(Icons.phone_android),
+                      prefix: const Icon(Icons.phone_android),
                       isSuffix: false,
                       cursorHeight: 15,
                       controller: phoneController,
@@ -395,28 +442,38 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         padding: const EdgeInsets.only(left: 20.0, top: 5),
                         child: Text(
                           phoneError!,
-                          style: const TextStyle(color: Colors.red, fontSize: 14),
+                          style:
+                              const TextStyle(color: Colors.red, fontSize: 14),
                         ),
                       ),
                   ],
                 ),
-                SizedBox(height: 20,),
-                CustomTextField(hintText: selectedGender,isPrefix: false,readOnly: true, hpad:20,isSuffix: true, dropdownItems: ['Male', 'Female'],
+                const SizedBox(
+                  height: 20,
+                ),
+                CustomTextField(
+                  hintText: selectedGender,
+                  isPrefix: false,
+                  readOnly: true,
+                  hpad: 20,
+                  isSuffix: true,
+                  dropdownItems: const ['Male', 'Female'],
                   onDropdownChanged: (value) {
                     setState(() {
                       if (value != null) {
                         selectedGender = value;
                       }
                     });
-                  },),
-                SizedBox(height: 20,),
-
-
-                CustomElevatedBtn(btnDesc: 'Update',horizontalPad: 75, onPressed:()=> _updateProfile())
-
-
+                  },
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                CustomElevatedBtn(
+                    btnDesc: 'Update',
+                    horizontalPad: 75,
+                    onPressed: () => _updateProfile())
               ],
-
             ),
           ),
         ),

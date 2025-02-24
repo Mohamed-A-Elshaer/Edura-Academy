@@ -14,27 +14,23 @@ import 'package:mashrooa_takharog/screens/instructor_courses_screen.dart';
 import 'package:mashrooa_takharog/screens/splashScreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../widgets/CustomCheckBox.dart';
 import '../widgets/customElevatedBtn.dart';
 import '../widgets/customTextField.dart';
 import 'FillYourProfile.dart';
 import 'StudentOrInstructor.dart';
 
-class SignInScreen extends StatefulWidget{
-
+class SignInScreen extends StatefulWidget {
   final String? userType;
-  SignInScreen({super.key,this.userType});
-
-
+  const SignInScreen({super.key, this.userType});
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
 }
 
 class _SignInScreenState extends State<SignInScreen> {
-  final SupaAuthService supaAuth=SupaAuthService();
-  final TextEditingController _emailController=TextEditingController();
-  final TextEditingController _passwordController=TextEditingController();
+  final SupaAuthService supaAuth = SupaAuthService();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   bool isPasswordVisible = false;
   String? emailError;
   String? passwordError;
@@ -45,13 +41,10 @@ class _SignInScreenState extends State<SignInScreen> {
     super.initState();
   }
 
-
-
   Future<void> _saveCredentials() async {
     final prefs = await SharedPreferences.getInstance();
 
     if (rememberMe) {
-
       await prefs.setBool('rememberMe', true);
       await prefs.setString('email', _emailController.text);
       await prefs.setString('password', _passwordController.text);
@@ -60,54 +53,52 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
-
-
-
-
   void login(BuildContext context, String intendedRole) async {
     final authService = AuthService();
 
     try {
-      final user = await authService.signInWithEmailPassword(_emailController.text, _passwordController.text);
-      await supaAuth.signInWithEmailPasswordSupabase(_emailController.text, _passwordController.text);
+      final user = await authService.signInWithEmailPassword(
+          _emailController.text, _passwordController.text);
+      await supaAuth.signInWithEmailPasswordSupabase(
+          _emailController.text, _passwordController.text);
 
-      if (user!= null) {
+      final actualRole = await _getUserType(user.user!.uid);
 
+      if (actualRole != intendedRole) {
+        _showAccessDeniedDialog(context, intendedRole);
+        await FirebaseAuth.instance.signOut();
+        return;
+      }
+      String collection =
+          widget.userType == 'student' ? 'students' : 'instructors';
 
-        final actualRole = await _getUserType(user.user!.uid);
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection(collection)
+          .doc(user.user!.uid)
+          .get();
+      if (userDoc.exists &&
+          !(userDoc.data() as Map<String, dynamic>)['isProfileComplete']) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FillYourProfile(userType: widget.userType),
+          ),
+        );
+      } else {
+        Widget destination = widget.userType == 'student'
+            ? NavigatorScreen()
+            : InstructorNavigatorScreen();
 
-        if (actualRole != intendedRole) {
-          _showAccessDeniedDialog(context, intendedRole);
-          await FirebaseAuth.instance.signOut();
-          return;
-        }
-        String collection = widget.userType == 'student' ? 'students' : 'instructors';
-
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection(collection).doc(user.user!.uid).get();
-        if (userDoc.exists && !(userDoc.data() as Map<String, dynamic>)['isProfileComplete']) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => FillYourProfile(userType: widget.userType),
-            ),
-          );
-        } else {
-          Widget destination = widget.userType == 'student'
-              ? NavigatorScreen()
-              : InstructorNavigatorScreen();
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => destination),
-          );
-        }
-
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => destination),
+        );
       }
     } catch (e) {
       print("Login Error: $e");
       setState(() {
         if (e.toString().contains('invalid-email') ||
-            e.toString().contains('wrong-password')||
+            e.toString().contains('wrong-password') ||
             e.toString().contains('invalid-credential')) {
           passwordError = '*Incorrect email or password!';
         } else if (e.toString().contains('user-not-found')) {
@@ -116,8 +107,7 @@ class _SignInScreenState extends State<SignInScreen> {
           passwordError = '*Login failed. Please try again.';
         }
       });
-    }
-    finally {
+    } finally {
       setState(() {
         isLoading = false;
       });
@@ -143,31 +133,28 @@ class _SignInScreenState extends State<SignInScreen> {
     return null; // Return null if no matching document is found
   }*/
 
-
-
-
   void _showAccessDeniedDialog(BuildContext context, String intendedRole) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
+          title: const Text(
             'Access Denied',
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              const Icon(
                 Icons.error_outline,
                 color: Colors.red,
                 size: 48,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
                 'You are not authorized to log in as a/an $intendedRole.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
+                style: const TextStyle(fontSize: 16),
               ),
             ],
           ),
@@ -187,7 +174,6 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-
   /* Future<bool> _isFirestoreEmailMatch(String userId, String enteredEmail) async {
     try {
       final doc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
@@ -204,31 +190,38 @@ class _SignInScreenState extends State<SignInScreen> {
     return false;
   }*/
 
-
-
   void validateInputs(String intendedRole) {
     setState(() {
-      emailError = _emailController.text.isEmpty ? '*Email field cannot be empty!' : null;
-      passwordError =_passwordController.text.isEmpty ? '*Password field cannot be empty!' : null;
+      emailError = _emailController.text.isEmpty
+          ? '*Email field cannot be empty!'
+          : null;
+      passwordError = _passwordController.text.isEmpty
+          ? '*Password field cannot be empty!'
+          : null;
     });
 
     if (emailError == null && passwordError == null) {
       setState(() {
         isLoading = true;
       });
-      login(context,intendedRole);
+      login(context, intendedRole);
     }
   }
 
-
   Future<String?> _getUserType(String userId) async {
     try {
-      final studentDoc = await FirebaseFirestore.instance.collection('students').doc(userId).get();
+      final studentDoc = await FirebaseFirestore.instance
+          .collection('students')
+          .doc(userId)
+          .get();
       if (studentDoc.exists) {
         return 'student';
       }
 
-      final instructorDoc = await FirebaseFirestore.instance.collection('instructors').doc(userId).get();
+      final instructorDoc = await FirebaseFirestore.instance
+          .collection('instructors')
+          .doc(userId)
+          .get();
       if (instructorDoc.exists) {
         return 'instructor';
       }
@@ -238,8 +231,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
     return null;
   }
-
-
 
   /*Future<bool> _isProfileComplete(String userId, String intendedRole) async {
     try {
@@ -259,7 +250,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
     return false; // Default to false if there's an error or no document
   }*/
-
 
   /*Future<bool> _checkProfileCompletion(String userId) async {
     try {
@@ -283,21 +273,30 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>StudentOrInstructor()));},
-            icon: Icon(CupertinoIcons.arrow_left,color: Colors.black,)),
-        backgroundColor:Colors.transparent ,
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => StudentOrInstructor()));
+            },
+            icon: const Icon(
+              CupertinoIcons.arrow_left,
+              color: Colors.black,
+            )),
+        backgroundColor: Colors.transparent,
         toolbarHeight: 27.0,
       ),
-      backgroundColor: Color(0xffF5F9FF),
+      backgroundColor: const Color(0xffF5F9FF),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            SizedBox(height: 36),
+            const SizedBox(height: 36),
             Transform(
               transform: Matrix4.translationValues(-15, 0, 0),
               child: Image.asset('assets/images/EduraFirst.png'),
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 25.0),
               child: Align(
@@ -328,28 +327,29 @@ class _SignInScreenState extends State<SignInScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             CustomTextField(
               hintText: 'Email',
-              prefix: Icon(Icons.email_outlined, color: Color(0xff545454)),
+              prefix:
+                  const Icon(Icons.email_outlined, color: Color(0xff545454)),
               isPrefix: true,
               isSuffix: false,
               isObscure: false,
               controller: _emailController,
               errorMessage: emailError,
             ),
-            SizedBox(height: 17),
+            const SizedBox(height: 17),
             CustomTextField(
-
               hintText: 'Password',
-              prefix: Icon(Icons.lock_outline_sharp, color: Color(0xff545454)),
+              prefix: const Icon(Icons.lock_outline_sharp,
+                  color: Color(0xff545454)),
               suffix: IconButton(
                 icon: Icon(
                   isPasswordVisible
                       ? CupertinoIcons.eye
                       : CupertinoIcons.eye_slash,
                 ),
-                color: Color(0xff545454),
+                color: const Color(0xff545454),
                 onPressed: () {
                   setState(() {
                     isPasswordVisible = !isPasswordVisible;
@@ -362,7 +362,9 @@ class _SignInScreenState extends State<SignInScreen> {
               controller: _passwordController,
               errorMessage: passwordError,
             ),
-            SizedBox(height: 40,),
+            const SizedBox(
+              height: 40,
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 34.0),
               child: Row(
@@ -375,69 +377,134 @@ class _SignInScreenState extends State<SignInScreen> {
                       _saveCredentials();
                     },
                     child: rememberMe
-                        ? Icon(
-                      Icons.check_box,
-                      size: 25.0,
-                      color: Colors.green,
-                    )
-                        : Icon(
-                      Icons.square_outlined,
-                      size: 25.0,
-                      color: Colors.green,
-                    ),
-
-
+                        ? const Icon(
+                            Icons.check_box,
+                            size: 25.0,
+                            color: Colors.green,
+                          )
+                        : const Icon(
+                            Icons.square_outlined,
+                            size: 25.0,
+                            color: Colors.green,
+                          ),
                   ),
-
-
-
-
-                  SizedBox(width: 6,),
-                  Text('Remember me',style: TextStyle(color: Color(0xff545454),fontSize: 13,fontWeight:FontWeight.w700 ),),
-                  SizedBox(width: 90,),
-                  GestureDetector(onTap: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> ForgotPasswordScreen()));}, child: Text('Forgot Password?',style: TextStyle(color: Color(0xff545454),fontSize: 13,fontWeight:FontWeight.w700 ),)),
-
+                  const SizedBox(
+                    width: 6,
+                  ),
+                  const Text(
+                    'Remember me',
+                    style: TextStyle(
+                        color: Color(0xff545454),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(
+                    width: 90,
+                  ),
+                  GestureDetector(
+                      onTap: () {
+                        Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ForgotPasswordScreen()));
+                      },
+                      child: const Text(
+                        'Forgot Password?',
+                        style: TextStyle(
+                            color: Color(0xff545454),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700),
+                      )),
                 ],
               ),
             ),
-            SizedBox(height: 40,),
-            isLoading? CircularProgressIndicator()
-                : CustomElevatedBtn(btnDesc: 'Sign In'
-              ,horizontalPad: 83,
-              onPressed: () => validateInputs(widget.userType!),),
-            SizedBox(height: 20,),
-            Text('Or Continue With',style: TextStyle(fontSize: 14,fontFamily: 'Mulish',fontWeight: FontWeight.w700,color: Color(0xff545454)),),
-            SizedBox(height: 25,),
+            const SizedBox(
+              height: 40,
+            ),
+            isLoading
+                ? const CircularProgressIndicator()
+                : CustomElevatedBtn(
+                    btnDesc: 'Sign In',
+                    horizontalPad: 83,
+                    onPressed: () => validateInputs(widget.userType!),
+                  ),
+            const SizedBox(
+              height: 20,
+            ),
+            const Text(
+              'Or Continue With',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Mulish',
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xff545454)),
+            ),
+            const SizedBox(
+              height: 25,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 GestureDetector(
-                    onTap: ()=>AuthService().signInWithGoogle(context,widget.userType!),
-                    child: Image.asset('assets/images/googleCircle.png',height: 55,)),
-                SizedBox(width: 40,),
+                    onTap: () => AuthService()
+                        .signInWithGoogle(context, widget.userType!),
+                    child: Image.asset(
+                      'assets/images/googleCircle.png',
+                      height: 55,
+                    )),
+                const SizedBox(
+                  width: 40,
+                ),
                 Transform(
                     transform: Matrix4.translationValues(0, -9, 0),
-                    child: GestureDetector(child: Image.asset('assets/images/appleCircle.png',height: 55,))),
+                    child: GestureDetector(
+                        child: Image.asset(
+                      'assets/images/appleCircle.png',
+                      height: 55,
+                    ))),
               ],
             ),
-            SizedBox(height: 27,),
+            const SizedBox(
+              height: 27,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Don\'t have an Account?',
-                  style: TextStyle(fontFamily: 'Mulish',fontSize: 14,fontWeight: FontWeight.w700,color: Color(0xff545454)),),
-                SizedBox(width: 6,),
+                const Text(
+                  'Don\'t have an Account?',
+                  style: TextStyle(
+                      fontFamily: 'Mulish',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xff545454)),
+                ),
+                const SizedBox(
+                  width: 6,
+                ),
                 GestureDetector(
-                  onTap: (){
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>SignUpScreen(userType: widget.userType!,)));
+                  onTap: () {
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => SignUpScreen(
+                                  userType: widget.userType!,
+                                )));
                   },
-                  child: Text('SIGN UP',style: TextStyle(
-                      shadows: [
-                        Shadow(
-                            color: Color(0xff0961F5),
-                            offset: Offset(0, -1))
-                      ],
-                      fontFamily: 'Mulish',fontSize: 14,fontWeight: FontWeight.w900,color: Colors.transparent,decoration: TextDecoration.underline,decorationColor: Color(0xff0961F5),decorationThickness: 3),),
+                  child: const Text(
+                    'SIGN UP',
+                    style: TextStyle(
+                        shadows: [
+                          Shadow(
+                              color: Color(0xff0961F5), offset: Offset(0, -1))
+                        ],
+                        fontFamily: 'Mulish',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.transparent,
+                        decoration: TextDecoration.underline,
+                        decorationColor: Color(0xff0961F5),
+                        decorationThickness: 3),
+                  ),
                 ),
               ],
             )

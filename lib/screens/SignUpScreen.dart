@@ -16,17 +16,18 @@ import '../widgets/customTextField.dart';
 
 class SignUpScreen extends StatefulWidget {
   final String? userType;
-  SignUpScreen({super.key, this.userType});
+  const SignUpScreen({super.key, this.userType});
 
   @override
   State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  TextEditingController _emailController = TextEditingController();
-  TextEditingController _passwordController = TextEditingController();
-  TextEditingController _confirmPasswordController = TextEditingController();
-  TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
 
   bool isPasswordVisible = false;
   bool isReEnterPasswordVisible = false;
@@ -50,7 +51,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _phoneController.dispose();
     super.dispose();
   }
- /* Future<bool> isPhoneNumberExists(String phone) async {
+  /* Future<bool> isPhoneNumberExists(String phone) async {
     String formattedPhone = '+20$phone';
 
     // Check both collections for existing phone number
@@ -68,21 +69,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }*/
 
   void register(BuildContext context) async {
-
     if (_passwordController.text == _confirmPasswordController.text) {
       try {
         final String formattedPhone = '+20${_phoneController.text}';
 
         await verifyPhoneNumber(context, formattedPhone);
-
       } catch (e) {
         print('Error during registration: $e');
         setState(() {
           if (e.toString().contains('invalid-email')) {
             emailError = '*Invalid email: doesn\'t exist!';
           } else if (e.toString().contains('weak-password')) {
-            passwordError = '*Password is too weak! It must be at least 8 characters.';
-            confirmpasswordError = '*Password is too weak! It must be at least 8 characters.';
+            passwordError =
+                '*Password is too weak! It must be at least 8 characters.';
+            confirmpasswordError =
+                '*Password is too weak! It must be at least 8 characters.';
           } else if (e.toString().contains('email-already-in-use')) {
             emailError = '*Email already in use!';
           } else {
@@ -97,13 +98,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-
-
-
-
   Future<void> addUserToSupabase() async {
-
-
     final supabase = Supabase.instance.client;
     try {
       final response = await supabase.auth.signUp(
@@ -117,11 +112,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-
-
-
-
-  Future<void> verifyPhoneNumber(BuildContext context, String formattedPhone) async {
+  Future<void> verifyPhoneNumber(
+      BuildContext context, String formattedPhone) async {
     try {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -132,7 +124,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
       await _auth.verifyPhoneNumber(
         phoneNumber: formattedPhone,
         verificationCompleted: (PhoneAuthCredential credential) async {
-          print('Verification completed automatically with credential: $credential');
+          print(
+              'Verification completed automatically with credential: $credential');
         },
         verificationFailed: (FirebaseAuthException e) {
           print('Phone verification failed: $e');
@@ -181,7 +174,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     duration: Duration(seconds: 5), // Adjust as needed
                   ),
                 );
-                final PhoneAuthCredential phoneCredential = PhoneAuthProvider.credential(
+                final PhoneAuthCredential phoneCredential =
+                    PhoneAuthProvider.credential(
                   verificationId: verificationId!,
                   smsCode: otpController.text,
                 );
@@ -189,13 +183,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 final String email = _emailController.text.trim();
                 final String password = _passwordController.text.trim();
                 final UserCredential userCredential =
-                await _auth.createUserWithEmailAndPassword(email: email, password: password);
-              //  await supaAuth.signUpWithEmailPasswordSupabase(email, password);
+                    await _auth.createUserWithEmailAndPassword(
+                        email: email, password: password);
+                //  await supaAuth.signUpWithEmailPasswordSupabase(email, password);
 
                 await userCredential.user!.linkWithCredential(phoneCredential);
 
-                String collection = widget.userType == 'student' ? 'students' : 'instructors';
-                await FirebaseFirestore.instance.collection(collection).doc(userCredential.user!.uid).set({
+                String collection =
+                    widget.userType == 'student' ? 'students' : 'instructors';
+                await FirebaseFirestore.instance
+                    .collection(collection)
+                    .doc(userCredential.user!.uid)
+                    .set({
                   'isProfileComplete': false,
                   'email': email,
                   'phone': formattedPhone,
@@ -219,11 +218,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 }
 
                 setState(() {
-                  if (e is FirebaseAuthException && e.code == 'email-already-in-use') {
+                  if (e is FirebaseAuthException &&
+                      e.code == 'email-already-in-use') {
                     emailError = '*Email address already exists!';
+                  } else {
+                    phoneError =
+                        '*Failed to complete registration(phone number may be already exists!). Please try again.';
                   }
-                  else{
-                  phoneError = '*Failed to complete registration(phone number may be already exists!). Please try again.';}
                 });
               }
             },
@@ -234,48 +235,61 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-
-
-
   void navigateToNextScreen() {
     if (mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => BusyChildWidget(
-            child: FillYourProfile(userType: widget.userType,email: _emailController.text,phone: _phoneController.text,),
-            loadingWidget: LoadingWidget(),
+            loadingWidget: const LoadingWidget(),
+            child: FillYourProfile(
+              userType: widget.userType,
+              email: _emailController.text,
+              phone: _phoneController.text,
+            ),
           ),
         ),
       );
     }
   }
+
   void validateInputs() {
     setState(() {
       emailError = _emailController.text.isEmpty
           ? '*Email field cannot be empty!'
           : !RegExp(r'^[^@\s]+@[^@\s]+\.(com|org|net|edu|gov)$')
-          .hasMatch(_emailController.text)
-          ? '*Invalid email address!'
+                  .hasMatch(_emailController.text)
+              ? '*Invalid email address!'
+              : null;
+      passwordError = _passwordController.text.isEmpty
+          ? '*Password field cannot be empty!'
           : null;
-      passwordError = _passwordController.text.isEmpty ? '*Password field cannot be empty!' : null;
-      confirmpasswordError = _confirmPasswordController.text.isEmpty ? '*Confirm password field cannot be empty!' : null;
-      phoneError = _phoneController.text.isEmpty ? '*Phone field cannot be empty!' : null;
-      termsError = !isTermsChecked ? '*You must agree to terms and conditions!' : null;
+      confirmpasswordError = _confirmPasswordController.text.isEmpty
+          ? '*Confirm password field cannot be empty!'
+          : null;
+      phoneError = _phoneController.text.isEmpty
+          ? '*Phone field cannot be empty!'
+          : null;
+      termsError =
+          !isTermsChecked ? '*You must agree to terms and conditions!' : null;
 
       RegExp passwordRegExp = RegExp(r'^(?=.*[A-Z])[A-Za-z0-9]{8,}$');
       if (!passwordRegExp.hasMatch(_passwordController.text)) {
         passwordError =
-        '*Password must be at least 8 characters long, contain at least one uppercase letter, and include only letters and numbers.';
+            '*Password must be at least 8 characters long, contain at least one uppercase letter, and include only letters and numbers.';
         confirmpasswordError =
-        '*Password must be at least 8 characters long, contain at least one uppercase letter, and include only letters and numbers.';
+            '*Password must be at least 8 characters long, contain at least one uppercase letter, and include only letters and numbers.';
       } else {
         passwordError = null;
         confirmpasswordError = null;
       }
     });
 
-    if (emailError == null && passwordError == null && confirmpasswordError == null && phoneError == null && termsError == null) {
+    if (emailError == null &&
+        passwordError == null &&
+        confirmpasswordError == null &&
+        phoneError == null &&
+        termsError == null) {
       register(context);
     }
   }
@@ -284,56 +298,64 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-actions: [
-  IconButton(onPressed: (){
-showDialog(
-    context: context,
-    builder: (BuildContext context){
-      return AlertDialog(
-        title: Text(
-          'Help',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.help,
-              color: Colors.black,
-              size: 48,
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Notice that password must be at least 8 characters long, contain at least one uppercase letter, and include only letters and numbers.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16,fontWeight: FontWeight.w800),
-            ),
-          ],
-        ),
         actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text(
-              'OK',
-              style: TextStyle(color: Theme.of(context).primaryColor),
-            ),
-          ),
+          IconButton(
+              onPressed: () {
+                showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text(
+                          'Help',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, color: Colors.black),
+                        ),
+                        content: const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.help,
+                              color: Colors.black,
+                              size: 48,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'Notice that password must be at least 8 characters long, contain at least one uppercase letter, and include only letters and numbers.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w800),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: Text(
+                              'OK',
+                              style: TextStyle(
+                                  color: Theme.of(context).primaryColor),
+                            ),
+                          ),
+                        ],
+                      );
+                    });
+              },
+              icon: const Icon(Icons.help))
         ],
-
-
-      );
-
-    }
-
-);
-
-  }, icon: Icon(Icons.help))
-],
-        leading: IconButton(onPressed: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>StudentOrInstructor()));},
-            icon: Icon(CupertinoIcons.arrow_left,color: Colors.black,)),
-        backgroundColor:Colors.transparent ,
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => StudentOrInstructor()));
+            },
+            icon: const Icon(
+              CupertinoIcons.arrow_left,
+              color: Colors.black,
+            )),
+        backgroundColor: Colors.transparent,
         toolbarHeight: 30.0,
       ),
       backgroundColor: const Color(0xffF5F9FF),
@@ -379,7 +401,8 @@ showDialog(
             const SizedBox(height: 30),
             CustomTextField(
               hintText: 'Email',
-              prefix: const Icon(Icons.email_outlined, color: Color(0xff545454)),
+              prefix:
+                  const Icon(Icons.email_outlined, color: Color(0xff545454)),
               isPrefix: true,
               isSuffix: false,
               controller: _emailController,
@@ -397,10 +420,13 @@ showDialog(
             const SizedBox(height: 17),
             CustomTextField(
               hintText: 'Password',
-              prefix: const Icon(Icons.lock_outline_sharp, color: Color(0xff545454)),
+              prefix: const Icon(Icons.lock_outline_sharp,
+                  color: Color(0xff545454)),
               suffix: IconButton(
                 icon: Icon(
-                  isPasswordVisible ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+                  isPasswordVisible
+                      ? CupertinoIcons.eye
+                      : CupertinoIcons.eye_slash,
                 ),
                 color: const Color(0xff545454),
                 onPressed: () {
@@ -418,10 +444,13 @@ showDialog(
             const SizedBox(height: 17),
             CustomTextField(
               hintText: 'Re-enter Password',
-              prefix: const Icon(Icons.lock_outline_sharp, color: Color(0xff545454)),
+              prefix: const Icon(Icons.lock_outline_sharp,
+                  color: Color(0xff545454)),
               suffix: IconButton(
                 icon: Icon(
-                  isReEnterPasswordVisible ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+                  isReEnterPasswordVisible
+                      ? CupertinoIcons.eye
+                      : CupertinoIcons.eye_slash,
                 ),
                 color: const Color(0xff545454),
                 onPressed: () {
@@ -455,15 +484,17 @@ showDialog(
                     isChecked: isTermsChecked,
                     onChanged: (value) {
                       setState(() {
-                        isTermsChecked = value!;
+                        isTermsChecked = value;
                       });
                     },
                   ),
                   const SizedBox(width: 10),
-
                   GestureDetector(
-                   onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>TermsAndCondScreen())),
-                    child: Text.rich(
+                    onTap: () => Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => TermsAndCondScreen())),
+                    child: const Text.rich(
                       TextSpan(
                         children: [
                           TextSpan(
@@ -472,7 +503,10 @@ showDialog(
                           ),
                           TextSpan(
                             text: 'Terms & Conditions',
-                            style: TextStyle(color: Colors.blue, fontSize: 15, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                color: Colors.blue,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -503,45 +537,90 @@ showDialog(
               padding: const EdgeInsets.symmetric(horizontal: 29.0),
               child: CustomElevatedBtn(
                 horizontalPad: 72,
-                onPressed: validateInputs, btnDesc: 'Sign Up',
+                onPressed: validateInputs,
+                btnDesc: 'Sign Up',
               ),
             ),
-
-            SizedBox(height: 20,),
-            Text('Or Continue With',style: TextStyle(fontSize: 14,fontFamily: 'Mulish',fontWeight: FontWeight.w700,color: Color(0xff545454)),),
-            SizedBox(height: 16,),
+            const SizedBox(
+              height: 20,
+            ),
+            const Text(
+              'Or Continue With',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Mulish',
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xff545454)),
+            ),
+            const SizedBox(
+              height: 16,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 GestureDetector(
-    onTap: ()=>AuthService().signInWithGoogle(context,widget.userType!),
-                    child: Image.asset('assets/images/googleCircle.png',height: 55,)),
-                SizedBox(width: 40,),
+                    onTap: () => AuthService()
+                        .signInWithGoogle(context, widget.userType!),
+                    child: Image.asset(
+                      'assets/images/googleCircle.png',
+                      height: 55,
+                    )),
+                const SizedBox(
+                  width: 40,
+                ),
                 Transform(
                     transform: Matrix4.translationValues(0, -9, 0),
-                    child: GestureDetector(child: Image.asset('assets/images/appleCircle.png',height: 55,))),
+                    child: GestureDetector(
+                        child: Image.asset(
+                      'assets/images/appleCircle.png',
+                      height: 55,
+                    ))),
               ],
             ),
-            SizedBox(height: 7,),
+            const SizedBox(
+              height: 7,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Already have an Account?',
-                  style: TextStyle(fontFamily: 'Mulish',fontSize: 14,fontWeight: FontWeight.w700,color: Color(0xff545454)),),
-                SizedBox(width: 6,),
+                const Text(
+                  'Already have an Account?',
+                  style: TextStyle(
+                      fontFamily: 'Mulish',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xff545454)),
+                ),
+                const SizedBox(
+                  width: 6,
+                ),
                 GestureDetector(
-                  onTap: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>SignInScreen(userType: widget.userType,)));},
-                  child: Text('SIGN IN',style: TextStyle(
-                      shadows: [
-                        Shadow(
-                            color: Color(0xff0961F5),
-                            offset: Offset(0, -1))
-                      ],
-                      fontFamily: 'Mulish',fontSize: 14,fontWeight: FontWeight.w900,color: Colors.transparent,decoration: TextDecoration.underline,decorationColor: Color(0xff0961F5),decorationThickness: 3),),
+                  onTap: () {
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => SignInScreen(
+                                  userType: widget.userType,
+                                )));
+                  },
+                  child: const Text(
+                    'SIGN IN',
+                    style: TextStyle(
+                        shadows: [
+                          Shadow(
+                              color: Color(0xff0961F5), offset: Offset(0, -1))
+                        ],
+                        fontFamily: 'Mulish',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.transparent,
+                        decoration: TextDecoration.underline,
+                        decorationColor: Color(0xff0961F5),
+                        decorationThickness: 3),
+                  ),
                 ),
               ],
             )
-
           ],
         ),
       ),

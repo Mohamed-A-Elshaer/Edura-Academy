@@ -7,6 +7,8 @@ import 'package:mashrooa_takharog/screens/forgotpasswordpage.dart';
 import '../widgets/customElevatedBtn.dart';
 
 class EnterYourPhoneResetEmail extends StatefulWidget {
+  const EnterYourPhoneResetEmail({super.key});
+
   @override
   State<EnterYourPhoneResetEmail> createState() =>
       _EnterYourPhoneResetEmailState();
@@ -19,7 +21,7 @@ class _EnterYourPhoneResetEmailState extends State<EnterYourPhoneResetEmail> {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
- /* Future<bool> _doesPhoneNumberExist(String rawPhoneNumber) async {
+  /* Future<bool> _doesPhoneNumberExist(String rawPhoneNumber) async {
     try {
       // Remove +20 prefix before querying
       String normalizedPhone = rawPhoneNumber.replaceFirst('+20', '');
@@ -73,7 +75,6 @@ class _EnterYourPhoneResetEmailState extends State<EnterYourPhoneResetEmail> {
       if (studentSnapshot.docs.isNotEmpty) {
         return studentSnapshot.docs.first.id;
       }
-
 
       return null;
     } catch (e) {
@@ -129,8 +130,7 @@ class _EnterYourPhoneResetEmailState extends State<EnterYourPhoneResetEmail> {
               ),
             );
           },
-          verificationCompleted: (PhoneAuthCredential credential) {
-          },
+          verificationCompleted: (PhoneAuthCredential credential) {},
           verificationFailed: (FirebaseAuthException e) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Error: ${e.message}')),
@@ -147,9 +147,6 @@ class _EnterYourPhoneResetEmailState extends State<EnterYourPhoneResetEmail> {
       }
     }
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -201,7 +198,8 @@ class _EnterYourPhoneResetEmailState extends State<EnterYourPhoneResetEmail> {
                 controller: _phoneController,
                 decoration: const InputDecoration(
                   labelText: 'Phone',
-                  prefixIcon: Icon(Icons.phone_android, color: Color(0xff545454)),
+                  prefixIcon:
+                      Icon(Icons.phone_android, color: Color(0xff545454)),
                 ),
                 keyboardType: TextInputType.phone,
                 validator: (value) {
@@ -215,7 +213,7 @@ class _EnterYourPhoneResetEmailState extends State<EnterYourPhoneResetEmail> {
               ),
             ),
             const SizedBox(height: 30),
-             CustomElevatedBtn(
+            CustomElevatedBtn(
               btnDesc: 'Submit',
               horizontalPad: 83,
               onPressed: _sendCodeToPhoneNumber,

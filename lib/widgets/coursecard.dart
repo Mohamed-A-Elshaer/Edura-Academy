@@ -20,8 +20,8 @@ class CourseCard extends StatefulWidget {
     required this.rating,
     required this.students,
     required this.imagePath,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<CourseCard> createState() => _CourseCardState();
@@ -32,26 +32,34 @@ class _CourseCardState extends State<CourseCard> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final userRef = FirebaseFirestore.instance.collection('students').doc(user.uid);
-    final course = HomepageState.coursecardList.firstWhere((c) => c['title'] == courseId);
+    final userRef =
+        FirebaseFirestore.instance.collection('students').doc(user.uid);
+    final course =
+        HomepageState.coursecardList.firstWhere((c) => c['title'] == courseId);
 
     setState(() {
-      if (SearchCoursesPageState.savedCourses.any((c) => c['title'] == courseId)) {
-        SearchCoursesPageState.savedCourses.removeWhere((c) => c['title'] == courseId);
+      if (SearchCoursesPageState.savedCourses
+          .any((c) => c['title'] == courseId)) {
+        SearchCoursesPageState.savedCourses
+            .removeWhere((c) => c['title'] == courseId);
         userRef.update({
-          'savedCourses': SearchCoursesPageState.savedCourses.map((c) => c['title']).toList(),
+          'savedCourses': SearchCoursesPageState.savedCourses
+              .map((c) => c['title'])
+              .toList(),
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Course has been removed from bookmarks successfully!'),
+            content:
+                Text('Course has been removed from bookmarks successfully!'),
             duration: Duration(seconds: 2),
           ),
         );
-
       } else {
         SearchCoursesPageState.savedCourses.add(course);
         userRef.set({
-          'savedCourses': SearchCoursesPageState.savedCourses.map((c) => c['title']).toList(),
+          'savedCourses': SearchCoursesPageState.savedCourses
+              .map((c) => c['title'])
+              .toList(),
         }, SetOptions(merge: true));
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -67,7 +75,7 @@ class _CourseCardState extends State<CourseCard> {
   Widget build(BuildContext context) {
     final courseId = widget.title;
     return Container(
-    //  width: 300,
+      //  width: 300,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -84,7 +92,6 @@ class _CourseCardState extends State<CourseCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           Container(
             height: 112,
             width: double.infinity,
@@ -116,13 +123,11 @@ class _CourseCardState extends State<CourseCard> {
           ),
           const SizedBox(height: 8),
 
-
           Text(
             'Price: ${widget.price}',
             style: const TextStyle(color: Colors.grey, fontSize: 14),
           ),
           const SizedBox(height: 8),
-
 
           Row(
             children: [
@@ -134,22 +139,25 @@ class _CourseCardState extends State<CourseCard> {
               ),
             ],
           ),
-         
-
 
           Transform(
             transform: Matrix4.translationValues(0, -10, 0),
             child: Align(
               alignment: Alignment.centerRight,
-              child:
-              IconButton(
+              child: IconButton(
                 icon: Icon(
-                  SearchCoursesPageState.savedCourses.any((c) => c['title'] == widget.title)? Icons.bookmark : Icons.bookmark_border,
-                  color: SearchCoursesPageState.savedCourses.any((c) => c['title'] == widget.title)  ? Colors.teal : null,
+                  SearchCoursesPageState.savedCourses
+                          .any((c) => c['title'] == widget.title)
+                      ? Icons.bookmark
+                      : Icons.bookmark_border,
+                  color: SearchCoursesPageState.savedCourses
+                          .any((c) => c['title'] == widget.title)
+                      ? Colors.teal
+                      : null,
                 ),
-                onPressed: ()=>_toggleSavedCourse(courseId),
+                onPressed: () => _toggleSavedCourse(courseId),
               ),
-              ),
+            ),
           ),
         ],
       ),

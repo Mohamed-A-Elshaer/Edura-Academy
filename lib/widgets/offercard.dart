@@ -7,6 +7,7 @@ class offerCard extends StatelessWidget {
   final Color backgroundColor;
 
   const offerCard({
+    super.key,
     required this.discount,
     required this.title,
     required this.description,
@@ -16,17 +17,17 @@ class offerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8), 
-      padding: const EdgeInsets.all(16), 
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: backgroundColor, 
-        borderRadius: BorderRadius.circular(16), 
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.3), 
+            color: Colors.grey.withOpacity(0.3),
             spreadRadius: 2,
             blurRadius: 6,
-            offset: const Offset(0, 3), 
+            offset: const Offset(0, 3),
           ),
         ],
       ),

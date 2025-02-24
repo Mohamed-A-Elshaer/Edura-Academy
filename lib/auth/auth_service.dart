@@ -9,57 +9,52 @@ import 'package:mashrooa_takharog/screens/InstructorNavigatorScreen.dart';
 
 import '../screens/StudentNavigatorScreen.dart';
 
-class AuthService{
-final FirebaseAuth auth =FirebaseAuth.instance;
-
+class AuthService {
+  final FirebaseAuth auth = FirebaseAuth.instance;
 
 //sign in(firebase)
-Future<UserCredential> signInWithEmailPassword(String email,password) async{
-
-  try{
-    UserCredential userCredential=await auth.signInWithEmailAndPassword(email: email, password: password);
-    return userCredential;
-  } on FirebaseAuthException catch(e){
-
-    throw Exception(e.code);
+  Future<UserCredential> signInWithEmailPassword(String email, password) async {
+    try {
+      UserCredential userCredential = await auth.signInWithEmailAndPassword(
+          email: email, password: password);
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.code);
+    }
   }
-
-
-}
-
-
-
 
   Future<void> signInWithGoogle(BuildContext context, String userType) async {
     final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
     final GoogleSignIn googleSignIn = GoogleSignIn();
 
     try {
-      final GoogleSignInAccount? googleSignInAccount = await googleSignIn.signIn();
+      final GoogleSignInAccount? googleSignInAccount =
+          await googleSignIn.signIn();
 
       if (googleSignInAccount == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Google Sign-In cancelled by user')),
+          const SnackBar(content: Text('Google Sign-In cancelled by user')),
         );
         return;
       }
 
-      final GoogleSignInAuthentication? googleSignInAuthentication =
-      await googleSignInAccount.authentication;
+      final GoogleSignInAuthentication googleSignInAuthentication =
+          await googleSignInAccount.authentication;
 
       final AuthCredential credential = GoogleAuthProvider.credential(
         idToken: googleSignInAuthentication?.idToken,
         accessToken: googleSignInAuthentication?.accessToken,
       );
 
-      UserCredential result = await firebaseAuth.signInWithCredential(credential);
+      UserCredential result =
+          await firebaseAuth.signInWithCredential(credential);
       User? userDetails = result.user;
 
       if (userDetails != null) {
         final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-        final String studentCollection = 'students';
-        final String instructorCollection = 'instructors';
+        const String studentCollection = 'students';
+        const String instructorCollection = 'instructors';
 
         final DocumentSnapshot studentDoc = await firestore
             .collection(studentCollection)
@@ -77,8 +72,8 @@ Future<UserCredential> signInWithEmailPassword(String email,password) async{
           _showAccessDeniedDialog(context, "student");
         } else if (studentDoc.exists || instructorDoc.exists) {
           final bool isProfileComplete = (studentDoc.exists
-              ? studentDoc.get('isProfileComplete')
-              : instructorDoc.get('isProfileComplete')) ??
+                  ? studentDoc.get('isProfileComplete')
+                  : instructorDoc.get('isProfileComplete')) ??
               false;
 
           if (isProfileComplete) {
@@ -135,23 +130,23 @@ Future<UserCredential> signInWithEmailPassword(String email,password) async{
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
+          title: const Text(
             'Access Denied',
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              const Icon(
                 Icons.error_outline,
                 color: Colors.red,
                 size: 48,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               Text(
                 'You are not authorized to log in as a/an $intendedRole.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
+                style: const TextStyle(fontSize: 16),
               ),
             ],
           ),
@@ -171,34 +166,28 @@ Future<UserCredential> signInWithEmailPassword(String email,password) async{
     );
   }
 
-
-
-
 //sign up
-Future<UserCredential> signUpWithEmailPassword(String email,password) async{
-try{
-  UserCredential userCredential=await auth.createUserWithEmailAndPassword(email: email, password: password);
-return userCredential;
-} on FirebaseAuthException catch(e){
-  throw Exception(e.code);
-
-}
-}
+  Future<UserCredential> signUpWithEmailPassword(String email, password) async {
+    try {
+      UserCredential userCredential = await auth.createUserWithEmailAndPassword(
+          email: email, password: password);
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.code);
+    }
+  }
 
 //sign out
 
-Future<void> signOut() async{
-  return await auth.signOut();
+  Future<void> signOut() async {
+    return await auth.signOut();
+  }
 
-}
-
-Future<void> resetPassword(String email)async {
-try {
-await auth.sendPasswordResetEmail(email: email);
-
-} on FirebaseAuthException catch(e){
-  throw Exception(e.code);
-}
-
-}
+  Future<void> resetPassword(String email) async {
+    try {
+      await auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.code);
+    }
+  }
 }

@@ -8,71 +8,90 @@ import 'package:mashrooa_takharog/widgets/customTextField.dart';
 
 import '../widgets/customElevatedBtn.dart';
 
-class EnterYourResetEmail extends StatelessWidget{
+class EnterYourResetEmail extends StatelessWidget {
+  const EnterYourResetEmail({super.key});
+
   @override
   Widget build(BuildContext context) {
-    final controller=Get.put(ForgetPasswordController());
-   return Scaffold(
-     backgroundColor: Color(0xffF5F9FF),
-     appBar: AppBar(
-       leading: IconButton(onPressed: (){
-         Navigator.pushReplacement(
-           context, MaterialPageRoute(builder: (context) => ForgotPasswordScreen()));},
-           icon: Icon(CupertinoIcons.arrow_left,color: Colors.black,)),
-       title: Text('Forgot Password',style: TextStyle(color: Color(0xff202244),fontFamily: 'Jost',fontSize: 21,fontWeight: FontWeight.w600),),
-       backgroundColor:Color(0xffF5F9FF) ,
-
-     ),
-     body:
-     Center(
-       child: Column(
-         children: [
-           SizedBox(height: 30,),
-           Padding(
-             padding: const EdgeInsets.all(15.0),
-             child: Text('Don\'t worry, sometimes people can forget too. Enter your email and we will send you a password reset link.',style: TextStyle(color: Color(0xff545454),fontSize: 14,fontFamily: 'Mulish',fontWeight: FontWeight.w800)
-               ,),
-
-           ),
-           SizedBox(height: 30,),
-Form(
-  key: controller.forgetPasswordFormKey,
-  child: TextFormField(
-    controller: controller.email,
-  validator: validateEmail,
-  decoration: InputDecoration(labelText: 'Email',prefixIcon: Icon(Icons.email_outlined, color: Color(0xff545454))),
-
-  ),
-),
-           SizedBox(height: 30,),
-
-           CustomElevatedBtn(btnDesc: 'Submit',horizontalPad: 83,onPressed:  () => controller.sendPasswordResetEmail() ),
-
-
-         ],
-
-       ),
-     ),
-
-   );
+    final controller = Get.put(ForgetPasswordController());
+    return Scaffold(
+      backgroundColor: const Color(0xffF5F9FF),
+      appBar: AppBar(
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => ForgotPasswordScreen()));
+            },
+            icon: const Icon(
+              CupertinoIcons.arrow_left,
+              color: Colors.black,
+            )),
+        title: const Text(
+          'Forgot Password',
+          style: TextStyle(
+              color: Color(0xff202244),
+              fontFamily: 'Jost',
+              fontSize: 21,
+              fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: const Color(0xffF5F9FF),
+      ),
+      body: Center(
+        child: Column(
+          children: [
+            const SizedBox(
+              height: 30,
+            ),
+            const Padding(
+              padding: EdgeInsets.all(15.0),
+              child: Text(
+                'Don\'t worry, sometimes people can forget too. Enter your email and we will send you a password reset link.',
+                style: TextStyle(
+                    color: Color(0xff545454),
+                    fontSize: 14,
+                    fontFamily: 'Mulish',
+                    fontWeight: FontWeight.w800),
+              ),
+            ),
+            const SizedBox(
+              height: 30,
+            ),
+            Form(
+              key: controller.forgetPasswordFormKey,
+              child: TextFormField(
+                controller: controller.email,
+                validator: validateEmail,
+                decoration: const InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon:
+                        Icon(Icons.email_outlined, color: Color(0xff545454))),
+              ),
+            ),
+            const SizedBox(
+              height: 30,
+            ),
+            CustomElevatedBtn(
+                btnDesc: 'Submit',
+                horizontalPad: 83,
+                onPressed: () => controller.sendPasswordResetEmail()),
+          ],
+        ),
+      ),
+    );
   }
 
-  static String? validateEmail(String? value){
-
-    if(value==null||value.isEmpty){
-        return 'Email is required!';
-
+  static String? validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Email is required!';
     }
-    final emailRegExp=RegExp(r'^[^@\s]+@[^@\s]+\.(com|org|net|edu|gov)$');
+    final emailRegExp = RegExp(r'^[^@\s]+@[^@\s]+\.(com|org|net|edu|gov)$');
 
-    if(!emailRegExp.hasMatch(value)){
+    if (!emailRegExp.hasMatch(value)) {
       return 'Invalid email address!';
-
     }
 
     return null;
   }
-
-
-
 }

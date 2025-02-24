@@ -15,9 +15,9 @@ import 'package:mashrooa_takharog/widgets/ProfileAvatar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ProfileScreen extends StatefulWidget{
+class ProfileScreen extends StatefulWidget {
   String? userType;
-   ProfileScreen({super.key, this.userType});
+  ProfileScreen({super.key, this.userType});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -28,8 +28,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? email = "Loading...";
   String? _imageUrl;
   final supabase = Supabase.instance.client;
-final supaAuth=SupaAuthService();
-
+  final supaAuth = SupaAuthService();
 
   @override
   void initState() {
@@ -39,15 +38,20 @@ final supaAuth=SupaAuthService();
       _fetchProfileAvatar();
     });
   }
+
   Future<void> _fetchUserData() async {
-    String collection = widget.userType == 'student' ? 'students' : 'instructors';
+    String collection =
+        widget.userType == 'student' ? 'students' : 'instructors';
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         print('Current User ID: ${user.uid}');
         print('Fetching data from collection: $collection');
 
-        final doc = await FirebaseFirestore.instance.collection(collection).doc(user.uid).get();
+        final doc = await FirebaseFirestore.instance
+            .collection(collection)
+            .doc(user.uid)
+            .get();
         if (doc.exists) {
           print('Document data: ${doc.data()}');
           setState(() {
@@ -73,7 +77,6 @@ final supaAuth=SupaAuthService();
     }
   }
 
-
   Future<void> _fetchProfileAvatar() async {
     final userId = supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -94,7 +97,8 @@ final supaAuth=SupaAuthService();
       }
 
       // If file exists, generate the URL
-      String imageUrl = supabase.storage.from('profiles').getPublicUrl(imagePath);
+      String imageUrl =
+          supabase.storage.from('profiles').getPublicUrl(imagePath);
       imageUrl = Uri.parse(imageUrl).replace(queryParameters: {
         't': DateTime.now().millisecondsSinceEpoch.toString()
       }).toString();
@@ -112,30 +116,30 @@ final supaAuth=SupaAuthService();
     }
   }
 
-
-
-
-  void logout(BuildContext context) async{
+  void logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
-    final auth=AuthService();
+    final auth = AuthService();
     auth.signOut();
-   await supaAuth.signOut();
-Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>SplashScreen()));
+    await supaAuth.signOut();
+    Navigator.pushReplacement(
+        context, MaterialPageRoute(builder: (context) => SplashScreen()));
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xffF5F9FF),
+      backgroundColor: const Color(0xffF5F9FF),
       appBar: AppBar(
-
-        title: Text('Profile',style: TextStyle(color: Color(0xff202244),fontFamily: 'Jost',fontSize: 21,fontWeight: FontWeight.w600),),
-        backgroundColor:Color(0xffF5F9FF) ,
-
+        title: const Text(
+          'Profile',
+          style: TextStyle(
+              color: Color(0xff202244),
+              fontFamily: 'Jost',
+              fontSize: 21,
+              fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: const Color(0xffF5F9FF),
       ),
       body: Center(
         child: Container(
@@ -148,51 +152,122 @@ Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>SplashS
               BoxShadow(
                 color: Colors.black.withOpacity(0.3),
                 blurRadius: 4,
-                offset: Offset(1, 1),
+                offset: const Offset(1, 1),
               ),
             ],
-
           ),
           child: SingleChildScrollView(
             child: Column(
               children: [
-
-
-                ProfileAvatar(imageUrl: _imageUrl,
-                    onUpload: (imageUrl) async{
-               setState(() {
-                 _imageUrl=imageUrl;
-               });
-               final userId=supabase.auth.currentUser!.id;
-await supabase.from('profiles').update({'avatar_url':imageUrl}).eq('id', userId);
-             }),
-               Text(nickname ?? "Loading...",style: TextStyle(fontFamily: 'Jost',fontSize: 24,fontWeight: FontWeight.w600,color: Color(0xff202244)),),
-                Text(email ?? "Loading...",style: TextStyle(fontFamily: 'Mulish',fontSize: 13,fontWeight: FontWeight.w700,color: Color(0xff545454)),),
-              SizedBox(height: 25,),
-CustomProfileElement(text: 'Edit Profile', icon: Icons.person_2_outlined,onTap: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>EditProfileScreen()));},),
-                SizedBox(height: 25,),
-                CustomProfileElement(text: 'Payment Option', icon: Icons.payment,onTap: (){},),
-                SizedBox(height: 25,),
-                CustomProfileElement(text: 'Notification', icon: Icons.notifications,onTap: (){},),
-                SizedBox(height: 25,),
-                CustomProfileElement(text: 'Security', icon: Icons.security,onTap: (){},),
-                SizedBox(height: 25,),
-                CustomProfileElement(text: 'Language', icon: Icons.language,onTap: (){},),
-                SizedBox(height: 25,),
-                CustomProfileElement(text: 'Dark mode', icon: Icons.dark_mode,onTap: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>ThemeModePage()));}),
-                SizedBox(height: 25,),
-                CustomProfileElement(text: 'Help Center', icon: Icons.help_center,onTap: (){},),
-                SizedBox(height: 25,),
-                CustomProfileElement(text: 'Logout', icon: Icons.power_settings_new,onTap: (){logout(context);},),
-
+                ProfileAvatar(
+                    imageUrl: _imageUrl,
+                    onUpload: (imageUrl) async {
+                      setState(() {
+                        _imageUrl = imageUrl;
+                      });
+                      final userId = supabase.auth.currentUser!.id;
+                      await supabase
+                          .from('profiles')
+                          .update({'avatar_url': imageUrl}).eq('id', userId);
+                    }),
+                Text(
+                  nickname ?? "Loading...",
+                  style: const TextStyle(
+                      fontFamily: 'Jost',
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xff202244)),
+                ),
+                Text(
+                  email ?? "Loading...",
+                  style: const TextStyle(
+                      fontFamily: 'Mulish',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xff545454)),
+                ),
+                const SizedBox(
+                  height: 25,
+                ),
+                CustomProfileElement(
+                  text: 'Edit Profile',
+                  icon: Icons.person_2_outlined,
+                  onTap: () {
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => EditProfileScreen()));
+                  },
+                ),
+                const SizedBox(
+                  height: 25,
+                ),
+                CustomProfileElement(
+                  text: 'Payment Option',
+                  icon: Icons.payment,
+                  onTap: () {},
+                ),
+                const SizedBox(
+                  height: 25,
+                ),
+                CustomProfileElement(
+                  text: 'Notification',
+                  icon: Icons.notifications,
+                  onTap: () {},
+                ),
+                const SizedBox(
+                  height: 25,
+                ),
+                CustomProfileElement(
+                  text: 'Security',
+                  icon: Icons.security,
+                  onTap: () {},
+                ),
+                const SizedBox(
+                  height: 25,
+                ),
+                CustomProfileElement(
+                  text: 'Language',
+                  icon: Icons.language,
+                  onTap: () {},
+                ),
+                const SizedBox(
+                  height: 25,
+                ),
+                CustomProfileElement(
+                    text: 'Dark mode',
+                    icon: Icons.dark_mode,
+                    onTap: () {
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ThemeModePage()));
+                    }),
+                const SizedBox(
+                  height: 25,
+                ),
+                CustomProfileElement(
+                  text: 'Help Center',
+                  icon: Icons.help_center,
+                  onTap: () {},
+                ),
+                const SizedBox(
+                  height: 25,
+                ),
+                CustomProfileElement(
+                  text: 'Logout',
+                  icon: Icons.power_settings_new,
+                  onTap: () {
+                    logout(context);
+                  },
+                ),
               ],
-
             ),
           ),
         ),
       ),
 
-     /* bottomNavigationBar: BottomNavigationBar(
+      /* bottomNavigationBar: BottomNavigationBar(
         onTap: (index) {
           if (index == 0) { // If "Profile" tab is tapped
             Navigator.pushReplacement(

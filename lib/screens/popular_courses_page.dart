@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -14,11 +13,9 @@ class PopularCoursesPage extends StatefulWidget {
 }
 
 class _PopularCoursesPageState extends State<PopularCoursesPage> {
-
-
   String _selectedFilter = 'All';
   bool _isSearching = false;
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
   final List<Map<String, dynamic>> _allCourses = [
@@ -99,13 +96,19 @@ class _PopularCoursesPageState extends State<PopularCoursesPage> {
   List<Map<String, dynamic>> get filteredCourses {
     List<Map<String, dynamic>> courses = _selectedFilter == 'All'
         ? _allCourses
-        : _allCourses.where((course) => course['category'] == _selectedFilter).toList();
+        : _allCourses
+            .where((course) => course['category'] == _selectedFilter)
+            .toList();
 
     if (_searchQuery.isNotEmpty) {
       courses = courses
           .where((course) =>
-      course['title'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          course['category'].toLowerCase().contains(_searchQuery.toLowerCase()))
+              course['title']
+                  .toLowerCase()
+                  .contains(_searchQuery.toLowerCase()) ||
+              course['category']
+                  .toLowerCase()
+                  .contains(_searchQuery.toLowerCase()))
           .toList();
     }
 
@@ -118,36 +121,38 @@ class _PopularCoursesPageState extends State<PopularCoursesPage> {
       appBar: AppBar(
         leading: _isSearching
             ? IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () {
-            setState(() {
-              _isSearching = false;
-              _searchQuery = '';
-              _searchController.clear();
-            });
-          },
-        )
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = false;
+                    _searchQuery = '';
+                    _searchController.clear();
+                  });
+                },
+              )
             : IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (context) => NavigatorScreen()));
-          },
-        ),
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => NavigatorScreen()));
+                },
+              ),
         title: _isSearching
             ? TextField(
-          controller: _searchController,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Search Courses...',
-            border: InputBorder.none,
-          ),
-          onChanged: (query) {
-            setState(() {
-              _searchQuery = query;
-            });
-          },
-        )
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Search Courses...',
+                  border: InputBorder.none,
+                ),
+                onChanged: (query) {
+                  setState(() {
+                    _searchQuery = query;
+                  });
+                },
+              )
             : const Text('Popular Courses'),
         actions: [
           if (!_isSearching)
@@ -199,37 +204,37 @@ class _PopularCoursesPageState extends State<PopularCoursesPage> {
                   .toList(),
             ),
           ),
-
           Expanded(
             child: filteredCourses.isEmpty
                 ? const Center(
-              child: Text(
-                "No courses available!",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            )
-                :ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: filteredCourses.length,
-              itemBuilder: (context, index) {
-                final course = filteredCourses[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _buildCourseCard(
-                    image: course['imagePath'],
-                    category: course['category'],
-                    title: course['title'],
-                    price: course['price'],
-                    rating: course['rating'],
-                    students: course['students'],
+                    child: Text(
+                      "No courses available!",
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: filteredCourses.length,
+                    itemBuilder: (context, index) {
+                      final course = filteredCourses[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _buildCourseCard(
+                          image: course['imagePath'],
+                          category: course['category'],
+                          title: course['title'],
+                          price: course['price'],
+                          rating: course['rating'],
+                          students: course['students'],
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),
-   /*   bottomNavigationBar: BottomNavigationBar(
+      /*   bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() {
@@ -323,10 +328,16 @@ class _PopularCoursesPageState extends State<PopularCoursesPage> {
             ),
             IconButton(
               icon: Icon(
-                SearchCoursesPageState.savedCourses.any((c) => c['title'] == courseId)? Icons.bookmark : Icons.bookmark_border,
-                color: SearchCoursesPageState.savedCourses.any((c) => c['title'] == courseId)  ? Colors.teal : null,
+                SearchCoursesPageState.savedCourses
+                        .any((c) => c['title'] == courseId)
+                    ? Icons.bookmark
+                    : Icons.bookmark_border,
+                color: SearchCoursesPageState.savedCourses
+                        .any((c) => c['title'] == courseId)
+                    ? Colors.teal
+                    : null,
               ),
-              onPressed: ()=>_toggleSavedCourse(courseId),
+              onPressed: () => _toggleSavedCourse(courseId),
             ),
           ],
         ),
@@ -338,26 +349,34 @@ class _PopularCoursesPageState extends State<PopularCoursesPage> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final userRef = FirebaseFirestore.instance.collection('students').doc(user.uid);
-    final course = HomepageState.coursecardList.firstWhere((c) => c['title'] == courseId);
+    final userRef =
+        FirebaseFirestore.instance.collection('students').doc(user.uid);
+    final course =
+        HomepageState.coursecardList.firstWhere((c) => c['title'] == courseId);
 
     setState(() {
-      if (SearchCoursesPageState.savedCourses.any((c) => c['title'] == courseId)) {
-        SearchCoursesPageState.savedCourses.removeWhere((c) => c['title'] == courseId);
+      if (SearchCoursesPageState.savedCourses
+          .any((c) => c['title'] == courseId)) {
+        SearchCoursesPageState.savedCourses
+            .removeWhere((c) => c['title'] == courseId);
         userRef.update({
-          'savedCourses': SearchCoursesPageState.savedCourses.map((c) => c['title']).toList(),
+          'savedCourses': SearchCoursesPageState.savedCourses
+              .map((c) => c['title'])
+              .toList(),
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Course has been removed from bookmarks successfully!'),
+            content:
+                Text('Course has been removed from bookmarks successfully!'),
             duration: Duration(seconds: 2),
           ),
         );
-
       } else {
         SearchCoursesPageState.savedCourses.add(course);
         userRef.set({
-          'savedCourses': SearchCoursesPageState.savedCourses.map((c) => c['title']).toList(),
+          'savedCourses': SearchCoursesPageState.savedCourses
+              .map((c) => c['title'])
+              .toList(),
         }, SetOptions(merge: true));
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

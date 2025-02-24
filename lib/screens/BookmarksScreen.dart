@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/screens/HomeScreen.dart';
 import 'package:mashrooa_takharog/screens/search_courses_page.dart';
 
-class BookmarksScreen extends StatefulWidget{
+class BookmarksScreen extends StatefulWidget {
+  const BookmarksScreen({super.key});
+
   @override
   State<BookmarksScreen> createState() => _BookmarksScreenState();
 }
@@ -24,14 +26,17 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final userRef = FirebaseFirestore.instance.collection('students').doc(user.uid);
+    final userRef =
+        FirebaseFirestore.instance.collection('students').doc(user.uid);
     final snapshot = await userRef.get();
     if (snapshot.exists) {
-      final savedTitles = List<String>.from(snapshot.data()?['savedCourses'] ?? []);
+      final savedTitles =
+          List<String>.from(snapshot.data()?['savedCourses'] ?? []);
       setState(() {
         SearchCoursesPageState.savedCourses.clear();
         for (var title in savedTitles) {
-          final course = SearchCoursesPageState.courses.firstWhere((c) => c['title'] == title, orElse: () => {});
+          final course = SearchCoursesPageState.courses
+              .firstWhere((c) => c['title'] == title, orElse: () => {});
           if (course.isNotEmpty) {
             SearchCoursesPageState.savedCourses.add(course);
           }
@@ -41,9 +46,11 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     }
   }
 
-
-
-  void showRemoveBookmarkDialog(BuildContext context, Map<String, dynamic> course, VoidCallback onRemove,) {
+  void showRemoveBookmarkDialog(
+    BuildContext context,
+    Map<String, dynamic> course,
+    VoidCallback onRemove,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -114,7 +121,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                       const SizedBox(height: 4),
                       Text(
                         "${course['price']} | ★ ${course['rating']} | ${course['students']}",
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
                   ),
@@ -162,18 +170,17 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     );
   }
 
-
-
-
   void _removeCourseFromBookmarks(String courseTitle) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final studentRef = FirebaseFirestore.instance.collection('students').doc(user.uid);
+    final studentRef =
+        FirebaseFirestore.instance.collection('students').doc(user.uid);
     final snapshot = await studentRef.get();
 
     if (snapshot.exists) {
-      final List<String> savedCourses = List<String>.from(snapshot.data()?['savedCourses'] ?? []);
+      final List<String> savedCourses =
+          List<String>.from(snapshot.data()?['savedCourses'] ?? []);
 
       if (savedCourses.contains(courseTitle)) {
         savedCourses.remove(courseTitle);
@@ -181,9 +188,10 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
         await studentRef.update({'savedCourses': savedCourses});
 
         setState(() {
-
-          SearchCoursesPageState.savedCourses.removeWhere((course) => course['title'] == courseTitle);
-          filteredCourses.removeWhere((course) => course['title'] == courseTitle);
+          SearchCoursesPageState.savedCourses
+              .removeWhere((course) => course['title'] == courseTitle);
+          filteredCourses
+              .removeWhere((course) => course['title'] == courseTitle);
         });
       }
     }
@@ -201,82 +209,87 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
     });
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bookmarks',style: TextStyle(color: Color(0xff202244),fontFamily: 'Jost',fontSize: 21,fontWeight: FontWeight.w600),),
+        title: const Text(
+          'Bookmarks',
+          style: TextStyle(
+              color: Color(0xff202244),
+              fontFamily: 'Jost',
+              fontSize: 21,
+              fontWeight: FontWeight.w600),
+        ),
         backgroundColor: Colors.transparent,
       ),
       body: Column(
         children: [
-          SizedBox(height: 23,),
-
-
-            SizedBox(
-              height: 50,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: HomepageState.categories.length,
-                itemBuilder: (context, index) {
-                  final data = HomepageState.categories[index];
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        HomepageState.selectedCardIndex = index;
-                      });
-                      _filterCoursesByCategory(data['title']);
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: HomepageState.selectedCardIndex == index
-                            ? const Color(0xff167F71)
-                            : Colors.grey[200],
-                      ),
-                      child: Center(
-                        child: Text(
-                          data['title'] ?? '',
-                          style: TextStyle(
-                            color: HomepageState.selectedCardIndex == index
-                                ? Colors.white
-                                : Colors.black,
-                          ),
+          const SizedBox(
+            height: 23,
+          ),
+          SizedBox(
+            height: 50,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: HomepageState.categories.length,
+              itemBuilder: (context, index) {
+                final data = HomepageState.categories[index];
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      HomepageState.selectedCardIndex = index;
+                    });
+                    _filterCoursesByCategory(data['title']);
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: HomepageState.selectedCardIndex == index
+                          ? const Color(0xff167F71)
+                          : Colors.grey[200],
+                    ),
+                    child: Center(
+                      child: Text(
+                        data['title'] ?? '',
+                        style: TextStyle(
+                          color: HomepageState.selectedCardIndex == index
+                              ? Colors.white
+                              : Colors.black,
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
-          SizedBox(height: 10,),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
           Expanded(
             child: filteredCourses.isEmpty
-                ? Center(child: Text("No bookmarks yet!"))
+                ? const Center(child: Text("No bookmarks yet!"))
                 : ListView.builder(
-              itemCount: filteredCourses.length,
-              itemBuilder: (context, index) {
-                final course = filteredCourses[index];
-              return SearchCourseCard(
-                course: course,
-                savedCourses: SearchCoursesPageState.savedCourses,
-                toggleSavedCourse: (courseId) {
-                  showRemoveBookmarkDialog(
-                    context,
-                    course,
-                    () => _removeCourseFromBookmarks(courseId),
-                  );                },
-              );
-            },
-          ),
+                    itemCount: filteredCourses.length,
+                    itemBuilder: (context, index) {
+                      final course = filteredCourses[index];
+                      return SearchCourseCard(
+                        course: course,
+                        savedCourses: SearchCoursesPageState.savedCourses,
+                        toggleSavedCourse: (courseId) {
+                          showRemoveBookmarkDialog(
+                            context,
+                            course,
+                            () => _removeCourseFromBookmarks(courseId),
+                          );
+                        },
+                      );
+                    },
+                  ),
           )
-
-          
-
         ],
       ),
     );
