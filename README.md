@@ -66,3 +66,9 @@ profile picture.
 
 -(Reviews Screen + Write a Review + Payment Method + Payment's Congratulations + Course is completed + Curriculum)screens has been designed (UI mainly + some logic has been handled. Some components still to be worked on for a better experience).
 
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+(Badr-Day 1)
+
+- Screens from 36 to 41 has been created (UI + some logic has been handled).
