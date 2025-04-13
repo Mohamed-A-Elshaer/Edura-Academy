@@ -39,19 +39,46 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
             transform: Matrix4.translationValues(187, 60, 0),
             child: GestureDetector(
               onTap: () async {
-                final ImagePicker picker=ImagePicker();
-                final XFile? image=await picker.pickImage(source: ImageSource.gallery);
-                if(image==null) return;
-                final imageExtension=image.path.split('.').last.toLowerCase();
-                final imageBytes=await image.readAsBytes();
-                final userId=supabase.auth.currentUser!.id;
-                final imagePath='/$userId/profile';
-                await supabase.storage.from('profiles').uploadBinary(imagePath,imageBytes,fileOptions: FileOptions(upsert: true,contentType: 'image/$imageExtension'));
-String imageUrl=supabase.storage.from('profiles').getPublicUrl(imagePath);
-imageUrl=Uri.parse(imageUrl).replace(queryParameters: {'t':DateTime.now().millisecondsSinceEpoch.toString()}).toString();
-widget.onUpload(imageUrl);
+                try {
+                  final ImagePicker picker = ImagePicker();
+                  final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
+                  if (image == null) return;
+
+                  final imageExtension = image.path.split('.').last.toLowerCase();
+                  final imageBytes = await image.readAsBytes();
+
+                  final userId = supabase.auth.currentUser!.id;
+                  final imagePath = '/$userId/profile';
+
+                  await supabase.storage.from('profiles').uploadBinary(
+                    imagePath,
+                    imageBytes,
+                    fileOptions: FileOptions(
+                      upsert: true,
+                      contentType: 'image/$imageExtension',
+                    ),
+                  );
+
+                  String imageUrl = supabase.storage.from('profiles').getPublicUrl(imagePath);
+
+                  // Add cache-busting timestamp
+                  imageUrl = Uri.parse(imageUrl)
+                      .replace(queryParameters: {'t': DateTime.now().millisecondsSinceEpoch.toString()})
+                      .toString();
+
+                  if (!mounted) return; // Prevent update after widget is disposed
+
+                  widget.onUpload(imageUrl);
+                } catch (e) {
+                  // You can replace this with a custom snackbar or dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to upload image: $e')),
+                  );
+                  debugPrint('Image upload error: $e');
+                }
               },
+
               child: Container(
                 height: 30,
                 width: 40,

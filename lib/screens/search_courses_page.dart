@@ -15,7 +15,7 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _showMentors = false;
-  static final List<Map<String, dynamic>> savedCourses = [];
+  static  List<Map<String, dynamic>> savedCourses = [];
   static final List<Map<String, dynamic>> courses = [
     {
       'image': 'assets/images/course1.png',
@@ -37,7 +37,7 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
     },
     {
       'image': 'assets/images/course3.png',
-      'category': 'Web Development',
+      'category': 'Programming',
       'title': 'Web Developement Full Diploma',
       'price': 'EGP799',
       'rating': 4.2,
@@ -101,11 +101,11 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
   ];
 
   final List<Map<String, String>> _mentors = [
-    {'name': 'Ahmed Abdullah', 'specialty': '3D Design'},
+    {'name': 'Ahmed Abdullah', 'specialty': 'Graphic Design'},
     {'name': 'Osama Ahmed', 'specialty': 'Arts & Humanities'},
     {'name': 'Amany Elsayed', 'specialty': 'Personal Development'},
     {'name': 'Mohamed Ahmed', 'specialty': 'SEO & Marketing'},
-    {'name': 'Ahmed Khaled', 'specialty': 'Web Development'},
+    {'name': 'Ahmed Khaled', 'specialty': 'Programming'},
     {'name': 'Robert William', 'specialty': 'Office Productivity'},
   ];
 

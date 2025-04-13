@@ -40,7 +40,7 @@ class _PopularCoursesPageState extends State<PopularCoursesPage> {
     },
     {
       'imagePath': 'assets/images/course3.png',
-      'category': 'Web Development',
+      'category': 'Programming',
       'title': 'Web Developement Full Diploma',
       'price': 'EGP799',
       'rating': 4.2,
@@ -173,7 +173,7 @@ class _PopularCoursesPageState extends State<PopularCoursesPage> {
                 'Arts & Humanities',
                 'Cooking',
                 'SEO & Marketing',
-                'Web Development',
+                'Programming',
                 'Finance and Accounting',
                 'Personal Development',
                 'Office Productivity',

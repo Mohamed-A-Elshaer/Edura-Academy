@@ -6,17 +6,26 @@ import 'package:mashrooa_takharog/screens/ProfileScreen.dart';
 import 'package:mashrooa_takharog/screens/instructor_courses_screen.dart';
 
 class InstructorNavigatorScreen extends StatefulWidget {
+  String? password;
+   InstructorNavigatorScreen({super.key,this.password});
+
   @override
   _MyInstructorNavigatorScreenState createState() => _MyInstructorNavigatorScreenState();
 }
 
 class _MyInstructorNavigatorScreenState extends State<InstructorNavigatorScreen> {
+
   int currentIndex = 0;
-  final List<Widget?> _screens = [
-    InstructorHomeScreen(),
-    InstructorCoursesScreen(),
-    ProfileScreen()
-  ];
+  late List<Widget?> _screens;
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      InstructorHomeScreen(),
+      InstructorCoursesScreen(),
+      ProfileScreen(password: widget.password),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {

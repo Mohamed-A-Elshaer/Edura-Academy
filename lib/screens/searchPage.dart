@@ -1,7 +1,11 @@
+import 'package:appwrite/appwrite.dart';
 import 'package:flutter/material.dart';
+import 'package:mashrooa_takharog/auth/Appwrite_service.dart';
 import 'package:mashrooa_takharog/screens/StudentNavigatorScreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mashrooa_takharog/screens/search_courses_page.dart'; // Import the search results page
+import 'package:mashrooa_takharog/screens/search_courses_page.dart';
+
+import 'CourseDetailScreen.dart'; // Import the search results page
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -13,8 +17,11 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   List<String> searchHistory = [];
-  List<Map<String, String>> searchResults = [];
+  List<Map<String, dynamic>> searchResults = [];
   String currentQuery = '';
+
+
+
 
   // Example course and mentor data
   final List<Map<String, String>> courses = [
@@ -32,7 +39,7 @@ class _SearchPageState extends State<SearchPage> {
     },
     {
 
-      'category': 'Web Development',
+      'category': 'Programming',
       'title': 'Web Developement Full Diploma',
 
     },
@@ -83,7 +90,7 @@ class _SearchPageState extends State<SearchPage> {
     {'name': 'Osama Ahmed', 'specialty': 'Arts & Humanities'},
     {'name': 'Amany Elsayed', 'specialty': 'Personal Development'},
     {'name': 'Mohamed Ahmed', 'specialty': 'SEO & Marketing'},
-    {'name': 'Ahmed Khaled', 'specialty': 'Web Development'},
+    {'name': 'Ahmed Khaled', 'specialty': 'Programming'},
     {'name': 'Robert William', 'specialty': 'Office Productivity'},
   ];
 
@@ -111,24 +118,96 @@ class _SearchPageState extends State<SearchPage> {
     }
   }
 
-  void _search(String query) {
+  void _search(String query) async {
     setState(() {
       currentQuery = query;
+    });
 
-      if (query.isEmpty) {
+    if (query.isEmpty) {
+      setState(() {
         searchResults.clear();
-      } else {
-        searchResults = [
-          ...courses.where((course) =>
-          course['title']!.toLowerCase().contains(query.toLowerCase()) ||
-              course['category']!.toLowerCase().contains(query.toLowerCase())),
-          ...mentors.where((mentor) =>
-          mentor['name']!.toLowerCase().contains(query.toLowerCase()) ||
-              mentor['specialty']!.toLowerCase().contains(query.toLowerCase())),
-        ];
+      });
+      return;
+    }
+
+    List<Map<String, String>> results = [];
+
+    // Define your allowed enum values for course categories
+    List<String> allowedCategories = [
+      "Graphic Design",
+      "Arts & Humanities",
+      "Cooking",
+      "Finance and Accounting",
+      "Personal Development",
+      "Office Productivity",
+      "Programming",
+      "SEO & Marketing"
+    ];
+
+    // Check if the query matches any enum category value
+    String? matchedCategory = allowedCategories.firstWhere(
+          (category) => category.toLowerCase() == query.toLowerCase(),
+      orElse: () => '', // return empty string
+    );
+
+    if (matchedCategory.isEmpty) matchedCategory = null; // convert empty string to null
+
+
+    try {
+      // ---- Fetch courses ----
+      List<String> courseQueries = [];
+
+      // Only use Query.search on title (fulltext index required for that)
+      courseQueries.add(Query.search('title', query));
+
+      // Add category query only if matched
+      if (matchedCategory != null) {
+        courseQueries.add(Query.equal('category', matchedCategory));
       }
+
+      final courseResponse = await Appwrite_service.databases.listDocuments(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c1c87c00009d84c6ff',
+        queries: courseQueries,
+      );
+
+      results.addAll(courseResponse.documents.map((doc) => {
+        'type': 'course',
+        'title': doc.data['title'],
+        'category': doc.data['category'],
+        'price': doc.data['price'].toString(),
+        'courseId': doc.$id,
+        'imagePath': "${doc.data['title'].replaceAll(' ', '_')}/course_cover.jpg",
+        'instructorName': doc.data['name'],
+      }));
+
+      // ---- Fetch instructors ----
+      final instructorResponse = await Appwrite_service.databases.listDocuments(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c0cc3600114e71d658',
+        queries: [
+          Query.equal('user_type', 'instructor'),
+          Query.or([
+            Query.search('name', query),
+            Query.search('major', query),
+          ]),
+        ],
+      );
+
+      results.addAll(instructorResponse.documents.map((doc) => {
+        'type': 'instructor',
+        'name': doc.data['name'],
+        'specialty': doc.data['major'],
+      }));
+    } catch (e) {
+      print('Error fetching search results: $e');
+    }
+
+    setState(() {
+      searchResults = results;
     });
   }
+
 
 
   Future<void> _clearSearchHistory() async {
@@ -252,20 +331,48 @@ class _SearchPageState extends State<SearchPage> {
                 itemCount: searchResults.length + 1,
                 itemBuilder: (context, index) {
                   if (index < searchResults.length) {
-                    bool isCourse = searchResults[index].containsKey('title');
-                    return Column(
-                      children: [
-                        ListTile(
-                          leading: Icon(
-                            isCourse ? Icons.school : Icons.person, // Use appropriate icon
-                            color: Colors.blue,
+                    final result = searchResults[index];
+                    if (result['type'] == 'course') {
+                      return Column(
+                        children: [
+                          ListTile(
+                            leading: Icon(Icons.school, color: Colors.blue),
+                            title: Text(result['title'] ?? ''),
+                            subtitle: Text(result['category'] ?? ''),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => Coursedetailscreen(
+                                      title: result['title'] ?? '',
+                                      category: result['category'] ?? '',
+                                      imagePath: result['imagePath'] ?? '',
+                                      courseId: result['courseId'] ?? '',
+                                      price: result['price']?.toString() ?? '',
+                                      instructorName: result['instructorName'] ?? '',
+                                    ),
+                                  ),
+                                );
+                              }
+
                           ),
-                          title: Text(searchResults[index]['title'] ?? searchResults[index]['name']!),
-                          subtitle: Text(searchResults[index]['category'] ?? searchResults[index]['specialty']!),
-                        ),
-                        const Divider(),
-                      ],
-                    );
+                          const Divider(),
+                        ],
+                      );
+                    } else if (result['type'] == 'instructor') {
+                      return Column(
+                        children: [
+                          ListTile(
+                            leading: Icon(Icons.person, color: Colors.blue),
+                            title: Text(result['name'] ?? ''),
+                            subtitle: Text(result['specialty'] ?? ''),
+                          ),
+                          const Divider(),
+                        ],
+                      );
+                    } else {
+                      return SizedBox.shrink();
+                    }
                   } else {
                     // The "Search for [query]" option
                     return GestureDetector(
@@ -291,7 +398,8 @@ class _SearchPageState extends State<SearchPage> {
                     );
                   }
                 },
-              ),
+              )
+
             ),
           ],
         ),

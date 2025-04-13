@@ -19,7 +19,7 @@ class _TopMentorsPageState extends State<TopMentorsPage> {
     {'name': 'Osama Ahmed', 'specialty': 'Arts & Humanities'},
     {'name': 'Amany Elsayed', 'specialty': 'Personal Development'},
     {'name': 'Mohamed Ahmed', 'specialty': 'SEO & Marketing'},
-    {'name': 'Ahmed Khaled', 'specialty': 'Web Development'},
+    {'name': 'Ahmed Khaled', 'specialty': 'Programming'},
     {'name': 'Robert William', 'specialty': 'Office Productivity'},
   ];
 

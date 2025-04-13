@@ -1,0 +1,250 @@
+import 'package:appwrite/appwrite.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:appwrite/models.dart' as models;
+import 'package:mashrooa_takharog/screens/video_player_screen.dart';
+import '../auth/Appwrite_service.dart';
+
+class DisplayCourseLessons extends StatefulWidget{
+  const DisplayCourseLessons({super.key,  required this.title, required this.courseId});
+
+  final String courseId;
+  final String title;
+
+  @override
+  State<DisplayCourseLessons> createState() => _DisplayCourseLessonsState();
+}
+
+class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
+  List<Map<String, dynamic>> sections = [];
+
+
+  @override
+  void initState() {
+    super.initState();
+    fetchSectionsAndVideos();
+  }
+  Future<void> fetchSectionsAndVideos() async {
+    try {
+      // ✅ Fetch course details from Appwrite database
+      final course = await Appwrite_service.databases.getDocument(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c1c87c00009d84c6ff',
+        documentId: widget.courseId,
+      );
+
+      List<String> sectionNames = List<String>.from(course.data['sections']);
+      List<String> sectionDurations = List<String>.from(course.data['section_durations']);
+      List<String> videoTitlesFromDb = List<String>.from(course.data['videos'] ?? []);
+
+      List<Map<String, dynamic>> fetchedSections = [];
+
+      for (int i = 0; i < sectionNames.length; i++) {
+        String rawSection = sectionNames[i];
+        String sectionTitle = rawSection.replaceFirst(RegExp(r'^\d+-\s*'), '');
+        String duration = (i < sectionDurations.length) ? sectionDurations[i] : "0 Mins";
+
+        // ✅ Fetch all files from Appwrite Storage for this section
+        final files = await Appwrite_service.storage.listFiles(
+          bucketId: '67ac838900066b15fc99',
+          queries: [
+            Query.startsWith(
+              'name',
+              '${widget.title.replaceAll(' ', '_')}/${rawSection.replaceAll(' ', '_')}',
+            ),
+          ],
+        );
+
+        List<Map<String, dynamic>> lessons = [];
+        int lessonNumber = 1;
+
+        for (String dbVideoTitle in videoTitlesFromDb) {
+          // ✅ Remove first 4 characters like "01- "
+          String dbVideoTrimmed = dbVideoTitle.length > 4 ? dbVideoTitle.substring(4) : dbVideoTitle;
+          String dbVideoNameOnly = dbVideoTrimmed.trim().split('/').last.replaceAll('.mp4', '').toLowerCase();
+          String normalizedDbVideo = dbVideoNameOnly.replaceAll('_', ' ').toLowerCase();
+
+          // ✅ Try to find matching file in storage
+          models.File? matchedFile;
+          for (var file in files.files) {
+            if (!file.name.endsWith('.mp4')) continue;
+
+            String storageFileName = file.name.split('/').last.replaceAll('.mp4', '');
+
+            // ✅ Remove first 4 characters from storage filename
+            String trimmedStorageName = storageFileName.length > 4 ? storageFileName.substring(4) : storageFileName;
+            String normalizedStorage = trimmedStorageName.replaceAll('_', ' ').toLowerCase().trim();
+
+            print('🔍 Comparing:');
+            print('   DB: $normalizedDbVideo');
+            print('   Storage: $normalizedStorage');
+            if (normalizedStorage == dbVideoNameOnly) {
+              matchedFile = file;
+              break;
+            }
+          }
+
+          if (matchedFile != null) {
+            String videoUrl =
+                'https://cloud.appwrite.io/v1/storage/buckets/67ac838900066b15fc99/files/${matchedFile.$id}/view?project=67ac8356002648e5b7e9';
+
+            lessons.add({
+              'number': lessonNumber.toString().padLeft(2, '0'),
+              'title': dbVideoTitle.replaceAll('.mp4', ''),
+              'videoId': matchedFile.$id,
+              'videoUrl': videoUrl,
+              'filePath': matchedFile.name,
+            });
+
+            lessonNumber++;
+          }
+          else {
+            print('⚠️ No match found for: $dbVideoTitle');
+          }
+        }
+
+        fetchedSections.add({
+          'title': sectionTitle,
+          'duration': duration,
+          'lessons': lessons,
+        });
+      }
+
+      setState(() {
+        sections = fetchedSections;
+      });
+    } catch (e) {
+      print('❌ Error fetching sections and videos: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Course Lessons',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+
+      body: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: sections.length,
+        itemBuilder: (context, sectionIndex) {
+          final section = sections[sectionIndex];
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      section['title'],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      section['duration'],
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ]),
+              SizedBox(height: 20,),
+
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: (section['lessons'] as List).length,
+                itemBuilder: (context, lessonIndex) {
+                  final lesson = section['lessons'][lessonIndex];
+                  return _buildLessonTile(lesson['number'],  lesson['title'].toString().substring(4),lesson['videoUrl']);
+
+                },
+              ),
+            ],
+          );
+        },
+      ),
+
+    );
+  }
+
+  Widget _buildLessonTile(String lessonNumber, String lessonTitle,String videoUrl) {
+    String displayTitle = lessonTitle;
+    if (lessonTitle.length > 30) {
+      displayTitle = lessonTitle.substring(0, 27) + '...';
+    }
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // 👈 Left side: lesson number + title
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Colors.blue,
+                  child: Text(
+                    lessonNumber,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  displayTitle,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            // 👉 Right side: Play icon
+            IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        VideoPlayerScreen(
+                          lessonTitle: lessonTitle,
+                          videoUrl: videoUrl,
+                        ),
+                  ),
+                );
+              },
+              icon: const Icon(
+                Icons.play_arrow,
+                size: 20,
+                color: Color(0xff0961F5),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  }

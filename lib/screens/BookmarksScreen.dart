@@ -2,8 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:mashrooa_takharog/auth/Appwrite_service.dart';
+import 'package:appwrite/appwrite.dart' as appwrite;
 import 'package:mashrooa_takharog/screens/HomeScreen.dart';
 import 'package:mashrooa_takharog/screens/search_courses_page.dart';
+
+import '../auth/supaAuth_service.dart';
+import '../widgets/coursecard.dart';
 
 class BookmarksScreen extends StatefulWidget{
   @override
@@ -26,20 +31,49 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
 
     final userRef = FirebaseFirestore.instance.collection('students').doc(user.uid);
     final snapshot = await userRef.get();
+
     if (snapshot.exists) {
       final savedTitles = List<String>.from(snapshot.data()?['savedCourses'] ?? []);
-      setState(() {
-        SearchCoursesPageState.savedCourses.clear();
-        for (var title in savedTitles) {
-          final course = SearchCoursesPageState.courses.firstWhere((c) => c['title'] == title, orElse: () => {});
-          if (course.isNotEmpty) {
-            SearchCoursesPageState.savedCourses.add(course);
+
+      try {
+        List<Map<String, dynamic>> fetchedCourses = [];
+
+        for (final title in savedTitles) {
+          final response = await Appwrite_service.databases.listDocuments(
+            databaseId: '67c029ce002c2d1ce046',
+            collectionId: '67c1c87c00009d84c6ff',
+            queries: [appwrite.Query.equal('title', title)],
+          );
+
+          if (response.documents.isNotEmpty) {
+            final courseData = response.documents.first.data;
+
+            // 🔥 Fetch and attach image URL
+            final imageUrl = await SupaAuthService.getCourseCoverImageUrl(courseData['title']);
+            courseData['imagePath'] = imageUrl;
+
+            // 🔥 Set fallback/defaults
+            courseData['rating'] ??= 4.5;
+            courseData['students'] ??= '200';
+
+            fetchedCourses.add(courseData);
           }
         }
-        _filterCoursesByCategory("All");
-      });
+
+        // 🔥 Sync savedCourses globally
+        SearchCoursesPageState.savedCourses = List.from(fetchedCourses);
+
+        setState(() {
+          filteredCourses = fetchedCourses;
+        });
+      } catch (e) {
+        print("Error fetching courses from Appwrite: $e");
+      }
     }
   }
+
+
+
 
 
 
@@ -74,8 +108,8 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
-                      course['image'],
+                    child:Image.network(
+                      course['imagePath'], // 🔥 Changed to match actual course data
                       width: 100,
                       height: 100,
                       fit: BoxFit.cover,
@@ -261,17 +295,25 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
               itemCount: filteredCourses.length,
               itemBuilder: (context, index) {
                 final course = filteredCourses[index];
-              return SearchCourseCard(
-                course: course,
-                savedCourses: SearchCoursesPageState.savedCourses,
-                toggleSavedCourse: (courseId) {
+              return CourseCard(
+                category: course['category'] ?? '',
+                title: course['title'] ?? '',
+                price: course['price']?.toString() ?? 'Free',
+                rating: course['rating'] ?? 4.5,
+                students: course['students']?.toString() ?? '200',
+                imagePath: course['imagePath'] ?? '',
+                instructorName: course['instructor_name'] ?? 'Unknown',
+                isBookmarked: true, // ✅ Since this is the Bookmarks screen
+                onBookmarkToggle: () {
                   showRemoveBookmarkDialog(
                     context,
                     course,
-                    () => _removeCourseFromBookmarks(courseId),
-                  );                },
+                        () => _removeCourseFromBookmarks(course['title']),
+                  );
+                },
               );
-            },
+
+              },
           ),
           )
 

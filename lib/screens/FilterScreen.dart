@@ -15,12 +15,14 @@ class FilterScreen extends StatelessWidget{
     'Video Durations'
   ];
   List<String> subCategoriesList=[
-    '3D Design',
-'Web Development',
-    '3D Animation',
     'Graphic Design',
+'Programming',
+    'Cooking',
+    'Finance and Accounting' ,
     'SEO & Marketing',
-    'Arts & Humanities'
+    'Arts & Humanities' ,
+    'Personal Development' ,
+    'Office Productivity'
   ];
   /*List<String> levels=[
     'All Levels',

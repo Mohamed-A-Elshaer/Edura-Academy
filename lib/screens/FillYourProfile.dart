@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:mashrooa_takharog/Databases/AppwriteTableCreate.dart';
+import 'package:mashrooa_takharog/Databases/SupaTableCreate.dart';
 import 'package:mashrooa_takharog/screens/HomeScreen.dart';
 import 'package:mashrooa_takharog/screens/InstructorNavigatorScreen.dart';
 import 'package:mashrooa_takharog/screens/StudentNavigatorScreen.dart';
@@ -18,7 +20,10 @@ class FillYourProfile extends StatefulWidget{
   final String? userType;
   String? email;
   String? phone;
-   FillYourProfile({super.key,this.userType, this.email, this.phone});
+  String? password;
+  String? supaUserId;
+  String? appwriteUserId;
+   FillYourProfile({super.key,this.userType, this.email, this.phone,this.password,this.supaUserId,this.appwriteUserId});
 
   @override
   State<FillYourProfile> createState() => _FillYourProfileState();
@@ -132,6 +137,12 @@ CustomElevatedBtn(btnDesc: 'Continue',horizontalPad: 75, onPressed: _validateAnd
         dobController.text = DateFormat('dd-MM-yyyy').format(picked);;
       });
   }
+
+
+
+
+
+
   void _validateAndContinue() {
     setState(() {
       // Validate inputs
@@ -160,10 +171,13 @@ CustomElevatedBtn(btnDesc: 'Continue',horizontalPad: 75, onPressed: _validateAnd
           'gender': selectedGender,
         });
 
+        SupaTableCreate.insertSupaUserDatabase(fullNameController.text, widget.email, widget.userType, widget.supaUserId);
+        AppwriteTableCreate.insertAppwriteUserDatabase(fullNameController.text, widget.email, widget.userType, widget.appwriteUserId);
+
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => CongratulationsPage(userType: widget.userType,)),
+          MaterialPageRoute(builder: (context) => CongratulationsPage(userType: widget.userType,password: widget.password,)),
         );
       }
     });

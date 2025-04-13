@@ -8,6 +8,7 @@ import 'package:mashrooa_takharog/screens/search_courses_page.dart';
 import 'package:mashrooa_takharog/screens/top_mentors_page.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+import 'SpecificCategoryPage.dart';
 import 'categoriesPage.dart';
 import '../widgets/coursecard.dart';
 import '../widgets/mentor.dart';
@@ -63,7 +64,7 @@ class HomepageState extends State<Homepage> {
     {"title": "Arts & Humanities"},
     {"title": "Cooking"},
     {"title": "SEO & Marketing"},
-   {"title": "Web Development"},
+   {"title": "Programming"},
    {"title": "Finance and Accounting"},
     {"title": "Personal Development"},
     {"title": "Office Productivity"},
@@ -74,7 +75,7 @@ class HomepageState extends State<Homepage> {
     {"title": "Graphic Design"},
     {"title": "Cooking"},
     {"title": "SEO & Marketing"},
-    {"title": "Web Development"},
+    {"title": "Programming"},
     {"title": "Arts & Humanities"},
     {"title": "Finance and Accounting"},
     {"title": "Personal Development"},
@@ -83,7 +84,7 @@ class HomepageState extends State<Homepage> {
 
 
 
-  static final List<Map<String, dynamic>> coursecardList = [
+  static List<Map<String, dynamic>> coursecardList = [
     {
       'imagePath': 'assets/images/course1.png',
       'category': 'Graphic Design',
@@ -102,7 +103,7 @@ class HomepageState extends State<Homepage> {
     },
     {
       'imagePath': 'assets/images/course3.png',
-      'category': 'Web Development',
+      'category': 'Programming',
       'title': 'Web Developement Full Diploma',
       'price': 'EGP799',
       'rating': 4.2,
@@ -409,13 +410,22 @@ SliverToBoxAdapter(child: SizedBox(height: 8,),),
                       setState(() {
                         selectedcategoryindex = index;
                       });
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SpecificCategoryPage(
+                            category: data['title'] ?? '',
+                          ),
+                        ),
+                      );
                     },
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 8),
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          color: Colors.white
+                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.white,
                       ),
                       child: Center(
                         child: Text(
@@ -433,6 +443,7 @@ SliverToBoxAdapter(child: SizedBox(height: 8,),),
               ),
             ),
           ),
+
 
 
           SliverPadding(
@@ -533,6 +544,7 @@ SliverToBoxAdapter(child: SizedBox(height: 8,),),
                         students: course['students'],
                         imagePath: course['imagePath'],
                         category: course['category'],
+                        instructorName: course['instructor_name'] ?? 'Unknown', isBookmarked: false, onBookmarkToggle: () {  },
                       ),
                     );
                   },

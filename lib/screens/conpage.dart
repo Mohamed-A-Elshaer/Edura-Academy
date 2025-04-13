@@ -5,8 +5,9 @@ import 'StudentNavigatorScreen.dart';
 
 class CongratulationsPage extends StatefulWidget {
   final String? userType;
+  String?password;
 
-  const CongratulationsPage({super.key,this.userType});
+   CongratulationsPage({super.key,this.userType,this.password});
 
   @override
   State<CongratulationsPage> createState() => _CongratulationsPageState();
@@ -22,8 +23,8 @@ class _CongratulationsPageState extends State<CongratulationsPage> {
     Future.delayed(const Duration(seconds: 7), () {
 
         Widget destination = widget.userType == 'student'
-            ? NavigatorScreen()
-            : InstructorNavigatorScreen();
+            ? NavigatorScreen(password: widget.password,)
+            : InstructorNavigatorScreen(password: widget.password,);
 
         Navigator.pushReplacement(
           context,

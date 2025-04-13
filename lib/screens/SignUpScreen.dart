@@ -1,3 +1,4 @@
+import 'package:appwrite/appwrite.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import 'package:mashrooa_takharog/widgets/CustomCheckBox.dart';
 import 'package:mashrooa_takharog/widgets/Loading.dart';
 import 'package:mashrooa_takharog/widgets/customElevatedBtn.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../auth/Appwrite_service.dart';
 import '../auth/auth_service.dart';
 import '../widgets/customTextField.dart';
 
@@ -40,7 +42,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String? verificationId;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final supabase = Supabase.instance.client;
+
   //final supaAuth=SupaAuthService();
+
+
+
+
 
   @override
   void dispose() {
@@ -104,7 +112,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Future<void> addUserToSupabase() async {
 
 
-    final supabase = Supabase.instance.client;
     try {
       final response = await supabase.auth.signUp(
         email: _emailController.text,
@@ -112,10 +119,35 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
 
       print("User registered: ${response.user?.id}");
+
+
     } catch (e) {
       print("Error during registration: $e");
     }
   }
+
+
+  Future<void> addUserToAppWrite() async {
+    try {
+      // Step 1: Create the account in Appwrite
+      await Appwrite_service.account.create(
+        userId: ID.unique(),
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      // Step 2: Immediately sign in the user
+      await Appwrite_service.account.createEmailPasswordSession(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      print("✅ User successfully signed up and signed in with Appwrite");
+    } catch (e) {
+      print("❌ Sign-up error: $e");
+    }
+  }
+
 
 
 
@@ -202,6 +234,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 });
 
                 await addUserToSupabase();
+                await addUserToAppWrite();
 
                 Navigator.of(context).pop();
                 navigateToNextScreen();
@@ -237,13 +270,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
 
 
-  void navigateToNextScreen() {
+  Future<void> navigateToNextScreen() async {
+    final appwriteUserId = (await Appwrite_service.account.get()).$id;
     if (mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => BusyChildWidget(
-            child: FillYourProfile(userType: widget.userType,email: _emailController.text,phone: _phoneController.text,),
+            child: FillYourProfile(userType: widget.userType,email: _emailController.text,phone: _phoneController.text,
+              password: _passwordController.text,supaUserId:supabase.auth.currentUser!.id ,appwriteUserId: appwriteUserId,),
             loadingWidget: LoadingWidget(),
           ),
         ),

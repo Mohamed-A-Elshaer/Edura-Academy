@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:appwrite/appwrite.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/screens/IntroScreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../auth/supaAuth_service.dart';
 import 'InstructorNavigatorScreen.dart';
 import 'SignInScreen.dart';
 import 'StudentNavigatorScreen.dart';
@@ -29,6 +31,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _navigateBasedOnLogin() async {
+    final client = Client()
+        .setEndpoint('https://cloud.appwrite.io/v1') // غيّره حسب الـ endpoint الخاص بك
+        .setProject('67ac8356002648e5b7e9')
+        .setSelfSigned(status: true);// غيّره حسب الـ project ID الخاص بك
+
+    final account = Account(client);
+    final SupaAuthService supaAuth=SupaAuthService();
+
     final prefs = await SharedPreferences.getInstance();
     final rememberMeEnabled = prefs.getBool('rememberMe') ?? false;
 
@@ -42,6 +52,24 @@ class _SplashScreenState extends State<SplashScreen> {
             email: email,
             password: password,
           );
+          await supaAuth.signInWithEmailPasswordSupabase(email, password);
+          try {
+            // Check if a session already exists
+            await account.get();
+            print("Appwrite: Session already active");
+          } catch (e) {
+            // No session exists, safe to create one
+            try {
+              await account.createEmailPasswordSession(
+                email: email,
+                password: password,
+              );
+              print("Appwrite: Session created");
+            } catch (sessionError) {
+              print("Appwrite session creation error: $sessionError");
+              throw sessionError; // Optional: rethrow to trigger the login error handler
+            }
+          }
 
           if (user != null) {
             final userType = await _getUserType(user.user!.uid);

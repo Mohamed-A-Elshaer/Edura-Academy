@@ -1,8 +1,10 @@
+import 'package:appwrite/appwrite.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mashrooa_takharog/auth/Appwrite_service.dart';
 import 'package:mashrooa_takharog/auth/auth_service.dart';
 import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import 'package:mashrooa_takharog/screens/EditProfileScreen.dart';
@@ -17,18 +19,19 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfileScreen extends StatefulWidget{
   String? userType;
-   ProfileScreen({super.key, this.userType});
+  String? password;
+   ProfileScreen({super.key, this.userType,this.password});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State<ProfileScreen> createState() => ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class ProfileScreenState extends State<ProfileScreen> {
   String? nickname = "Loading...";
   String? email = "Loading...";
   String? _imageUrl;
   final supabase = Supabase.instance.client;
-final supaAuth=SupaAuthService();
+
 
 
   @override
@@ -38,6 +41,8 @@ final supaAuth=SupaAuthService();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchProfileAvatar();
     });
+
+
   }
   Future<void> _fetchUserData() async {
     String collection = widget.userType == 'student' ? 'students' : 'instructors';
@@ -115,13 +120,30 @@ final supaAuth=SupaAuthService();
 
 
 
-  void logout(BuildContext context) async{
+  static void logout(BuildContext context) async{
+
+    final account = Appwrite_service.account;
+
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     final auth=AuthService();
     auth.signOut();
-   await supaAuth.signOut();
-Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>SplashScreen()));
+   SupaAuthService.signOut();
+    try {
+      // Check if there is an active session before deleting it
+      final sessions = await account.listSessions();
+      if (sessions.sessions.isNotEmpty) {
+        await account.deleteSession(sessionId: 'current');
+        print("Appwrite session deleted successfully");
+      } else {
+        print("No active Appwrite session found");
+      }
+    } catch (e) {
+      print("Error deleting Appwrite session: $e");
+    }
+
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>SplashScreen()));
   }
 
 
@@ -169,7 +191,7 @@ await supabase.from('profiles').update({'avatar_url':imageUrl}).eq('id', userId)
                Text(nickname ?? "Loading...",style: TextStyle(fontFamily: 'Jost',fontSize: 24,fontWeight: FontWeight.w600,color: Color(0xff202244)),),
                 Text(email ?? "Loading...",style: TextStyle(fontFamily: 'Mulish',fontSize: 13,fontWeight: FontWeight.w700,color: Color(0xff545454)),),
               SizedBox(height: 25,),
-CustomProfileElement(text: 'Edit Profile', icon: Icons.person_2_outlined,onTap: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>EditProfileScreen()));},),
+CustomProfileElement(text: 'Edit Profile', icon: Icons.person_2_outlined,onTap: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>EditProfileScreen(password: widget.password,)));},),
                 SizedBox(height: 25,),
                 CustomProfileElement(text: 'Payment Option', icon: Icons.payment,onTap: (){},),
                 SizedBox(height: 25,),

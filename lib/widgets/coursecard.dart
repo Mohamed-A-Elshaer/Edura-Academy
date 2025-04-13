@@ -1,8 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/screens/search_courses_page.dart';
-
+import '../screens/CourseDetailScreen.dart';
 import '../screens/HomeScreen.dart';
 
 class CourseCard extends StatefulWidget {
@@ -11,15 +12,23 @@ class CourseCard extends StatefulWidget {
   final String price;
   final double rating;
   final String students;
-  final String imagePath;
+  final String instructorName;
+  String imagePath;
+  final bool isBookmarked;
+  final VoidCallback onBookmarkToggle;
+  final courseId;
 
-  const CourseCard({
+   CourseCard({
     required this.category,
     required this.title,
     required this.price,
     required this.rating,
     required this.students,
     required this.imagePath,
+     required this.instructorName,
+     required this.isBookmarked,
+     required this.onBookmarkToggle,
+      this.courseId,
     Key? key,
   }) : super(key: key);
 
@@ -28,40 +37,56 @@ class CourseCard extends StatefulWidget {
 }
 
 class _CourseCardState extends State<CourseCard> {
-  void _toggleSavedCourse(String courseId) async {
+  void _toggleSavedCourse(String courseTitle) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
     final userRef = FirebaseFirestore.instance.collection('students').doc(user.uid);
-    final course = HomepageState.coursecardList.firstWhere((c) => c['title'] == courseId);
+    final isAlreadySaved = SearchCoursesPageState.savedCourses.any((c) => c['title'] == courseTitle);
 
-    setState(() {
-      if (SearchCoursesPageState.savedCourses.any((c) => c['title'] == courseId)) {
-        SearchCoursesPageState.savedCourses.removeWhere((c) => c['title'] == courseId);
-        userRef.update({
-          'savedCourses': SearchCoursesPageState.savedCourses.map((c) => c['title']).toList(),
+    if (isAlreadySaved) {
+      await userRef.update({
+        'savedCourses': FieldValue.arrayRemove([courseTitle]),
+      });
+
+      setState(() {
+        SearchCoursesPageState.savedCourses.removeWhere((c) => c['title'] == courseTitle);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Course has been removed from bookmarks successfully!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      // Add only minimal info needed to savedCourses, or rebuild it later from title
+      setState(() {
+        SearchCoursesPageState.savedCourses.add({
+          'title': courseTitle,
+          'category': widget.category,
+          'price': widget.price,
+          'rating': widget.rating,
+          'students': widget.students,
+          'imagePath': widget.imagePath,
+          'instructorName': widget.instructorName,
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Course has been removed from bookmarks successfully!'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+      });
 
-      } else {
-        SearchCoursesPageState.savedCourses.add(course);
-        userRef.set({
-          'savedCourses': SearchCoursesPageState.savedCourses.map((c) => c['title']).toList(),
-        }, SetOptions(merge: true));
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Course has been added to bookmarks successfully!'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    });
+      await userRef.set({
+        'savedCourses': FieldValue.arrayUnion([courseTitle]),
+      }, SetOptions(merge: true));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Course has been added to bookmarks successfully!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -85,24 +110,41 @@ class _CourseCardState extends State<CourseCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          Container(
-            height: 112,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              image: DecorationImage(
-                image: AssetImage(widget.imagePath),
-                fit: BoxFit.cover,
-              ),
-            ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              widget.imagePath,
+              height: 112,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
+            )
+
           ),
-          const SizedBox(height: 12),
+
+
+    const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+
+              Text(
+                widget.category,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange[800],
+                ),
+              ),
+              IconButton(onPressed: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Coursedetailscreen(category: widget.category, imagePath:widget.imagePath,title: widget.title,courseId:widget.courseId , price: widget.price,instructorName: widget.instructorName,)));}, icon: Icon(Icons.navigate_next),color: Colors.teal,),
+            ],
+          ),
+          //const SizedBox(height: 8),
           Text(
-            widget.category,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.orange[800],
+            'by: ${widget.instructorName}',
+            style: const TextStyle(
+              fontSize: 13,
+              color: Colors.grey,
             ),
           ),
           const SizedBox(height: 8),
@@ -118,7 +160,7 @@ class _CourseCardState extends State<CourseCard> {
 
 
           Text(
-            'Price: ${widget.price}',
+            'Price: ${widget.price}EGP',
             style: const TextStyle(color: Colors.grey, fontSize: 14),
           ),
           const SizedBox(height: 8),
@@ -144,15 +186,19 @@ class _CourseCardState extends State<CourseCard> {
               child:
               IconButton(
                 icon: Icon(
-                  SearchCoursesPageState.savedCourses.any((c) => c['title'] == widget.title)? Icons.bookmark : Icons.bookmark_border,
-                  color: SearchCoursesPageState.savedCourses.any((c) => c['title'] == widget.title)  ? Colors.teal : null,
+                  widget.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                  color: widget.isBookmarked ? Colors.teal : null,
                 ),
-                onPressed: ()=>_toggleSavedCourse(courseId),
+                onPressed: widget.onBookmarkToggle,
               ),
-              ),
+
+
+
+            ),
           ),
         ],
       ),
     );
+
   }
 }

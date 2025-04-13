@@ -4,28 +4,32 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:mashrooa_takharog/auth/Appwrite_service.dart';
+import 'package:mashrooa_takharog/auth/GoogleSignInAppwrite.dart';
+import 'package:mashrooa_takharog/auth/GoogleSignInSupa.dart';
+import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import 'package:mashrooa_takharog/screens/FillYourProfile.dart';
 import 'package:mashrooa_takharog/screens/InstructorNavigatorScreen.dart';
 
 import '../screens/StudentNavigatorScreen.dart';
 
 class AuthService{
-final FirebaseAuth auth =FirebaseAuth.instance;
+  final FirebaseAuth auth =FirebaseAuth.instance;
 
 
 //sign in(firebase)
-Future<UserCredential> signInWithEmailPassword(String email,password) async{
+  Future<UserCredential> signInWithEmailPassword(String email,password) async{
 
-  try{
-    UserCredential userCredential=await auth.signInWithEmailAndPassword(email: email, password: password);
-    return userCredential;
-  } on FirebaseAuthException catch(e){
+    try{
+      UserCredential userCredential=await auth.signInWithEmailAndPassword(email: email, password: password);
+      return userCredential;
+    } on FirebaseAuthException catch(e){
 
-    throw Exception(e.code);
+      throw Exception(e.code);
+    }
+
+
   }
-
-
-}
 
 
 
@@ -33,6 +37,7 @@ Future<UserCredential> signInWithEmailPassword(String email,password) async{
   Future<void> signInWithGoogle(BuildContext context, String userType) async {
     final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
     final GoogleSignIn googleSignIn = GoogleSignIn();
+
 
     try {
       final GoogleSignInAccount? googleSignInAccount = await googleSignIn.signIn();
@@ -55,6 +60,17 @@ Future<UserCredential> signInWithEmailPassword(String email,password) async{
       UserCredential result = await firebaseAuth.signInWithCredential(credential);
       User? userDetails = result.user;
 
+      //await GoogleSignInSupa.supaGoogleSignIn( googleSignInAuthentication?.idToken, googleSignInAuthentication?.accessToken);
+
+      String supabaseUserId = await  GoogleSignInSupa.addGoogleUserToSupabase(userDetails!.email!,'Default_Password_123');
+
+
+
+      await GoogleSignInAppwrite.appWriteGoogleSignIn(
+          userDetails!.email!,
+          userDetails.displayName!,
+          userDetails.uid
+      );
       if (userDetails != null) {
         final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
@@ -73,6 +89,10 @@ Future<UserCredential> signInWithEmailPassword(String email,password) async{
 
         if (studentDoc.exists && userType == "instructor") {
           _showAccessDeniedDialog(context, "instructor");
+
+          SupaAuthService.signOut();
+Appwrite_service.appwriteForceLogout();
+
         } else if (instructorDoc.exists && userType == "student") {
           _showAccessDeniedDialog(context, "student");
         } else if (studentDoc.exists || instructorDoc.exists) {
@@ -97,6 +117,8 @@ Future<UserCredential> signInWithEmailPassword(String email,password) async{
                 builder: (context) => FillYourProfile(
                   userType: userType,
                   email: userDetails.email,
+                  supaUserId: supabaseUserId,
+                  appwriteUserId:userDetails.uid,
                 ),
               ),
             );
@@ -118,6 +140,8 @@ Future<UserCredential> signInWithEmailPassword(String email,password) async{
               builder: (context) => FillYourProfile(
                 userType: userType,
                 email: userDetails.email,
+                supaUserId: supabaseUserId,
+                appwriteUserId:userDetails.uid,
               ),
             ),
           );
@@ -175,30 +199,30 @@ Future<UserCredential> signInWithEmailPassword(String email,password) async{
 
 
 //sign up
-Future<UserCredential> signUpWithEmailPassword(String email,password) async{
-try{
-  UserCredential userCredential=await auth.createUserWithEmailAndPassword(email: email, password: password);
-return userCredential;
-} on FirebaseAuthException catch(e){
-  throw Exception(e.code);
+  Future<UserCredential> signUpWithEmailPassword(String email,password) async{
+    try{
+      UserCredential userCredential=await auth.createUserWithEmailAndPassword(email: email, password: password);
+      return userCredential;
+    } on FirebaseAuthException catch(e){
+      throw Exception(e.code);
 
-}
-}
+    }
+  }
 
 //sign out
 
-Future<void> signOut() async{
-  return await auth.signOut();
+  Future<void> signOut() async{
+    return await auth.signOut();
 
-}
+  }
 
-Future<void> resetPassword(String email)async {
-try {
-await auth.sendPasswordResetEmail(email: email);
+  Future<void> resetPassword(String email)async {
+    try {
+      await auth.sendPasswordResetEmail(email: email);
 
-} on FirebaseAuthException catch(e){
-  throw Exception(e.code);
-}
+    } on FirebaseAuthException catch(e){
+      throw Exception(e.code);
+    }
 
-}
+  }
 }

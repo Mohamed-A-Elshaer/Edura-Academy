@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mashrooa_takharog/screens/SpecificCategoryPage.dart';
 
 class Categoriespage extends StatelessWidget {
   const Categoriespage({super.key});
@@ -21,10 +22,10 @@ class Categoriespage extends StatelessWidget {
         child: ListView(
           children: [
 
-            _buildRow(context, 'assets/images/cook.png', 'assets/images/02.png',100),
-            _buildRow(context, 'assets/images/03.png', 'assets/images/04.png',100),
-            _buildRow(context, 'assets/images/05.png', 'assets/images/06.png',100),
-            _buildRow(context, 'assets/images/07.png', 'assets/images/08.png',100),
+            _buildRow(context, 'assets/images/cook.png', 'assets/images/02.png',100,'Cooking','Graphic Design'),
+            _buildRow(context, 'assets/images/03.png', 'assets/images/04.png',100,'Programming','SEO & Marketing'),
+            _buildRow(context, 'assets/images/05.png', 'assets/images/06.png',100,'Finance and Accounting','Personal Development'),
+            _buildRow(context, 'assets/images/07.png', 'assets/images/08.png',100,'Office Productivity','Arts & Humanities'),
           ],
         ),
       ),
@@ -32,7 +33,7 @@ class Categoriespage extends StatelessWidget {
   }
 
   
-  Widget _buildRow(BuildContext context, String asset1, String asset2,double height) {
+  Widget _buildRow(BuildContext context, String asset1, String asset2,double height, String category1, String category2) {
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Row(
@@ -40,7 +41,7 @@ class Categoriespage extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: () {
-              _navigateToNewPage(context); 
+              _navigateToNewPage(context,category1);
             },
             child: Image.asset(
               asset1,
@@ -50,7 +51,7 @@ class Categoriespage extends StatelessWidget {
           ),
           GestureDetector(
             onTap: () {
-              _navigateToNewPage(context); 
+              _navigateToNewPage(context,category2);
             },
             child: Image.asset(
               asset2,
@@ -64,25 +65,15 @@ class Categoriespage extends StatelessWidget {
   }
 
   
-  void _navigateToNewPage(BuildContext context) {
+  void _navigateToNewPage(BuildContext context, String category) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EmptyPage(), 
+        builder: (context) => SpecificCategoryPage(category:category,),
       ),
     );
   }
 }
 
 
-class EmptyPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('.....'),
-      ),
-      
-    );
-  }
-}
+

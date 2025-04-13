@@ -3,13 +3,18 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
+import 'package:mashrooa_takharog/Databases/AppwriteTableCreate.dart';
+import 'package:mashrooa_takharog/Databases/SupaTableCreate.dart';
+import 'package:mashrooa_takharog/screens/SupabaseAppwriteEmailUpdate.dart';
 import '../widgets/customElevatedBtn.dart';
 import '../widgets/customTextField.dart';
 import 'InstructorNavigatorScreen.dart';
 import 'StudentNavigatorScreen.dart';
 
 class EditProfileScreen extends StatefulWidget{
+  String? password;
+   EditProfileScreen({super.key,this.password});
+
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -28,11 +33,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
+
   void _navigateBasedOnUserType(BuildContext context) async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
 
     try {
       // ✅ Fetch user by UID instead of email
@@ -142,6 +149,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _updateFirestoreAndAuth(String collection, String docId, String newEmail, String newPhone) async {
     User? user = _auth.currentUser;
+    String? appwriteUserId = await AppwriteTableCreate.getCurrentUserId();
+    String? supabaseUserId = await SupaTableCreate.getCurrentUserId();
+
+
+
     if (user == null) return;
 
     Map<String, dynamic> updatedData = {};
@@ -157,12 +169,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       if (updatedData.isNotEmpty) {
         await firestore.collection(collection).doc(docId).update(updatedData);
+        AppwriteTableCreate.updateUserInAppwriteDB(appwriteUserId!, newEmail, fullNameController.text);
+
+        SupaTableCreate.updateUserInSupabaseDB(supabaseUserId!, newEmail, fullNameController.text);
+
 
         // Update email in Firebase Authentication
         if (newEmail.isNotEmpty && newEmail != user.email) {
           try {
             await user.updateEmail(newEmail);
             print("✅ Firebase Auth email updated successfully!");
+            await SupabaseAppwriteEmailUpdate.updateSupabaseEmail(newEmail);
+            print("✅ Supabase Auth email updated successfully!");
+            await SupabaseAppwriteEmailUpdate.updateAppwriteEmail(newEmail,widget.password);
+            print("✅ Appwrite Auth email updated successfully!");
+
+
+
           } on FirebaseAuthException catch (e) {
             if (e.code == 'requires-recent-login') {
               print("⚠️ User needs to re-authenticate to update email.");
@@ -298,7 +321,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
 
       // Update only modified fields
-      await _updateFirestoreAndAuth(collection, userDoc.id, newEmail, newPhone.isNotEmpty ? newPhone : userDoc.get('phone'));
+      await _updateFirestoreAndAuth(collection, userDoc.id, newEmail, newPhone.isNotEmpty ? newPhone : userDoc.get('phone')??'');
 
     } catch (e) {
       print("Error updating profile: $e");

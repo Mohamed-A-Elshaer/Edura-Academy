@@ -1,7 +1,9 @@
+import 'package:appwrite/appwrite.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:mashrooa_takharog/auth/Appwrite_service.dart';
 import 'package:mashrooa_takharog/auth/auth_service.dart';
 import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import 'package:mashrooa_takharog/screens/ForgotPasswordScreen.dart';
@@ -66,10 +68,31 @@ class _SignInScreenState extends State<SignInScreen> {
 
   void login(BuildContext context, String intendedRole) async {
     final authService = AuthService();
+    final account = Appwrite_service.account;
+
 
     try {
       final user = await authService.signInWithEmailPassword(_emailController.text, _passwordController.text);
       await supaAuth.signInWithEmailPasswordSupabase(_emailController.text, _passwordController.text);
+      try {
+        // Check if a session already exists
+        await account.get();
+        print("Appwrite: Session already active");
+      } catch (e) {
+        // No session exists, safe to create one
+        try {
+          await account.createEmailPasswordSession(
+            email: _emailController.text,
+            password: _passwordController.text,
+          );
+          print("Appwrite: Session created");
+        } catch (sessionError) {
+          print("Appwrite session creation error: $sessionError");
+          throw sessionError; // Optional: rethrow to trigger the login error handler
+        }
+      }
+
+
 
       if (user!= null) {
 
@@ -79,6 +102,19 @@ class _SignInScreenState extends State<SignInScreen> {
         if (actualRole != intendedRole) {
           _showAccessDeniedDialog(context, intendedRole);
           await FirebaseAuth.instance.signOut();
+         SupaAuthService.signOut();
+          try {
+            // Check if there is an active session before deleting it
+            final sessions = await account.listSessions();
+            if (sessions.sessions.isNotEmpty) {
+              await account.deleteSession(sessionId: 'current');
+              print("Appwrite session deleted successfully");
+            } else {
+              print("No active Appwrite session found");
+            }
+          } catch (e) {
+            print("Error deleting Appwrite session: $e");
+          }
           return;
         }
         String collection = widget.userType == 'student' ? 'students' : 'instructors';
@@ -93,8 +129,8 @@ class _SignInScreenState extends State<SignInScreen> {
           );
         } else {
           Widget destination = widget.userType == 'student'
-              ? NavigatorScreen()
-              : InstructorNavigatorScreen();
+              ? NavigatorScreen(password: _passwordController.text,)
+              : InstructorNavigatorScreen(password: _passwordController.text,);
 
           Navigator.pushReplacement(
             context,
