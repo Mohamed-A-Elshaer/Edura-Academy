@@ -13,7 +13,7 @@ import 'InstructorNavigatorScreen.dart';
 import 'SignInScreen.dart';
 import 'StudentNavigatorScreen.dart';
 
-class SplashScreen extends StatefulWidget{
+class SplashScreen extends StatefulWidget {
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -32,12 +32,13 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _navigateBasedOnLogin() async {
     final client = Client()
-        .setEndpoint('https://cloud.appwrite.io/v1') // غيّره حسب الـ endpoint الخاص بك
+        .setEndpoint(
+            'https://cloud.appwrite.io/v1') // غيّره حسب الـ endpoint الخاص بك
         .setProject('67ac8356002648e5b7e9')
-        .setSelfSigned(status: true);// غيّره حسب الـ project ID الخاص بك
+        .setSelfSigned(status: true); // غيّره حسب الـ project ID الخاص بك
 
     final account = Account(client);
-    final SupaAuthService supaAuth=SupaAuthService();
+    final SupaAuthService supaAuth = SupaAuthService();
 
     final prefs = await SharedPreferences.getInstance();
     final rememberMeEnabled = prefs.getBool('rememberMe') ?? false;
@@ -81,7 +82,8 @@ class _SplashScreenState extends State<SplashScreen> {
             } else if (userType == 'instructor') {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => InstructorNavigatorScreen()),
+                MaterialPageRoute(
+                    builder: (context) => InstructorNavigatorScreen()),
               );
             } else {
               Navigator.pushReplacement(
@@ -105,13 +107,17 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<String?> _getUserType(String userId) async {
     try {
-      final studentDoc = await FirebaseFirestore.instance.collection('students').doc(userId).get();
-      if (studentDoc.exists)
-        return 'student';
+      final studentDoc = await FirebaseFirestore.instance
+          .collection('students')
+          .doc(userId)
+          .get();
+      if (studentDoc.exists) return 'student';
 
-      final instructorDoc = await FirebaseFirestore.instance.collection('instructors').doc(userId).get();
-      if (instructorDoc.exists)
-        return 'instructor';
+      final instructorDoc = await FirebaseFirestore.instance
+          .collection('instructors')
+          .doc(userId)
+          .get();
+      if (instructorDoc.exists) return 'instructor';
     } catch (e) {
       print("Error fetching user type: $e");
     }
@@ -119,20 +125,22 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Widget build(BuildContext context) {
-   return Scaffold(
-
-backgroundColor: Color(0xff0961F5),
-     body: Column(
-       children: [
-SizedBox(height: 160,),
-          Image.asset('assets/images/logo.png',),
-        CircularProgressIndicator(
-          backgroundColor: Colors.white,
-strokeWidth: 4,
-        )
-       ],
-     ),
-
-   );
+    return Scaffold(
+      backgroundColor: Color(0xff0961F5),
+      body: Column(
+        children: [
+          SizedBox(
+            height: 160,
+          ),
+          Image.asset(
+            'assets/images/logo.png',
+          ),
+          CircularProgressIndicator(
+            backgroundColor: Colors.white,
+            strokeWidth: 4,
+          )
+        ],
+      ),
+    );
   }
 }
