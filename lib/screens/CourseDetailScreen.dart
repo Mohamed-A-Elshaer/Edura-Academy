@@ -296,6 +296,17 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     }
   }
 
+  Future<bool> _checkAvatarUrlValid(String? url) async {
+    if (url == null) return false;
+
+    try {
+      final uri = Uri.parse(url);
+      final response = await HttpClient().headUrl(uri).then((req) => req.close());
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
 
 
 
@@ -552,13 +563,20 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
              fontWeight: FontWeight.w500),),
             Row(
               children: [
-                CircleAvatar(
-                  radius: 46,
-                  backgroundColor: Colors.grey[200],
-                  backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-                  child: avatarUrl == null
-                      ? Icon(Icons.person_outline, color: Colors.grey[400], size: 30)
-                      : null,
+                FutureBuilder(
+                  future: _checkAvatarUrlValid(avatarUrl),
+                  builder: (context, snapshot) {
+                    final isValid = snapshot.data == true;
+
+                    return CircleAvatar(
+                      radius: 46,
+                      backgroundColor: Colors.grey[200],
+                      backgroundImage: isValid ? NetworkImage(avatarUrl!) : null,
+                      child: !isValid
+                          ? Icon(Icons.person_outline, color: Colors.grey[400], size: 30)
+                          : null,
+                    );
+                  },
                 ),
                 const SizedBox(width: 12), // Gives space between avatar and text
                 Expanded( // Ensures text takes only available space
@@ -706,6 +724,8 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
               
                         },
                       ),
+
+
                     ],
                   );
                 },

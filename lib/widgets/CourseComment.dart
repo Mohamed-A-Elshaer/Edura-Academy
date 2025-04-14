@@ -128,34 +128,14 @@ decoration: BoxDecoration(
 
               ),
 
-              SizedBox(height: 2,),
+              SizedBox(height: 15,),
                Transform.translate(
                 
-                 offset: Offset(-50, 0),
-                 child: Row(
-                    children: [
-                      IconButton(onPressed: (){
-                        setState(() {
-                          iconOn=!iconOn;
-                        });
-                 
-                      }, icon: iconOn? Icon(CupertinoIcons.heart_fill,color: Color(0xffDD2E44),size: 23,):Icon(CupertinoIcons.heart,color: Color(0xff1D1D1B),size: 23,)),
-                 
-                      Text('760',style: TextStyle(fontWeight:FontWeight.w800,fontFamily: 'Mulish',fontSize: 14,color: Color(0xff202244)),),
-                      SizedBox(width: 20,),
-
-                      SizedBox(
-                        height: 20,
-                        child: VerticalDivider(
-                          color: Colors.black,
-                          thickness: 1.2,
-                          width: 20,
-                        ),
-                      ),
+                 offset: Offset(60, 0),
+                 child:
                       Text('2 Weeks Ago',style: TextStyle(fontWeight:FontWeight.w800,fontFamily: 'Mulish',fontSize: 14,color: Color(0xff202244)),)
 
-                    ],
-                  ),
+
                ),
               
 
