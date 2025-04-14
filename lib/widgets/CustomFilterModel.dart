@@ -7,7 +7,10 @@ double? containerHeight;
   String title;
   int itemCount;
   List<String> checkBoxItem;
-   CustomFilterModel({super.key,required this.title,required this.itemCount,required this.checkBoxItem,this.containerHeight});
+final List<String> selectedItems;
+final Function(String) onToggle;
+   CustomFilterModel({super.key,required this.title,required this.itemCount,required this.checkBoxItem,this.containerHeight,required this.selectedItems,
+     required this.onToggle,});
 
 
 
@@ -30,10 +33,15 @@ double? containerHeight;
         physics: NeverScrollableScrollPhysics(),
             itemCount: itemCount,
             itemBuilder: (context, index) {
+              final item = checkBoxItem[index];
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 5.0),
                 child: CustomFilterCheckBox(
-                  text: checkBoxItem[index],
+                  text: item,
+                  isSelected: selectedItems.contains(item),
+                  onChanged: (bool value) {
+                    onToggle(item);
+                  },
                 ),
               );
             },

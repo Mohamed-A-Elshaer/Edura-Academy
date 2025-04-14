@@ -5,20 +5,22 @@ import 'package:mashrooa_takharog/screens/StudentNavigatorScreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mashrooa_takharog/screens/search_courses_page.dart';
 
+import '../auth/supaAuth_service.dart';
 import 'CourseDetailScreen.dart'; // Import the search results page
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
 
   @override
-  _SearchPageState createState() => _SearchPageState();
+  SearchPageState createState() => SearchPageState();
 }
 
-class _SearchPageState extends State<SearchPage> {
+class SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   List<String> searchHistory = [];
   List<Map<String, dynamic>> searchResults = [];
   String currentQuery = '';
+  String? userId;
 
 
 
@@ -97,26 +99,124 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
-    _loadSearchHistory();
+    _initUserAndLoadHistory();
+  }
+  static String getCourseCoverImageUrl(String courseName) {
+    try {
+      String formattedCourseName= courseName.replaceAll(' ', '_');
+      final path = '$formattedCourseName/course_cover.jpg';
+      final publicUrl = SupaAuthService.supabase.storage.from('profiles').getPublicUrl(path);
+      print(publicUrl);
+      return publicUrl;
+    } catch (e) {
+      print('Error fetching cover image from Supabase: $e');
+      return ''; // fallback
+    }
+  }
+
+  Future<void> _initUserAndLoadHistory() async {
+    try {
+      final user = await Appwrite_service.account.get();
+      setState(() {
+        userId = user.$id;
+      });
+      _loadSearchHistory();
+    } catch (e) {
+      print('Error getting current user: $e');
+    }
   }
 
   Future<void> _loadSearchHistory() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      searchHistory = prefs.getStringList('searchHistory') ?? [];
-    });
-  }
+    if (userId == null) return;
 
-  Future<void> _saveSearchHistory(String query) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (!searchHistory.contains(query)) {
-      searchHistory.insert(0, query);
-      if (searchHistory.length > 10) {
-        searchHistory = searchHistory.sublist(0, 10);
-      }
-      prefs.setStringList('searchHistory', searchHistory);
+    try {
+      final response = await Appwrite_service.databases.getDocument(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c0cc3600114e71d658',
+        documentId: userId!,
+      );
+
+      setState(() {
+        searchHistory = List<String>.from(response.data['searches_history'] ?? []);
+      });
+      print('Loaded search history: $searchHistory');
+    } catch (e) {
+      print('Error loading search history: $e');
     }
   }
+
+  Future<void> saveSearchToHistory(String keyword) async {
+    if (keyword.trim().isEmpty || userId == null) return;
+
+    try {
+      // Get current history
+      final currentDoc = await Appwrite_service.databases.getDocument(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c0cc3600114e71d658',
+        documentId: userId!,
+      );
+
+      List<String> history = List<String>.from(currentDoc.data['searches_history'] ?? []);
+
+      // Avoid duplicates
+      history.remove(keyword);
+      history.insert(0, keyword); // Add to front
+
+      // Limit to 10 items
+      if (history.length > 10) {
+        history.removeRange(10, history.length);
+      }
+
+      // Update document
+      await Appwrite_service.databases.updateDocument(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c0cc3600114e71d658',
+        documentId: userId!,
+        data: {
+          'searches_history': history,
+        },
+      );
+
+      setState(() {
+        searchHistory = history;
+      });
+      print('Saved search history: $history');
+    } catch (e) {
+      print('Error saving search history: $e');
+    }
+  }
+
+  Future<void> _clearSearchHistory() async {
+    if (userId == null) return;
+
+    try {
+      await Appwrite_service.databases.updateDocument(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c0cc3600114e71d658',
+        documentId: userId!,
+        data: {
+          'searches_history': [],
+        },
+      );
+
+      setState(() {
+        searchHistory.clear();
+      });
+    } catch (e) {
+      print('Error clearing search history: $e');
+    }
+  }
+
+
+
+  void _goToSearchResultsPage(String query) {
+    saveSearchToHistory(query);
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => SearchCoursesPage()),
+    );
+  }
+
 
   void _search(String query) async {
     setState(() {
@@ -146,8 +246,8 @@ class _SearchPageState extends State<SearchPage> {
 
     // Check if the query matches any enum category value
     String? matchedCategory = allowedCategories.firstWhere(
-          (category) => category.toLowerCase() == query.toLowerCase(),
-      orElse: () => '', // return empty string
+          (category) => category.toLowerCase().contains(query.toLowerCase()),
+      orElse: () => '',
     );
 
     if (matchedCategory.isEmpty) matchedCategory = null; // convert empty string to null
@@ -155,15 +255,13 @@ class _SearchPageState extends State<SearchPage> {
 
     try {
       // ---- Fetch courses ----
-      List<String> courseQueries = [];
+      List<String> courseQueries = [
+        Query.or([
+          Query.search('title', query),
+          Query.equal('category', matchedCategory ?? '__no_match__'),
+        ])
+      ];
 
-      // Only use Query.search on title (fulltext index required for that)
-      courseQueries.add(Query.search('title', query));
-
-      // Add category query only if matched
-      if (matchedCategory != null) {
-        courseQueries.add(Query.equal('category', matchedCategory));
-      }
 
       final courseResponse = await Appwrite_service.databases.listDocuments(
         databaseId: '67c029ce002c2d1ce046',
@@ -173,13 +271,14 @@ class _SearchPageState extends State<SearchPage> {
 
       results.addAll(courseResponse.documents.map((doc) => {
         'type': 'course',
-        'title': doc.data['title'],
-        'category': doc.data['category'],
-        'price': doc.data['price'].toString(),
+        'title': doc.data['title'] ?? '',
+        'category': doc.data['category'] ?? '',
+        'price': (doc.data['price'] ?? 0).toString(),
         'courseId': doc.$id,
-        'imagePath': "${doc.data['title'].replaceAll(' ', '_')}/course_cover.jpg",
-        'instructorName': doc.data['name'],
+        'imagePath': getCourseCoverImageUrl(doc.data['title'] ?? ''),
+        'instructorName': doc.data['name'] ?? '',
       }));
+
 
       // ---- Fetch instructors ----
       final instructorResponse = await Appwrite_service.databases.listDocuments(
@@ -210,21 +309,6 @@ class _SearchPageState extends State<SearchPage> {
 
 
 
-  Future<void> _clearSearchHistory() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('searchHistory');
-    setState(() {
-      searchHistory.clear();
-    });
-  }
-
-  void _goToSearchResultsPage(String query) {
-    _saveSearchHistory(query);
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => SearchCoursesPage()),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -257,6 +341,7 @@ class _SearchPageState extends State<SearchPage> {
                 _search(query);
               },
               onSubmitted: (query) {
+                saveSearchToHistory(query);
                 _goToSearchResultsPage(query);
               },
               decoration: InputDecoration(
@@ -306,7 +391,9 @@ class _SearchPageState extends State<SearchPage> {
                   const Text("No matching results found"),
                   const SizedBox(height: 10),
                   GestureDetector(
-                    onTap: () => _goToSearchResultsPage(currentQuery),
+                    onTap: () {
+                      saveSearchToHistory(currentQuery);
+                      _goToSearchResultsPage(currentQuery);},
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                       decoration: BoxDecoration(
@@ -321,6 +408,12 @@ class _SearchPageState extends State<SearchPage> {
                             "Search for \"$currentQuery\"",
                             style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
                           ),
+                          Spacer(),
+                          CircleAvatar(
+                              backgroundColor: Colors.white,
+                              radius: 14,
+                              child:  Icon(Icons.arrow_forward_ios_sharp)
+                          )
                         ],
                       ),
                     ),
@@ -346,7 +439,7 @@ class _SearchPageState extends State<SearchPage> {
                                     builder: (context) => Coursedetailscreen(
                                       title: result['title'] ?? '',
                                       category: result['category'] ?? '',
-                                      imagePath: result['imagePath'] ?? '',
+                                      imagePath: getCourseCoverImageUrl(result['title'] ?? ''),
                                       courseId: result['courseId'] ?? '',
                                       price: result['price']?.toString() ?? '',
                                       instructorName: result['instructorName'] ?? '',
@@ -392,6 +485,12 @@ class _SearchPageState extends State<SearchPage> {
                               "Search for \"$currentQuery\"",
                               style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
                             ),
+Spacer(),
+                            CircleAvatar(
+                              backgroundColor: Colors.white,
+                           radius: 14,
+                           child:  Icon(Icons.arrow_forward_ios_sharp)
+                            )
                           ],
                         ),
                       ),

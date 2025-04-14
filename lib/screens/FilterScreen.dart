@@ -6,14 +6,28 @@ import 'package:mashrooa_takharog/widgets/CustomFilterCheckBox.dart';
 import 'package:mashrooa_takharog/widgets/CustomFilterModel.dart';
 import 'package:mashrooa_takharog/widgets/customElevatedBtn.dart';
 
-class FilterScreen extends StatelessWidget{
+class FilterScreen extends StatefulWidget{
+  final Map<String, dynamic>? initialFilters;
+  const FilterScreen({super.key, this.initialFilters});
+  @override
+  State<FilterScreen> createState() => _FilterScreenState();
+}
+
+class _FilterScreenState extends State<FilterScreen> {
+  List<String> selectedCategories = [];
+  List<String> selectedPrices = [];
+  List<String> selectedRatings = [];
+  List<String> selectedDurations = [];
+
   List<String> title=[
     'SubCategories',
     'Price',
-    'Features',
-    'Rating',
     'Video Durations'
+    '',
+    'Rating'
+
   ];
+
   List<String> subCategoriesList=[
     'Graphic Design',
 'Programming',
@@ -24,18 +38,17 @@ class FilterScreen extends StatelessWidget{
     'Personal Development' ,
     'Office Productivity'
   ];
+
   /*List<String> levels=[
     'All Levels',
     'Beginners',
     'Intermediate',
     'Expert',
   ];*/
-
   List<String> price=[
     'Paid',
     'Free',
      ];
-
 
   List<String> rating=[
     '4.5 & Up Above',
@@ -43,18 +56,83 @@ class FilterScreen extends StatelessWidget{
     '3.5 & Up Above',
     '3.0 & Up Above',
   ];
+
   List<String> videoDuration=[
-    '0-2 Hours',
-    '3-6 Hours',
-    '7-16 Hours',
-    '17+ Hours',
+    '0-5 Minutes',
+    '5-10 Minutes',
+    '10-30 Minutes',
+    '30+ Minutes',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialize from initialFilters if they exist
+    if (widget.initialFilters != null) {
+      selectedCategories = List<String>.from(widget.initialFilters!['categories'] ?? []);
+      selectedPrices = List<String>.from(widget.initialFilters!['prices'] ?? []);
+      selectedRatings = List<String>.from(widget.initialFilters!['ratings'] ?? []);
+      selectedDurations = List<String>.from(widget.initialFilters!['durations'] ?? []);
+    }
+  }
+
+
+  void _toggleCategory(String category) {
+    setState(() {
+      if (selectedCategories.contains(category)) {
+        selectedCategories.remove(category);
+      } else {
+        selectedCategories.add(category);
+      }
+    });
+  }
+
+  void _togglePrice(String price) {
+    setState(() {
+      if (selectedPrices.contains(price)) {
+        selectedPrices.remove(price);
+      } else {
+        selectedPrices.add(price);
+      }
+    });
+  }
+
+  void _toggleRating(String rating) {
+    setState(() {
+      if (selectedRatings.contains(rating)) {
+        selectedRatings.remove(rating);
+      } else {
+        selectedRatings.add(rating);
+      }
+    });
+  }
+
+  void _toggleDuration(String duration) {
+    setState(() {
+      if (selectedDurations.contains(duration)) {
+        selectedDurations.remove(duration);
+      } else {
+        selectedDurations.add(duration);
+      }
+    });
+  }
+
+  void _clearFilters() {
+    setState(() {
+      selectedCategories.clear();
+      selectedPrices.clear();
+      selectedRatings.clear();
+      selectedDurations.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
 return Scaffold(
   backgroundColor: Color(0xffF5F9FF),
   appBar: AppBar(
-    leading: IconButton(onPressed: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>SearchCoursesPage()));},
+    leading: IconButton(onPressed: (){Navigator.pop(context);},
         icon: Icon(CupertinoIcons.arrow_left,color: Colors.black,)),
     title: Text('Filter',style: TextStyle(color: Color(0xff202244),fontFamily: 'Jost',fontSize: 21,fontWeight: FontWeight.w600),),
 
@@ -63,7 +141,7 @@ return Scaffold(
       Padding(
         padding: const EdgeInsets.only(right: 30),
         child: GestureDetector(
-          onTap: (){},
+          onTap: _clearFilters,
           child: Text('Clear',style: TextStyle(color: Color(0xff545454),fontFamily: 'Jost',fontSize: 16,fontWeight: FontWeight.w600),),
         ),
       )
@@ -79,11 +157,14 @@ return Scaffold(
         child: Column(
 
           children: [
-           CustomFilterModel(title: title[0], itemCount: subCategoriesList.length, checkBoxItem: subCategoriesList),
+           CustomFilterModel(title: title[0], itemCount: subCategoriesList.length, checkBoxItem: subCategoriesList,containerHeight: 330,selectedItems: selectedCategories, onToggle: _toggleCategory,),
+            CustomFilterModel(title: title[1], itemCount: price.length, checkBoxItem: price,containerHeight: 100,selectedItems: selectedPrices, onToggle: _togglePrice,),
+            CustomFilterModel(title: title[2], itemCount: videoDuration.length, checkBoxItem: videoDuration,containerHeight: 180, selectedItems: selectedDurations, onToggle: _toggleDuration,),
+            CustomFilterModel(title: title[3], itemCount: rating.length, checkBoxItem: rating,containerHeight: 180,selectedItems: selectedRatings, onToggle: _toggleRating,),
            // CustomFilterModel(title: title[1], itemCount: levels.length, checkBoxItem: levels,containerHeight: 180,),
-            CustomFilterModel(title: title[2], itemCount: price.length, checkBoxItem: price,containerHeight: 100,),
-            CustomFilterModel(title: title[4], itemCount: rating.length, checkBoxItem: rating,containerHeight: 180,),
-            CustomFilterModel(title: title[5], itemCount: videoDuration.length, checkBoxItem: videoDuration,containerHeight: 180,),
+
+
+
 
 
 
@@ -99,12 +180,15 @@ return Scaffold(
     ),
       Align(
         alignment: Alignment.bottomCenter,
-        child: CustomElevatedBtn(btnDesc: 'Apply',horizontalPad: 89,onPressed: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>SearchCoursesPage()));},),
+        child: CustomElevatedBtn(btnDesc: 'Apply',horizontalPad: 89,onPressed: (){ Navigator.pop(context, {
+    'categories': selectedCategories,
+    'prices': selectedPrices,
+    'ratings': selectedRatings,
+    'durations': selectedDurations,
+    });}),
       )
     ]
   ),
 );
   }
-
-
 }
