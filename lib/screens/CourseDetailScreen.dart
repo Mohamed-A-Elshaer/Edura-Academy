@@ -5,7 +5,7 @@ import 'package:appwrite/appwrite.dart';
 import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/screens/DisplayCourseLessons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_credit_card/flutter_credit_card.dart';
+//import 'package:flutter_credit_card/flutter_credit_card.dart';
 
 import '../auth/Appwrite_service.dart';
 import 'SpecificCategoryPage.dart';
@@ -42,6 +42,10 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
   String cvvCode = '';
   bool isCvvFocused = false;
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  String? cardNumberError;
+  String? expiryDateError;
+  String? cvvError;
+  String? cardHolderNameError;
 
   @override
   void initState() {
@@ -363,6 +367,65 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     }
   }
 
+  bool _validateCardNumber(String value) {
+    if (value.isEmpty) {
+      return false;
+    }
+    // Remove any spaces from the card number
+    String cleanNumber = value.replaceAll(' ', '');
+    // Check if it's all digits and 16 characters long
+    return RegExp(r'^\d{16}$').hasMatch(cleanNumber);
+  }
+
+  bool _validateExpiryDate(String value) {
+    if (value.isEmpty) {
+      return false;
+    }
+    // Check format MM/YY
+    if (!RegExp(r'^\d{2}/\d{2}$').hasMatch(value)) {
+      return false;
+    }
+    
+    // Extract month and year
+    List<String> parts = value.split('/');
+    int month = int.parse(parts[0]);
+    int year = int.parse(parts[1]);
+    
+    // Get current date
+    DateTime now = DateTime.now();
+    int currentYear = now.year % 100;
+    int currentMonth = now.month;
+    
+    // Validate month (1-12)
+    if (month < 1 || month > 12) {
+      return false;
+    }
+    
+    // Validate year (not expired)
+    if (year < currentYear || (year == currentYear && month < currentMonth)) {
+      return false;
+    }
+    
+    return true;
+  }
+
+  bool _validateCVV(String value) {
+    return RegExp(r'^\d{3}$').hasMatch(value);
+  }
+
+  bool _validateCardHolderName(String value) {
+    return value.isNotEmpty && RegExp(r'^[a-zA-Z\s]+$').hasMatch(value);
+  }
+
+  void _validateForm() {
+    setState(() {
+      cardNumberError = _validateCardNumber(cardNumber) ? null : 'Please enter a valid 16-digit card number';
+      expiryDateError = _validateExpiryDate(expiryDate) ? null : 'Please enter a valid expiry date (MM/YY)';
+      cvvError = _validateCVV(cvvCode) ? null : 'Please enter a valid 3-digit CVV';
+      cardHolderNameError = _validateCardHolderName(cardHolderName) ? null : 'Please enter a valid name (letters only)';
+    });
+  }
+
   void _showPaymentSheet() {
     showModalBottomSheet(
       context: context,
@@ -380,223 +443,254 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
             right: 16,
           ),
           child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Payment Details',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // Card Number Field
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Card Number',
-                    hintText: 'XXXX XXXX XXXX XXXX',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    prefixIcon: const Icon(Icons.credit_card),
-                    errorText: cardNumber.length > 0 && cardNumber.length != 16 
-                        ? 'Card number must be 16 digits'
-                        : null,
-                  ),
-                  keyboardType: TextInputType.number,
-                  maxLength: 16,
-                  onChanged: (value) {
-                    setState(() {
-                      cardNumber = value.replaceAll(' ', '');
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Expiry Date and CVV Row
-                Row(
-                  children: [
-                    // Expiry Date Field
-                    Expanded(
-                      child: TextField(
-                        decoration: InputDecoration(
-                          labelText: 'Expiry Date',
-                          hintText: 'MM/YY',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          prefixIcon: const Icon(Icons.calendar_today),
-                        ),
-                        keyboardType: TextInputType.number,
-                        maxLength: 5,
-                        onChanged: (value) {
-                          if (value.length == 2 && !value.contains('/')) {
-                            setState(() {
-                              expiryDate = value + '/';
-                            });
-                          } else {
-                            setState(() {
-                              expiryDate = value;
-                            });
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    // CVV Field
-                    Expanded(
-                      child: TextField(
-                        decoration: InputDecoration(
-                          labelText: 'CVV',
-                          hintText: 'XXX',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          prefixIcon: const Icon(Icons.security),
-                          errorText: cvvCode.length > 0 && cvvCode.length != 3 
-                              ? 'CVV must be 3 digits'
-                              : null,
-                        ),
-                        keyboardType: TextInputType.number,
-                        maxLength: 3,
-                        obscureText: true,
-                        onChanged: (value) {
-                          setState(() {
-                            cvvCode = value;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Card Holder Name Field
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Card Holder Name',
-                    hintText: 'Name as shown on card',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    prefixIcon: const Icon(Icons.person),
-                  ),
-                  textCapitalization: TextCapitalization.words,
-                  onChanged: (value) {
-                    setState(() {
-                      cardHolderName = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // Payment Summary
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Payment Summary',
+                        'Payment Details',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Course Price:'),
-                          Text('EGP ${widget.price}'),
-                        ],
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                // Pay Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
+                  // Card Number Field
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Card Number',
+                      hintText: 'XXXX XXXX XXXX XXXX',
+                      border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
+                      prefixIcon: const Icon(Icons.credit_card),
+                      errorText: cardNumberError,
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.red),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.red),
+                      ),
                     ),
-                    onPressed: () {
-                      if (_validateCardDetails()) {
-                        Navigator.pop(context);
-                        _processPurchase();
-                      }
+                    keyboardType: TextInputType.number,
+                    maxLength: 16,
+                    onChanged: (value) {
+                      setState(() {
+                        cardNumber = value.replaceAll(' ', '');
+                        _validateForm();
+                      });
                     },
-                    child: Text(
-                      'Pay EGP ${widget.price}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
+                    validator: (value) {
+                      if (!_validateCardNumber(value ?? '')) {
+                        return 'Please enter a valid 16-digit card number';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Expiry Date and CVV Row
+                  Row(
+                    children: [
+                      // Expiry Date Field
+                      Expanded(
+                        child: TextFormField(
+                          decoration: InputDecoration(
+                            labelText: 'Expiry Date',
+                            hintText: 'MM/YY',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            prefixIcon: const Icon(Icons.calendar_today),
+                            errorText: expiryDateError,
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: Colors.red),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: Colors.red),
+                            ),
+                          ),
+                          keyboardType: TextInputType.number,
+                          maxLength: 5,
+                          onChanged: (value) {
+                            if (value.length == 2 && !value.contains('/')) {
+                              setState(() {
+                                expiryDate = value + '/';
+                                _validateForm();
+                              });
+                            } else {
+                              setState(() {
+                                expiryDate = value;
+                                _validateForm();
+                              });
+                            }
+                          },
+                          validator: (value) {
+                            if (!_validateExpiryDate(value ?? '')) {
+                              return 'Please enter a valid expiry date (MM/YY)';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      // CVV Field
+                      Expanded(
+                        child: TextFormField(
+                          decoration: InputDecoration(
+                            labelText: 'CVV',
+                            hintText: 'XXX',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            prefixIcon: const Icon(Icons.security),
+                            errorText: cvvError,
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: Colors.red),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(color: Colors.red),
+                            ),
+                          ),
+                          keyboardType: TextInputType.number,
+                          maxLength: 3,
+                          obscureText: true,
+                          onChanged: (value) {
+                            setState(() {
+                              cvvCode = value;
+                              _validateForm();
+                            });
+                          },
+                          validator: (value) {
+                            if (!_validateCVV(value ?? '')) {
+                              return 'Please enter a valid 3-digit CVV';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Card Holder Name Field
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Card Holder Name',
+                      hintText: 'Name as shown on card',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      prefixIcon: const Icon(Icons.person),
+                      errorText: cardHolderNameError,
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.red),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.red),
+                      ),
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                    onChanged: (value) {
+                      setState(() {
+                        cardHolderName = value;
+                        _validateForm();
+                      });
+                    },
+                    validator: (value) {
+                      if (!_validateCardHolderName(value ?? '')) {
+                        return 'Please enter a valid name (letters only)';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Payment Summary
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Payment Summary',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Course Price:'),
+                            Text('EGP ${widget.price}'),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Pay Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        _validateForm();
+                        if (formKey.currentState?.validate() ?? false) {
+                          Navigator.pop(context);
+                          _processPurchase();
+                        }
+                      },
+                      child: Text(
+                        'Pay EGP ${widget.price}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
-  }
-
-  bool _validateCardDetails() {
-    if (cardNumber.length != 16) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid 16-digit card number')),
-      );
-      return false;
-    }
-
-    if (expiryDate.length != 5 || !expiryDate.contains('/')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid expiry date (MM/YY)')),
-      );
-      return false;
-    }
-
-    if (cvvCode.length != 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid 3-digit CVV')),
-      );
-      return false;
-    }
-
-    if (cardHolderName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter the card holder name')),
-      );
-      return false;
-    }
-
-    return true;
   }
 
   @override
@@ -635,7 +729,25 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                 child: CircleAvatar(
                   radius: 25,
                   backgroundColor: const Color(0xFF167F71),
-                  child: IconButton(onPressed: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>DisplayCourseLessons(title: widget.title, courseId: widget.courseId)));}, icon: const Icon(Icons.play_arrow)),
+                  child: _isPurchased 
+                    ? IconButton(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context, 
+                            MaterialPageRoute(
+                              builder: (context) => DisplayCourseLessons(
+                                title: widget.title, 
+                                courseId: widget.courseId
+                              )
+                            )
+                          );
+                        }, 
+                        icon: const Icon(Icons.play_arrow, color: Colors.white)
+                      )
+                    : IconButton(
+                        onPressed: null,
+                        icon: const Icon(Icons.lock, color: Colors.white),
+                      ),
                 ),
               ),
             ],
@@ -967,7 +1079,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
             const SizedBox(height: 16),
             Container(
               height: 400,
-              child: _isPurchased ? ListView.builder(
+              child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: sections.length,
                 itemBuilder: (context, sectionIndex) {
@@ -977,23 +1089,24 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                      Text(
-                        section['title'],
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
+                        children: [
+                          Text(
+                            section['title'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                             ),
-                            Text(
-                              section['duration'],
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 14,
-                              ),
+                          ),
+                          Text(
+                            section['duration'],
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
                             ),
-]),
-                      SizedBox(height: 20,),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 20),
               
                       ListView.builder(
                         shrinkWrap: true,
@@ -1001,25 +1114,28 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                         itemCount: (section['lessons'] as List).length,
                         itemBuilder: (context, lessonIndex) {
                           final lesson = section['lessons'][lessonIndex];
-                          return _buildLessonTile(lesson['number'], lesson['title'].toString().substring(4));
-              
+                          return _buildLessonTile(
+                            lesson['number'], 
+                            lesson['title'].toString().substring(4),
+                            isPurchased: _isPurchased,
+                            onTap: _isPurchased ? () {
+                              // Handle video playback when purchased
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => DisplayCourseLessons(
+                                    title: widget.title,
+                                    courseId: widget.courseId,
+                                  ),
+                                ),
+                              );
+                            } : null,
+                          );
                         },
                       ),
                     ],
                   );
                 },
-              ) : Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.lock, size: 48, color: Colors.grey),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Purchase this course to access the curriculum',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                  ],
-                ),
               ),
             ),
           ],
@@ -1104,7 +1220,7 @@ class ReviewCard extends StatelessWidget {
   }
 }
 
-  Widget _buildLessonTile(String lessonNumber, String lessonTitle) {
+  Widget _buildLessonTile(String lessonNumber, String lessonTitle, {bool isPurchased = false, VoidCallback? onTap}) {
     String displayTitle = lessonTitle;
     if (lessonTitle.length > 30) {
       displayTitle = lessonTitle.substring(0, 27) + '...';
@@ -1112,37 +1228,45 @@ class ReviewCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Colors.blue,
-                  child: Text(
-                    lessonNumber,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: isPurchased ? Colors.blue : Colors.grey,
+                    child: Text(
+                      lessonNumber,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  displayTitle,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                  const SizedBox(width: 8),
+                  Text(
+                    displayTitle,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: isPurchased ? Colors.black : Colors.grey,
+                    ),
                   ),
+                ],
+              ),
+              if (!isPurchased)
+                const Icon(
+                  Icons.lock,
+                  color: Colors.grey,
+                  size: 20,
                 ),
-              ],
-            ),
-
-
-          ],
+            ],
+          ),
         ),
       ),
     );
