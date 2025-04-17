@@ -5,12 +5,14 @@ class VideoPlayerScreen extends StatefulWidget {
   final String videoUrl;
   final String lessonTitle;
   final VoidCallback? onVideoCompleted;
+  final bool isAlreadyCompleted;
 
   const VideoPlayerScreen({
     super.key,
     required this.videoUrl,
     required this.lessonTitle,
     this.onVideoCompleted,
+    this.isAlreadyCompleted = false,
   });
 
   @override
@@ -29,6 +31,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   void initState() {
     super.initState();
+    _isCompleted = widget.isAlreadyCompleted;
     _initializeVideo();
   }
 
@@ -50,7 +53,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
       // Add progress listener
       controller.addListener(_updateProgress);
-      
+
       // Start playing
       controller.play();
       setState(() {
@@ -76,7 +79,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   void _updateProgress() {
-    if (!mounted || _controller == null || !_controller!.value.isInitialized) return;
+    if (!mounted || _controller == null || !_controller!.value.isInitialized)
+      return;
 
     final position = _controller!.value.position;
     final duration = _controller!.value.duration;
@@ -90,24 +94,26 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     _lastPosition = position;
 
     final progress = position.inMilliseconds / duration.inMilliseconds;
-    
+
     print('Video Progress: ${(progress * 100).toStringAsFixed(1)}%');
     print('Position: $position / Duration: $duration');
 
     setState(() {
       _progress = progress;
-      
-      // Check if video is completed (reached 90% or more)
-      if (progress >= 0.90 && !_isCompleted) {
-        _isCompleted = true;
-        _showCheckmark = true;
-        print('Video completed: ${widget.lessonTitle}');
+
+      if (!widget.isAlreadyCompleted) {
+        // Check if video is completed (reached 90% or more)
+        if (progress >= 0.90 && !_isCompleted) {
+          _isCompleted = true;
+          _showCheckmark = true;
+          print('Video completed: ${widget.lessonTitle}');
+        }
       }
     });
   }
 
   void _handleCheckmarkPress() {
-    if (widget.onVideoCompleted != null) {
+    if (widget.onVideoCompleted != null && !widget.isAlreadyCompleted) {
       widget.onVideoCompleted!();
       setState(() {
         _showCheckmark = false;
@@ -176,7 +182,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ),
 
           // Checkmark Button
-          if (_showCheckmark)
+          if (_showCheckmark && !widget.isAlreadyCompleted)
             Positioned(
               bottom: 20,
               right: 20,
@@ -199,7 +205,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   child: const Icon(
                     Icons.check,
                     color: Colors.white,
-                    size: 30,
+                    size: 24,
                   ),
                 ),
               ),
@@ -257,7 +263,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        _formatDuration(_controller?.value.position ?? Duration.zero),
+                        _formatDuration(
+                            _controller?.value.position ?? Duration.zero),
                         style: const TextStyle(color: Colors.white),
                       ),
                       Text(
@@ -265,7 +272,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                         style: const TextStyle(color: Colors.white),
                       ),
                       Text(
-                        _formatDuration(_controller?.value.duration ?? Duration.zero),
+                        _formatDuration(
+                            _controller?.value.duration ?? Duration.zero),
                         style: const TextStyle(color: Colors.white),
                       ),
                     ],

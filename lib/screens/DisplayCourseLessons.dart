@@ -221,60 +221,96 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
   }
 
   Widget _buildLessonTile(String number, String title, String videoUrl) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => VideoPlayerScreen(
-              videoUrl: videoUrl,
-              lessonTitle: title,
-              onVideoCompleted: () => _handleVideoCompletion(
-                  videoUrl.split('/files/')[1].split('/view')[0]),
-            ),
-          ),
+    // استخراج معرف الفيديو من الURL
+    String videoId = videoUrl.split('/files/')[1].split('/view')[0];
+
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setTileState) {
+        return FutureBuilder<bool>(
+          future: _checkVideoCompletion(videoId),
+          builder: (context, snapshot) {
+            bool isCompleted = snapshot.data ?? false;
+
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => VideoPlayerScreen(
+                      videoUrl: videoUrl,
+                      lessonTitle: title,
+                      isAlreadyCompleted: isCompleted,
+                      onVideoCompleted: () => _handleVideoCompletion(videoId),
+                    ),
+                  ),
+                );
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: isCompleted ? Colors.green : Colors.blue,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Center(
+                        child: isCompleted
+                            ? const Icon(Icons.check, color: Colors.white)
+                            : Text(
+                                number,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: isCompleted ? Colors.grey : Colors.black,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.play_circle_outline,
+                        color: isCompleted ? Colors.green : Colors.blue),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.blue,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Center(
-                child: Text(
-                  number,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            const Icon(Icons.play_circle_outline, color: Colors.blue),
-          ],
-        ),
-      ),
     );
+  }
+
+  // Helper method to check video completion status
+  Future<bool> _checkVideoCompletion(String videoId) async {
+    try {
+      final currentUser = await Appwrite_service.account.get();
+      final userDoc = await Appwrite_service.databases.getDocument(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c0cc3600114e71d658',
+        documentId: currentUser.$id,
+      );
+      List<String> completedVideos =
+          List<String>.from(userDoc.data['completed_videos'] ?? []);
+      return completedVideos.contains(videoId);
+    } catch (e) {
+      print('Error checking video completion status: $e');
+      return false;
+    }
   }
 }

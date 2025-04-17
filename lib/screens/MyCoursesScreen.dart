@@ -39,22 +39,21 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
       // Get current user
       final currentUser = await Appwrite_service.account.get();
 
-      // Get user's document from database
+      // Get user's document
       final userDoc = await Appwrite_service.databases.getDocument(
         databaseId: '67c029ce002c2d1ce046',
         collectionId: '67c0cc3600114e71d658',
         documentId: currentUser.$id,
       );
 
-      // Get purchased courses array
+      // Get purchased courses array and completed videos
       List<String> purchasedCourseTitles =
           List<String>.from(userDoc.data['purchased_courses'] ?? []);
-
-      // Get completed videos list
       List<String> completedVideos =
           List<String>.from(userDoc.data['completed_videos'] ?? []);
 
-      print('Current completed videos in database: $completedVideos');
+      print('Purchased courses: $purchasedCourseTitles');
+      print('Completed videos: $completedVideos');
 
       // Fetch details for each purchased course
       List<Map<String, dynamic>> courses = [];
@@ -71,24 +70,32 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
 
           if (response.documents.isNotEmpty) {
             final course = response.documents.first;
-            List<String> courseVideos =
-                List<String>.from(course.data['videos'] ?? []);
+
+            // Get video IDs for this course
+            final files = await Appwrite_service.storage.listFiles(
+              bucketId: '67ac838900066b15fc99',
+              queries: [
+                Query.startsWith('name', '${courseTitle.replaceAll(' ', '_')}'),
+                Query.endsWith('name', '.mp4'),
+              ],
+            );
+
+            List<String> courseVideoIds =
+                files.files.map((file) => file.$id).toList();
 
             // Count completed videos for this course
-            int completedCount = 0;
-            for (String videoId in courseVideos) {
-              if (completedVideos.contains(videoId)) {
-                completedCount++;
-              }
-            }
+            int completedCount = courseVideoIds
+                .where((videoId) => completedVideos.contains(videoId))
+                .length;
 
             // Calculate completion percentage
-            double completionPercentage = courseVideos.isEmpty
-                ? 0
-                : (completedCount / courseVideos.length) * 100;
+            double completionPercentage = courseVideoIds.isEmpty
+                ? 0.0
+                : (completedCount / courseVideoIds.length) * 100;
 
             print('Course: $courseTitle');
-            print('Total Videos: ${courseVideos.length}');
+            print('Course video IDs: $courseVideoIds');
+            print('Total Videos: ${courseVideoIds.length}');
             print('Completed Videos: $completedCount');
             print('Completion Percentage: $completionPercentage%');
 
@@ -101,7 +108,7 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
               'price': course.data['price'] ?? '0',
               'instructorName':
                   course.data['instructorName'] ?? 'Unknown Instructor',
-              'videoCount': courseVideos.length,
+              'videoCount': courseVideoIds.length,
               'completedVideos': completedCount,
               'duration': course.data['courseDuration_inMins'] ?? 0,
               'rating': course.data['rating'] ?? '4.5',
@@ -148,6 +155,91 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
     }
   }
 
+  // Helper method to check and update course completion status
+  Future<void> _checkAndUpdateCourseCompletion(
+      String userId, String courseTitle, List<String> completedVideos) async {
+    try {
+      print('Checking completion status for course: $courseTitle');
+
+      // Get user document to update completed courses
+      final userDoc = await Appwrite_service.databases.getDocument(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c0cc3600114e71d658',
+        documentId: userId,
+      );
+
+      // Get current lists
+      List<String> completedCourses =
+          List<String>.from(userDoc.data['completed_courses'] ?? []);
+      List<String> ongoingCourses =
+          List<String>.from(userDoc.data['ongoing_courses'] ?? []);
+
+      // Get course details
+      final courseResponse = await Appwrite_service.databases.listDocuments(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c1c87c00009d84c6ff',
+        queries: [
+          Query.equal('title', courseTitle),
+        ],
+      );
+
+      if (courseResponse.documents.isNotEmpty) {
+        final course = courseResponse.documents.first;
+
+        // Get video IDs for this course
+        final files = await Appwrite_service.storage.listFiles(
+          bucketId: '67ac838900066b15fc99',
+          queries: [
+            Query.startsWith('name', '${courseTitle.replaceAll(' ', '_')}'),
+            Query.endsWith('name', '.mp4'),
+          ],
+        );
+
+        List<String> courseVideoIds =
+            files.files.map((file) => file.$id).toList();
+
+        // Check if all videos are completed
+        bool isFullyCompleted = true;
+        for (String videoId in courseVideoIds) {
+          if (!completedVideos.contains(videoId)) {
+            isFullyCompleted = false;
+            break;
+          }
+        }
+
+        print('Course videos total: ${courseVideoIds.length}');
+        print('User completed videos: ${completedVideos.length}');
+        print('Is fully completed: $isFullyCompleted');
+
+        // If course is completed and not already in completed courses list
+        if (isFullyCompleted && !completedCourses.contains(courseTitle)) {
+          print('Adding course to completed list: $courseTitle');
+
+          // Add to completed courses and remove from ongoing courses
+          completedCourses.add(courseTitle);
+          ongoingCourses.remove(courseTitle);
+
+          // Update user document
+          await Appwrite_service.databases.updateDocument(
+            databaseId: '67c029ce002c2d1ce046',
+            collectionId: '67c0cc3600114e71d658',
+            documentId: userId,
+            data: {
+              'completed_courses': completedCourses,
+              'ongoing_courses': ongoingCourses,
+            },
+          );
+
+          print('Updated completed and ongoing courses in database');
+          print('Completed courses: $completedCourses');
+          print('Ongoing courses: $ongoingCourses');
+        }
+      }
+    } catch (e) {
+      print('Error checking course completion: $e');
+    }
+  }
+
   Future<void> _markVideoAsCompleted(String courseTitle, String videoId) async {
     try {
       print(
@@ -179,7 +271,7 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
 
       print('Updated completed videos: $completedVideos');
 
-      // Update user document
+      // Update user document with completed videos
       await Appwrite_service.databases.updateDocument(
         databaseId: '67c029ce002c2d1ce046',
         collectionId: '67c0cc3600114e71d658',
@@ -189,33 +281,11 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
         },
       );
 
-      print('Updated user document with completed videos');
+      // Check if course is now completed and update status
+      await _checkAndUpdateCourseCompletion(
+          currentUser.$id, courseTitle, completedVideos);
 
-      // Get the course details to calculate progress
-      final courseResponse = await Appwrite_service.databases.listDocuments(
-        databaseId: '67c029ce002c2d1ce046',
-        collectionId: '67c1c87c00009d84c6ff',
-        queries: [
-          Query.equal('title', courseTitle),
-        ],
-      );
-
-      if (courseResponse.documents.isNotEmpty) {
-        final course = courseResponse.documents.first;
-        List<String> courseVideos =
-            List<String>.from(course.data['videos'] ?? []);
-
-        double completionPercentage = courseVideos.isEmpty
-            ? 0
-            : (completedVideos.length / courseVideos.length) * 100;
-
-        print('Course: $courseTitle');
-        print('Total Videos: ${courseVideos.length}');
-        print('Completed Videos: ${completedVideos.length}');
-        print('New Completion Percentage: $completionPercentage%');
-      }
-
-      // Refresh course list
+      // Refresh course list to update UI
       await _fetchEnrolledCourses();
 
       if (mounted) {
@@ -569,18 +639,35 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                                                       ? Colors.green
                                                       : Colors.blue,
                                                 ),
+                                                minHeight: 8,
                                               ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                '${course['completionPercentage'].toStringAsFixed(1)}% Complete',
-                                                style: TextStyle(
-                                                  color:
-                                                      course['completionPercentage'] >=
-                                                              100
-                                                          ? Colors.green
-                                                          : Colors.blue,
-                                                  fontSize: 12,
-                                                ),
+                                              const SizedBox(height: 8),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    '${course['completionPercentage'].toStringAsFixed(1)}% Complete',
+                                                    style: TextStyle(
+                                                      color:
+                                                          course['completionPercentage'] >=
+                                                                  100
+                                                              ? Colors.green
+                                                              : Colors.blue,
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    '${course['completedVideos']}/${course['videoCount']} Videos',
+                                                    style: TextStyle(
+                                                      color: Colors.grey[600],
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),
