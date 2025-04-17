@@ -28,17 +28,17 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
 
   Future<void> _fetchEnrolledCourses() async {
     if (!mounted) return;
-    
+
     setState(() {
       _isRefreshing = true;
     });
 
     try {
       print('Fetching enrolled courses...');
-      
+
       // Get current user
       final currentUser = await Appwrite_service.account.get();
-      
+
       // Get user's document from database
       final userDoc = await Appwrite_service.databases.getDocument(
         databaseId: '67c029ce002c2d1ce046',
@@ -46,11 +46,30 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
         documentId: currentUser.$id,
       );
 
-      // Get purchased courses array and completed videos
-      List<String> purchasedCourseTitles = List<String>.from(userDoc.data['purchased_courses'] ?? []);
-      Map<String, List<String>> completedVideos = Map<String, List<String>>.from(
-        userDoc.data['completed_videos'] ?? {}
-      );
+      // Get purchased courses array
+      List<String> purchasedCourseTitles =
+          List<String>.from(userDoc.data['purchased_courses'] ?? []);
+
+      // Handle completed videos field (could be a Map or List)
+      Map<String, List<String>> completedVideos;
+      var completedVideosData = userDoc.data['completed_videos'] ?? {};
+
+      if (completedVideosData is Map) {
+        // If it's a map, convert it directly
+        completedVideos = Map<String, List<String>>.from(
+          completedVideosData
+              .map((key, value) => MapEntry(key, List<String>.from(value))),
+        );
+      } else if (completedVideosData is List) {
+        // If it's a list, initialize an empty map and assign the list to each course
+        completedVideos = {};
+        for (String courseTitle in purchasedCourseTitles) {
+          completedVideos[courseTitle] = List<String>.from(completedVideosData);
+        }
+      } else {
+        // If it's neither, initialize an empty map
+        completedVideos = {};
+      }
 
       print('Current completed videos in database: $completedVideos');
 
@@ -69,12 +88,14 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
 
           if (response.documents.isNotEmpty) {
             final course = response.documents.first;
-            List<String> courseVideos = List<String>.from(course.data['videos'] ?? []);
-            List<String> userCompletedVideos = completedVideos[courseTitle] ?? [];
-            
+            List<String> courseVideos =
+                List<String>.from(course.data['videos'] ?? []);
+            List<String> userCompletedVideos =
+                completedVideos[courseTitle] ?? [];
+
             // Calculate completion percentage
-            double completionPercentage = courseVideos.isEmpty 
-                ? 0 
+            double completionPercentage = courseVideos.isEmpty
+                ? 0
                 : (userCompletedVideos.length / courseVideos.length) * 100;
 
             print('Course: $courseTitle');
@@ -85,10 +106,12 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
             courses.add({
               'title': course.data['title'] ?? 'Untitled Course',
               'category': course.data['category'] ?? 'Uncategorized',
-              'imagePath': course.data['imagePath'] ?? 'https://via.placeholder.com/300x200',
+              'imagePath': course.data['imagePath'] ??
+                  'https://via.placeholder.com/300x200',
               'courseId': course.$id,
               'price': course.data['price'] ?? '0',
-              'instructorName': course.data['instructorName'] ?? 'Unknown Instructor',
+              'instructorName':
+                  course.data['instructorName'] ?? 'Unknown Instructor',
               'videoCount': courseVideos.length,
               'completedVideos': userCompletedVideos.length,
               'duration': course.data['courseDuration_inMins'] ?? 0,
@@ -102,8 +125,12 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
       }
 
       // Categorize courses
-      completedCourses = courses.where((course) => course['completionPercentage'] >= 100).toList();
-      ongoingCourses = courses.where((course) => course['completionPercentage'] < 100).toList();
+      completedCourses = courses
+          .where((course) => course['completionPercentage'] >= 100)
+          .toList();
+      ongoingCourses = courses
+          .where((course) => course['completionPercentage'] < 100)
+          .toList();
 
       print('Completed Courses: ${completedCourses.length}');
       print('Ongoing Courses: ${ongoingCourses.length}');
@@ -134,15 +161,16 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
 
   Future<void> _markVideoAsCompleted(String courseTitle, String videoId) async {
     try {
-      print('Marking video as completed - Course: $courseTitle, Video: $videoId');
-      
+      print(
+          'Marking video as completed - Course: $courseTitle, Video: $videoId');
+
       setState(() {
         _isRefreshing = true;
       });
-      
+
       // Get current user
       final currentUser = await Appwrite_service.account.get();
-      
+
       // Get user's document
       final userDoc = await Appwrite_service.databases.getDocument(
         databaseId: '67c029ce002c2d1ce046',
@@ -150,10 +178,22 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
         documentId: currentUser.$id,
       );
 
-      // Get current completed videos
-      Map<String, List<String>> completedVideos = Map<String, List<String>>.from(
-        userDoc.data['completed_videos'] ?? {}
-      );
+      // Handle completed videos field (could be a Map or List)
+      Map<String, List<String>> completedVideos;
+      var completedVideosData = userDoc.data['completed_videos'] ?? {};
+
+      if (completedVideosData is Map) {
+        completedVideos = Map<String, List<String>>.from(
+          completedVideosData
+              .map((key, value) => MapEntry(key, List<String>.from(value))),
+        );
+      } else if (completedVideosData is List) {
+        // If it's a list, convert it to a map with the current course
+        completedVideos = {};
+        completedVideos[courseTitle] = List<String>.from(completedVideosData);
+      } else {
+        completedVideos = {};
+      }
 
       print('Current completed videos before update: $completedVideos');
 
@@ -193,11 +233,12 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
 
       if (courseResponse.documents.isNotEmpty) {
         final course = courseResponse.documents.first;
-        List<String> courseVideos = List<String>.from(course.data['videos'] ?? []);
+        List<String> courseVideos =
+            List<String>.from(course.data['videos'] ?? []);
         List<String> userCompletedVideos = completedVideos[courseTitle] ?? [];
-        
-        double completionPercentage = courseVideos.isEmpty 
-            ? 0 
+
+        double completionPercentage = courseVideos.isEmpty
+            ? 0
             : (userCompletedVideos.length / courseVideos.length) * 100;
 
         print('Course: $courseTitle');
@@ -303,7 +344,8 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                           });
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: !_showOngoing ? Colors.teal : Colors.grey[200],
+                          backgroundColor:
+                              !_showOngoing ? Colors.teal : Colors.grey[200],
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -327,7 +369,8 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                           });
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _showOngoing ? Colors.teal : Colors.grey[200],
+                          backgroundColor:
+                              _showOngoing ? Colors.teal : Colors.grey[200],
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -354,8 +397,8 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                     : enrolledCourses.isEmpty
                         ? Center(
                             child: Text(
-                              _showOngoing 
-                                  ? 'No ongoing courses' 
+                              _showOngoing
+                                  ? 'No ongoing courses'
                                   : 'No completed courses yet',
                               style: const TextStyle(fontSize: 18),
                             ),
@@ -375,43 +418,57 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                                   ),
                                   child: InkWell(
                                     onTap: () {
-                                      print('Tapping on course: ${course['title']}');
+                                      print(
+                                          'Tapping on course: ${course['title']}');
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) {
-                                            print('Building DisplayCourseLessons screen');
+                                            print(
+                                                'Building DisplayCourseLessons screen');
                                             return DisplayCourseLessons(
                                               title: course['title'],
                                               courseId: course['courseId'],
                                               onVideoCompleted: (videoId) {
-                                                print('Video completed callback received in MyCoursesScreen');
-                                                _markVideoAsCompleted(course['title'], videoId).then((_) {
-                                                  print('Course list refreshed after video completion');
+                                                print(
+                                                    'Video completed callback received in MyCoursesScreen');
+                                                _markVideoAsCompleted(
+                                                        course['title'],
+                                                        videoId)
+                                                    .then((_) {
+                                                  print(
+                                                      'Course list refreshed after video completion');
                                                 });
                                               },
                                             );
                                           },
                                         ),
                                       ).then((_) {
-                                        print('Returned from DisplayCourseLessons');
+                                        print(
+                                            'Returned from DisplayCourseLessons');
                                         _fetchEnrolledCourses();
                                       });
                                     },
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         ClipRRect(
-                                          borderRadius: const BorderRadius.vertical(
+                                          borderRadius:
+                                              const BorderRadius.vertical(
                                             top: Radius.circular(12),
                                           ),
                                           child: Image.network(
-                                            course['imagePath'] ?? 'https://via.placeholder.com/300x200',
+                                            course['imagePath'] ??
+                                                'https://via.placeholder.com/300x200',
                                             height: 200,
                                             width: double.infinity,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
-                                              print('Error loading image: $error');
+                                            errorBuilder: (BuildContext context,
+                                                Object error,
+                                                StackTrace? stackTrace) {
+                                              print(
+                                                  'Error loading image: $error');
                                               return Container(
                                                 height: 200,
                                                 width: double.infinity,
@@ -423,17 +480,27 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                                                 ),
                                               );
                                             },
-                                            loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                                              if (loadingProgress == null) return child;
+                                            loadingBuilder:
+                                                (BuildContext context,
+                                                    Widget child,
+                                                    ImageChunkEvent?
+                                                        loadingProgress) {
+                                              if (loadingProgress == null)
+                                                return child;
                                               return Container(
                                                 height: 200,
                                                 width: double.infinity,
                                                 color: Colors.grey[200],
                                                 child: Center(
-                                                  child: CircularProgressIndicator(
-                                                    value: loadingProgress.expectedTotalBytes != null
-                                                        ? loadingProgress.cumulativeBytesLoaded /
-                                                            loadingProgress.expectedTotalBytes!
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    value: loadingProgress
+                                                                .expectedTotalBytes !=
+                                                            null
+                                                        ? loadingProgress
+                                                                .cumulativeBytesLoaded /
+                                                            loadingProgress
+                                                                .expectedTotalBytes!
                                                         : null,
                                                   ),
                                                 ),
@@ -444,7 +511,8 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                                         Padding(
                                           padding: const EdgeInsets.all(16),
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 course['category'],
@@ -480,7 +548,9 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                                               ),
                                               const SizedBox(height: 12),
                                               Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
                                                 children: [
                                                   Row(
                                                     children: [
@@ -518,11 +588,17 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                                               ),
                                               const SizedBox(height: 8),
                                               LinearProgressIndicator(
-                                                value: course['completionPercentage'] / 100,
-                                                backgroundColor: Colors.grey[200],
-                                                valueColor: AlwaysStoppedAnimation<Color>(
-                                                  course['completionPercentage'] >= 100 
-                                                      ? Colors.green 
+                                                value: course[
+                                                        'completionPercentage'] /
+                                                    100,
+                                                backgroundColor:
+                                                    Colors.grey[200],
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                        Color>(
+                                                  course['completionPercentage'] >=
+                                                          100
+                                                      ? Colors.green
                                                       : Colors.blue,
                                                 ),
                                               ),
@@ -530,9 +606,11 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                                               Text(
                                                 '${course['completionPercentage'].toStringAsFixed(1)}% Complete',
                                                 style: TextStyle(
-                                                  color: course['completionPercentage'] >= 100 
-                                                      ? Colors.green 
-                                                      : Colors.blue,
+                                                  color:
+                                                      course['completionPercentage'] >=
+                                                              100
+                                                          ? Colors.green
+                                                          : Colors.blue,
                                                   fontSize: 12,
                                                 ),
                                               ),

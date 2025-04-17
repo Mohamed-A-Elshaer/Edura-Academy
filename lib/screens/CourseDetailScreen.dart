@@ -11,7 +11,14 @@ import '../auth/Appwrite_service.dart';
 import 'SpecificCategoryPage.dart';
 
 class Coursedetailscreen extends StatefulWidget {
-  const Coursedetailscreen({super.key,required this.category, required this.imagePath, required this.title, required this.courseId, required this.price, required this.instructorName});
+  const Coursedetailscreen(
+      {super.key,
+      required this.category,
+      required this.imagePath,
+      required this.title,
+      required this.courseId,
+      required this.price,
+      required this.instructorName});
   final String category;
   final String imagePath;
   final String title;
@@ -69,15 +76,18 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
       );
 
       List<String> sectionNames = List<String>.from(course.data['sections']);
-      List<String> sectionDurations = List<String>.from(course.data['section_durations']);
-      List<String> videoTitlesFromDb = List<String>.from(course.data['videos'] ?? []);
+      List<String> sectionDurations =
+          List<String>.from(course.data['section_durations']);
+      List<String> videoTitlesFromDb =
+          List<String>.from(course.data['videos'] ?? []);
 
       List<Map<String, dynamic>> fetchedSections = [];
 
       for (int i = 0; i < sectionNames.length; i++) {
         String rawSection = sectionNames[i];
         String sectionTitle = rawSection.replaceFirst(RegExp(r'^\d+-\s*'), '');
-        String duration = (i < sectionDurations.length) ? sectionDurations[i] : "0 Mins";
+        String duration =
+            (i < sectionDurations.length) ? sectionDurations[i] : "0 Mins";
 
         // ✅ Fetch all files from Appwrite Storage for this section
         final files = await Appwrite_service.storage.listFiles(
@@ -85,7 +95,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
           queries: [
             Query.startsWith(
               'name',
-              '${widget.title.replaceAll(' ', '_')}/${rawSection.replaceAll(' ', '_')}',
+              '${widget.title.replaceAll(' ', '')}/${rawSection.replaceAll(' ', '')}',
             ),
           ],
         );
@@ -95,15 +105,22 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
 
         for (String dbVideoTitle in videoTitlesFromDb) {
           // ✅ Extract filename (e.g., '01- Introduction to Flutter')
-          String dbVideoNameOnly = dbVideoTitle.trim().split('/').last.replaceAll('.mp4', '').toLowerCase();
+          String dbVideoNameOnly = dbVideoTitle
+              .trim()
+              .split('/')
+              .last
+              .replaceAll('.mp4', '')
+              .toLowerCase();
 
           // ✅ Try to find matching file in storage
           models.File? matchedFile;
           for (var file in files.files) {
             if (!file.name.endsWith('.mp4')) continue;
 
-            String storageFileName = file.name.split('/').last.replaceAll('.mp4', '');
-            String normalizedStorage = storageFileName.replaceAll('_', ' ').toLowerCase().trim();
+            String storageFileName =
+                file.name.split('/').last.replaceAll('.mp4', '');
+            String normalizedStorage =
+                storageFileName.replaceAll('_', ' ').toLowerCase().trim();
 
             if (normalizedStorage == dbVideoNameOnly) {
               matchedFile = file;
@@ -157,7 +174,8 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
       final instructorDoc = await Appwrite_service.databases.getDocument(
         databaseId: '67c029ce002c2d1ce046',
         collectionId: '67c0cc3600114e71d658',
-        documentId: instructorId,      );
+        documentId: instructorId,
+      );
 
       final email = instructorDoc.data['email'];
       instructorMajor = instructorDoc.data['major'] ?? '';
@@ -196,9 +214,12 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
   Future<void> _fetchVideoCount() async {
     try {
       final courseDocument = await Appwrite_service.databases.getDocument(
-        databaseId: '67c029ce002c2d1ce046', // Replace with your actual database ID
-        collectionId: '67c1c87c00009d84c6ff', // Replace with your actual collection ID
-        documentId: widget.courseId, // Use the courseId to fetch the specific course
+        databaseId:
+            '67c029ce002c2d1ce046', // Replace with your actual database ID
+        collectionId:
+            '67c1c87c00009d84c6ff', // Replace with your actual collection ID
+        documentId:
+            widget.courseId, // Use the courseId to fetch the specific course
       );
 
       List<dynamic> videos = courseDocument.data['videos'] ?? [];
@@ -209,12 +230,16 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
       print('Error fetching video count: $e');
     }
   }
+
   Future<void> _fetchCourseDuration() async {
     try {
       final courseDocument = await Appwrite_service.databases.getDocument(
-        databaseId: '67c029ce002c2d1ce046', // Replace with your actual database ID
-        collectionId: '67c1c87c00009d84c6ff', // Replace with your actual collection ID
-        documentId: widget.courseId, // Use the courseId to fetch the specific course
+        databaseId:
+            '67c029ce002c2d1ce046', // Replace with your actual database ID
+        collectionId:
+            '67c1c87c00009d84c6ff', // Replace with your actual collection ID
+        documentId:
+            widget.courseId, // Use the courseId to fetch the specific course
       );
 
       setState(() {
@@ -228,13 +253,17 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
   Future<void> _fetchCourseDescription() async {
     try {
       final courseDocument = await Appwrite_service.databases.getDocument(
-        databaseId: '67c029ce002c2d1ce046', // Replace with your actual database ID
-        collectionId: '67c1c87c00009d84c6ff', // Replace with your actual collection ID
-        documentId: widget.courseId, // Use the courseId to fetch the specific course
+        databaseId:
+            '67c029ce002c2d1ce046', // Replace with your actual database ID
+        collectionId:
+            '67c1c87c00009d84c6ff', // Replace with your actual collection ID
+        documentId:
+            widget.courseId, // Use the courseId to fetch the specific course
       );
 
       setState(() {
-        courseDescription = courseDocument.data['description'] ?? ''; // Retrieve the course description
+        courseDescription = courseDocument.data['description'] ??
+            ''; // Retrieve the course description
         _checkDescriptionOverflow();
       });
     } catch (e) {
@@ -255,7 +284,9 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
       text: span,
     );
 
-    tp.layout(maxWidth: MediaQuery.of(context).size.width - 64); // padding 16 * 2 + margin
+    tp.layout(
+        maxWidth:
+            MediaQuery.of(context).size.width - 64); // padding 16 * 2 + margin
 
     if (tp.didExceedMaxLines) {
       _isDescriptionOverflowing = true;
@@ -305,7 +336,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     try {
       // Get current user
       final currentUser = await Appwrite_service.account.get();
-      
+
       // Get user's document from database
       final userDoc = await Appwrite_service.databases.getDocument(
         databaseId: '67c029ce002c2d1ce046',
@@ -314,8 +345,9 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
       );
 
       // Check if course is in purchased_courses array
-      List<String> purchasedCourses = List<String>.from(userDoc.data['purchased_courses'] ?? []);
-      
+      List<String> purchasedCourses =
+          List<String>.from(userDoc.data['purchased_courses'] ?? []);
+
       setState(() {
         _isPurchased = purchasedCourses.contains(widget.title);
       });
@@ -328,7 +360,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     try {
       // Get current user
       final currentUser = await Appwrite_service.account.get();
-      
+
       // Get user's document
       final userDoc = await Appwrite_service.databases.getDocument(
         databaseId: '67c029ce002c2d1ce046',
@@ -337,11 +369,12 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
       );
 
       // Get existing purchased courses or initialize empty list
-      List<String> purchasedCourses = List<String>.from(userDoc.data['purchased_courses'] ?? []);
-      
+      List<String> purchasedCourses =
+          List<String>.from(userDoc.data['purchased_courses'] ?? []);
+
       // Add new course to the list
       purchasedCourses.add(widget.title);
-      
+
       // Update user document with new purchased courses list
       await Appwrite_service.databases.updateDocument(
         databaseId: '67c029ce002c2d1ce046',
@@ -349,6 +382,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
         documentId: currentUser.$id,
         data: {
           'purchased_courses': purchasedCourses,
+          'ongoing_courses': purchasedCourses
         },
       );
 
@@ -362,7 +396,8 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     } catch (e) {
       print('Error processing purchase: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error processing purchase. Please try again.')),
+        const SnackBar(
+            content: Text('Error processing purchase. Please try again.')),
       );
     }
   }
@@ -385,27 +420,27 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     if (!RegExp(r'^\d{2}/\d{2}$').hasMatch(value)) {
       return false;
     }
-    
+
     // Extract month and year
     List<String> parts = value.split('/');
     int month = int.parse(parts[0]);
     int year = int.parse(parts[1]);
-    
+
     // Get current date
     DateTime now = DateTime.now();
     int currentYear = now.year % 100;
     int currentMonth = now.month;
-    
+
     // Validate month (1-12)
     if (month < 1 || month > 12) {
       return false;
     }
-    
+
     // Validate year (not expired)
     if (year < currentYear || (year == currentYear && month < currentMonth)) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -419,10 +454,17 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
 
   void _validateForm() {
     setState(() {
-      cardNumberError = _validateCardNumber(cardNumber) ? null : 'Please enter a valid 16-digit card number';
-      expiryDateError = _validateExpiryDate(expiryDate) ? null : 'Please enter a valid expiry date (MM/YY)';
-      cvvError = _validateCVV(cvvCode) ? null : 'Please enter a valid 3-digit CVV';
-      cardHolderNameError = _validateCardHolderName(cardHolderName) ? null : 'Please enter a valid name (letters only)';
+      cardNumberError = _validateCardNumber(cardNumber)
+          ? null
+          : 'Please enter a valid 16-digit card number';
+      expiryDateError = _validateExpiryDate(expiryDate)
+          ? null
+          : 'Please enter a valid expiry date (MM/YY)';
+      cvvError =
+          _validateCVV(cvvCode) ? null : 'Please enter a valid 3-digit CVV';
+      cardHolderNameError = _validateCardHolderName(cardHolderName)
+          ? null
+          : 'Please enter a valid name (letters only)';
     });
   }
 
@@ -705,7 +747,8 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => SpecificCategoryPage(category: widget.category),
+                builder: (context) =>
+                    SpecificCategoryPage(category: widget.category),
               ),
             );
           },
@@ -729,32 +772,27 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                 child: CircleAvatar(
                   radius: 25,
                   backgroundColor: const Color(0xFF167F71),
-                  child: _isPurchased 
-                    ? IconButton(
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context, 
-                            MaterialPageRoute(
-                              builder: (context) => DisplayCourseLessons(
-                                title: widget.title, 
-                                courseId: widget.courseId
-                              )
-                            )
-                          );
-                        }, 
-                        icon: const Icon(Icons.play_arrow, color: Colors.white)
-                      )
-                    : IconButton(
-                        onPressed: null,
-                        icon: const Icon(Icons.lock, color: Colors.white),
-                      ),
+                  child: _isPurchased
+                      ? IconButton(
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => DisplayCourseLessons(
+                                        title: widget.title,
+                                        courseId: widget.courseId)));
+                          },
+                          icon:
+                              const Icon(Icons.play_arrow, color: Colors.white))
+                      : IconButton(
+                          onPressed: null,
+                          icon: const Icon(Icons.lock, color: Colors.white),
+                        ),
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 1),
-
           Container(
             margin: const EdgeInsets.only(top: 25),
             decoration: BoxDecoration(
@@ -776,8 +814,8 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                     Text(
-                     widget.category,
+                    Text(
+                      widget.category,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -803,7 +841,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                 Text(
+                Text(
                   widget.title,
                   style: TextStyle(
                     fontSize: 18,
@@ -853,7 +891,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                         ),
                       ],
                     ),
-                     Text(
+                    Text(
                       'EGP ${widget.price}',
                       style: TextStyle(
                         fontSize: 22,
@@ -869,7 +907,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                   children: [],
                 ),
                 const SizedBox(height: 16),
-                                Padding(
+                Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
@@ -890,8 +928,9 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                           ),
                           child: Text('About',
                               style: TextStyle(
-                                  color:
-                                      !_showCuric ? Colors.white : Colors.black)),
+                                  color: !_showCuric
+                                      ? Colors.white
+                                      : Colors.black)),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -912,8 +951,9 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                           ),
                           child: Text('Curriculum',
                               style: TextStyle(
-                                  color:
-                                      _showCuric ? Colors.white : Colors.black)),
+                                  color: _showCuric
+                                      ? Colors.white
+                                      : Colors.black)),
                         ),
                       ),
                     ],
@@ -922,7 +962,6 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
               ],
             ),
           ),
-
           if (!_showCuric) ...[
             const SizedBox(height: 16),
             Column(
@@ -933,9 +972,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[700],
-
                   ),
-
                 ),
                 if (_isDescriptionOverflowing)
                   TextButton(
@@ -955,26 +992,30 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                   ),
               ],
             ),
-
-             const SizedBox(height: 13),
-          
-            
-             const Text("Instructor", style: TextStyle(fontSize: 20,
-             fontWeight: FontWeight.w500),),
+            const SizedBox(height: 13),
+            const Text(
+              "Instructor",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+            ),
             Row(
               children: [
                 CircleAvatar(
                   radius: 46,
                   backgroundColor: Colors.grey[200],
-                  backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+                  backgroundImage:
+                      avatarUrl != null ? NetworkImage(avatarUrl!) : null,
                   child: avatarUrl == null
-                      ? Icon(Icons.person_outline, color: Colors.grey[400], size: 30)
+                      ? Icon(Icons.person_outline,
+                          color: Colors.grey[400], size: 30)
                       : null,
                 ),
-                const SizedBox(width: 12), // Gives space between avatar and text
-                Expanded( // Ensures text takes only available space
+                const SizedBox(
+                    width: 12), // Gives space between avatar and text
+                Expanded(
+                  // Ensures text takes only available space
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start, // Keeps text aligned left
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start, // Keeps text aligned left
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
@@ -999,19 +1040,19 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                 ),
               ],
             ),
-
             const Divider(
               thickness: 0.3,
-                      color: Colors.grey,
-                      height: 36,),
-             const SizedBox(height: 16),
+              color: Colors.grey,
+              height: 36,
+            ),
+            const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.blue.shade50,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child:  Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -1039,7 +1080,6 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                     ],
                   ),
                   SizedBox(height: 8),
-
                   Row(
                     children: [
                       Icon(Icons.access_time, size: 24, color: Colors.blue),
@@ -1048,7 +1088,6 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                     ],
                   ),
                   SizedBox(height: 8),
-
                 ],
               ),
             ),
@@ -1074,7 +1113,6 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
               rating: 4.8,
             ),
           ],
-
           if (_showCuric) ...[
             const SizedBox(height: 16),
             Container(
@@ -1107,7 +1145,6 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                         ],
                       ),
                       SizedBox(height: 20),
-              
                       ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -1115,21 +1152,24 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                         itemBuilder: (context, lessonIndex) {
                           final lesson = section['lessons'][lessonIndex];
                           return _buildLessonTile(
-                            lesson['number'], 
+                            lesson['number'],
                             lesson['title'].toString().substring(4),
                             isPurchased: _isPurchased,
-                            onTap: _isPurchased ? () {
-                              // Handle video playback when purchased
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => DisplayCourseLessons(
-                                    title: widget.title,
-                                    courseId: widget.courseId,
-                                  ),
-                                ),
-                              );
-                            } : null,
+                            onTap: _isPurchased
+                                ? () {
+                                    // Handle video playback when purchased
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            DisplayCourseLessons(
+                                          title: widget.title,
+                                          courseId: widget.courseId,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                : null,
                           );
                         },
                       ),
@@ -1139,7 +1179,6 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
               ),
             ),
           ],
-
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _isPurchased ? null : _showPaymentSheet,
@@ -1149,9 +1188,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
               backgroundColor: Colors.blue,
             ),
             child: Text(
-              _isPurchased 
-                ? 'Enrolled' 
-                : 'Enroll Course EGP ${widget.price}',
+              _isPurchased ? 'Enrolled' : 'Enroll Course EGP ${widget.price}',
               style: TextStyle(color: Colors.white),
             ),
           ),
@@ -1160,6 +1197,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     );
   }
 }
+
 class ReviewCard extends StatelessWidget {
   final String name;
   final String review;
@@ -1195,7 +1233,8 @@ class ReviewCard extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -1220,54 +1259,55 @@ class ReviewCard extends StatelessWidget {
   }
 }
 
-  Widget _buildLessonTile(String lessonNumber, String lessonTitle, {bool isPurchased = false, VoidCallback? onTap}) {
-    String displayTitle = lessonTitle;
-    if (lessonTitle.length > 30) {
-      displayTitle = lessonTitle.substring(0, 27) + '...';
-    }
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      elevation: 2,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: isPurchased ? Colors.blue : Colors.grey,
-                    child: Text(
-                      lessonNumber,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+Widget _buildLessonTile(String lessonNumber, String lessonTitle,
+    {bool isPurchased = false, VoidCallback? onTap}) {
+  String displayTitle = lessonTitle;
+  if (lessonTitle.length > 30) {
+    displayTitle = lessonTitle.substring(0, 27) + '...';
+  }
+  return Card(
+    margin: const EdgeInsets.only(bottom: 8),
+    elevation: 2,
+    child: InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: isPurchased ? Colors.blue : Colors.grey,
+                  child: Text(
+                    lessonNumber,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    displayTitle,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: isPurchased ? Colors.black : Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-              if (!isPurchased)
-                const Icon(
-                  Icons.lock,
-                  color: Colors.grey,
-                  size: 20,
                 ),
-            ],
-          ),
+                const SizedBox(width: 8),
+                Text(
+                  displayTitle,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: isPurchased ? Colors.black : Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+            if (!isPurchased)
+              const Icon(
+                Icons.lock,
+                color: Colors.grey,
+                size: 20,
+              ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
