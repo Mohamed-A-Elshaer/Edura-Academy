@@ -5,7 +5,7 @@ import 'package:appwrite/models.dart' as models;
 import 'package:mashrooa_takharog/screens/video_player_screen.dart';
 import '../auth/Appwrite_service.dart';
 
-class DisplayCourseLessons extends StatefulWidget{
+class DisplayCourseLessons extends StatefulWidget {
   final String title;
   final String courseId;
   final Function(String)? onVideoCompleted;
@@ -24,12 +24,12 @@ class DisplayCourseLessons extends StatefulWidget{
 class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
   List<Map<String, dynamic>> sections = [];
 
-
   @override
   void initState() {
     super.initState();
     fetchSectionsAndVideos();
   }
+
   Future<void> fetchSectionsAndVideos() async {
     try {
       // ✅ Fetch course details from Appwrite database
@@ -40,15 +40,18 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
       );
 
       List<String> sectionNames = List<String>.from(course.data['sections']);
-      List<String> sectionDurations = List<String>.from(course.data['section_durations']);
-      List<String> videoTitlesFromDb = List<String>.from(course.data['videos'] ?? []);
+      List<String> sectionDurations =
+          List<String>.from(course.data['section_durations']);
+      List<String> videoTitlesFromDb =
+          List<String>.from(course.data['videos'] ?? []);
 
       List<Map<String, dynamic>> fetchedSections = [];
 
       for (int i = 0; i < sectionNames.length; i++) {
         String rawSection = sectionNames[i];
         String sectionTitle = rawSection.replaceFirst(RegExp(r'^\d+-\s*'), '');
-        String duration = (i < sectionDurations.length) ? sectionDurations[i] : "0 Mins";
+        String duration =
+            (i < sectionDurations.length) ? sectionDurations[i] : "0 Mins";
 
         // ✅ Fetch all files from Appwrite Storage for this section
         final files = await Appwrite_service.storage.listFiles(
@@ -66,20 +69,32 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
 
         for (String dbVideoTitle in videoTitlesFromDb) {
           // ✅ Remove first 4 characters like "01- "
-          String dbVideoTrimmed = dbVideoTitle.length > 4 ? dbVideoTitle.substring(4) : dbVideoTitle;
-          String dbVideoNameOnly = dbVideoTrimmed.trim().split('/').last.replaceAll('.mp4', '').toLowerCase();
-          String normalizedDbVideo = dbVideoNameOnly.replaceAll('_', ' ').toLowerCase();
+          String dbVideoTrimmed = dbVideoTitle.length > 4
+              ? dbVideoTitle.substring(4)
+              : dbVideoTitle;
+          String dbVideoNameOnly = dbVideoTrimmed
+              .trim()
+              .split('/')
+              .last
+              .replaceAll('.mp4', '')
+              .toLowerCase();
+          String normalizedDbVideo =
+              dbVideoNameOnly.replaceAll('_', ' ').toLowerCase();
 
           // ✅ Try to find matching file in storage
           models.File? matchedFile;
           for (var file in files.files) {
             if (!file.name.endsWith('.mp4')) continue;
 
-            String storageFileName = file.name.split('/').last.replaceAll('.mp4', '');
+            String storageFileName =
+                file.name.split('/').last.replaceAll('.mp4', '');
 
             // ✅ Remove first 4 characters from storage filename
-            String trimmedStorageName = storageFileName.length > 4 ? storageFileName.substring(4) : storageFileName;
-            String normalizedStorage = trimmedStorageName.replaceAll('_', ' ').toLowerCase().trim();
+            String trimmedStorageName = storageFileName.length > 4
+                ? storageFileName.substring(4)
+                : storageFileName;
+            String normalizedStorage =
+                trimmedStorageName.replaceAll('_', ' ').toLowerCase().trim();
 
             print('🔍 Comparing:');
             print('   DB: $normalizedDbVideo');
@@ -103,8 +118,7 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
             });
 
             lessonNumber++;
-          }
-          else {
+          } else {
             print('⚠️ No match found for: $dbVideoTitle');
           }
         }
@@ -160,7 +174,6 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-
       body: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: sections.length,
@@ -169,122 +182,96 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      section['title'],
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    Text(
-                      section['duration'],
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
-                    ),
-                  ]),
-              SizedBox(height: 20,),
-
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text(
+                  section['title'],
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  section['duration'],
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 14,
+                  ),
+                ),
+              ]),
+              SizedBox(
+                height: 20,
+              ),
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: (section['lessons'] as List).length,
                 itemBuilder: (context, lessonIndex) {
                   final lesson = section['lessons'][lessonIndex];
-                  return _buildLessonTile(lesson['number'],  lesson['title'].toString().substring(4),lesson['videoUrl']);
-
+                  return _buildLessonTile(
+                      lesson['number'],
+                      lesson['title'].toString().substring(4),
+                      lesson['videoUrl']);
                 },
               ),
             ],
           );
         },
       ),
-
     );
   }
 
-  Widget _buildLessonTile(String lessonNumber, String lessonTitle, String videoUrl) {
-    String displayTitle = lessonTitle;
-    if (lessonTitle.length > 30) {
-      displayTitle = lessonTitle.substring(0, 27) + '...';
-    }
-
-    // Find the video ID for this lesson
-    String? videoId;
-    for (var section in sections) {
-      for (var lesson in section['lessons']) {
-        if (lesson['videoUrl'] == videoUrl) {
-          videoId = lesson['videoId'];
-          print('Found video ID: $videoId for URL: $videoUrl');
-          break;
-        }
-      }
-      if (videoId != null) break;
-    }
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // 👈 Left side: lesson number + title
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Colors.blue,
-                  child: Text(
-                    lessonNumber,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  displayTitle,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+  Widget _buildLessonTile(String number, String title, String videoUrl) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VideoPlayerScreen(
+              videoUrl: videoUrl,
+              lessonTitle: title,
+              onVideoCompleted: () => _handleVideoCompletion(
+                  videoUrl.split('/files/')[1].split('/view')[0]),
             ),
-            // 👉 Right side: Play icon
-            IconButton(
-              onPressed: () {
-                print('Playing video: $videoUrl');
-                print('Video ID: $videoId');
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => VideoPlayerScreen(
-                      lessonTitle: lessonTitle,
-                      videoUrl: videoUrl,
-                      onVideoCompleted: videoId != null 
-                          ? () {
-                              print('Video completed callback triggered');
-                              _handleVideoCompletion(videoId!);
-                            }
-                          : null,
-                    ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.blue,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Center(
+                child: Text(
+                  number,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
-                );
-              },
-              icon: const Icon(
-                Icons.play_arrow,
-                size: 20,
-                color: Color(0xff0961F5),
+                ),
               ),
             ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const Icon(Icons.play_circle_outline, color: Colors.blue),
           ],
         ),
       ),

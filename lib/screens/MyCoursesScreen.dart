@@ -50,26 +50,9 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
       List<String> purchasedCourseTitles =
           List<String>.from(userDoc.data['purchased_courses'] ?? []);
 
-      // Handle completed videos field (could be a Map or List)
-      Map<String, List<String>> completedVideos;
-      var completedVideosData = userDoc.data['completed_videos'] ?? {};
-
-      if (completedVideosData is Map) {
-        // If it's a map, convert it directly
-        completedVideos = Map<String, List<String>>.from(
-          completedVideosData
-              .map((key, value) => MapEntry(key, List<String>.from(value))),
-        );
-      } else if (completedVideosData is List) {
-        // If it's a list, initialize an empty map and assign the list to each course
-        completedVideos = {};
-        for (String courseTitle in purchasedCourseTitles) {
-          completedVideos[courseTitle] = List<String>.from(completedVideosData);
-        }
-      } else {
-        // If it's neither, initialize an empty map
-        completedVideos = {};
-      }
+      // Get completed videos list
+      List<String> completedVideos =
+          List<String>.from(userDoc.data['completed_videos'] ?? []);
 
       print('Current completed videos in database: $completedVideos');
 
@@ -90,17 +73,23 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
             final course = response.documents.first;
             List<String> courseVideos =
                 List<String>.from(course.data['videos'] ?? []);
-            List<String> userCompletedVideos =
-                completedVideos[courseTitle] ?? [];
+
+            // Count completed videos for this course
+            int completedCount = 0;
+            for (String videoId in courseVideos) {
+              if (completedVideos.contains(videoId)) {
+                completedCount++;
+              }
+            }
 
             // Calculate completion percentage
             double completionPercentage = courseVideos.isEmpty
                 ? 0
-                : (userCompletedVideos.length / courseVideos.length) * 100;
+                : (completedCount / courseVideos.length) * 100;
 
             print('Course: $courseTitle');
             print('Total Videos: ${courseVideos.length}');
-            print('Completed Videos: ${userCompletedVideos.length}');
+            print('Completed Videos: $completedCount');
             print('Completion Percentage: $completionPercentage%');
 
             courses.add({
@@ -113,7 +102,7 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
               'instructorName':
                   course.data['instructorName'] ?? 'Unknown Instructor',
               'videoCount': courseVideos.length,
-              'completedVideos': userCompletedVideos.length,
+              'completedVideos': completedCount,
               'duration': course.data['courseDuration_inMins'] ?? 0,
               'rating': course.data['rating'] ?? '4.5',
               'completionPercentage': completionPercentage,
@@ -178,33 +167,13 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
         documentId: currentUser.$id,
       );
 
-      // Handle completed videos field (could be a Map or List)
-      Map<String, List<String>> completedVideos;
-      var completedVideosData = userDoc.data['completed_videos'] ?? {};
-
-      if (completedVideosData is Map) {
-        completedVideos = Map<String, List<String>>.from(
-          completedVideosData
-              .map((key, value) => MapEntry(key, List<String>.from(value))),
-        );
-      } else if (completedVideosData is List) {
-        // If it's a list, convert it to a map with the current course
-        completedVideos = {};
-        completedVideos[courseTitle] = List<String>.from(completedVideosData);
-      } else {
-        completedVideos = {};
-      }
-
-      print('Current completed videos before update: $completedVideos');
-
-      // Initialize course's completed videos list if it doesn't exist
-      if (!completedVideos.containsKey(courseTitle)) {
-        completedVideos[courseTitle] = [];
-      }
+      // Get completed videos list
+      List<String> completedVideos =
+          List<String>.from(userDoc.data['completed_videos'] ?? []);
 
       // Add video to completed list if not already there
-      if (!completedVideos[courseTitle]!.contains(videoId)) {
-        completedVideos[courseTitle]!.add(videoId);
+      if (!completedVideos.contains(videoId)) {
+        completedVideos.add(videoId);
         print('Added video to completed list: $videoId');
       }
 
@@ -235,15 +204,14 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
         final course = courseResponse.documents.first;
         List<String> courseVideos =
             List<String>.from(course.data['videos'] ?? []);
-        List<String> userCompletedVideos = completedVideos[courseTitle] ?? [];
 
         double completionPercentage = courseVideos.isEmpty
             ? 0
-            : (userCompletedVideos.length / courseVideos.length) * 100;
+            : (completedVideos.length / courseVideos.length) * 100;
 
         print('Course: $courseTitle');
         print('Total Videos: ${courseVideos.length}');
-        print('Completed Videos: ${userCompletedVideos.length}');
+        print('Completed Videos: ${completedVideos.length}');
         print('New Completion Percentage: $completionPercentage%');
       }
 
