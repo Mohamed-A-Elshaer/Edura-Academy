@@ -6,10 +6,16 @@ import 'package:mashrooa_takharog/screens/video_player_screen.dart';
 import '../auth/Appwrite_service.dart';
 
 class DisplayCourseLessons extends StatefulWidget{
-  const DisplayCourseLessons({super.key,  required this.title, required this.courseId});
-
-  final String courseId;
   final String title;
+  final String courseId;
+  final Function(String)? onVideoCompleted;
+
+  const DisplayCourseLessons({
+    super.key,
+    required this.title,
+    required this.courseId,
+    this.onVideoCompleted,
+  });
 
   @override
   State<DisplayCourseLessons> createState() => _DisplayCourseLessonsState();
@@ -118,6 +124,22 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
     }
   }
 
+  void _handleVideoCompletion(String videoId) {
+    if (widget.onVideoCompleted != null) {
+      print('Video completion triggered for ID: $videoId');
+      widget.onVideoCompleted!(videoId);
+      // Show completion message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Video marked as completed!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      // Pop back to MyCoursesScreen which will trigger a refresh
+      Navigator.pop(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -185,11 +207,25 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
     );
   }
 
-  Widget _buildLessonTile(String lessonNumber, String lessonTitle,String videoUrl) {
+  Widget _buildLessonTile(String lessonNumber, String lessonTitle, String videoUrl) {
     String displayTitle = lessonTitle;
     if (lessonTitle.length > 30) {
       displayTitle = lessonTitle.substring(0, 27) + '...';
     }
+
+    // Find the video ID for this lesson
+    String? videoId;
+    for (var section in sections) {
+      for (var lesson in section['lessons']) {
+        if (lesson['videoUrl'] == videoUrl) {
+          videoId = lesson['videoId'];
+          print('Found video ID: $videoId for URL: $videoUrl');
+          break;
+        }
+      }
+      if (videoId != null) break;
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       elevation: 2,
@@ -225,14 +261,21 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
             // 👉 Right side: Play icon
             IconButton(
               onPressed: () {
+                print('Playing video: $videoUrl');
+                print('Video ID: $videoId');
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        VideoPlayerScreen(
-                          lessonTitle: lessonTitle,
-                          videoUrl: videoUrl,
-                        ),
+                    builder: (context) => VideoPlayerScreen(
+                      lessonTitle: lessonTitle,
+                      videoUrl: videoUrl,
+                      onVideoCompleted: videoId != null 
+                          ? () {
+                              print('Video completed callback triggered');
+                              _handleVideoCompletion(videoId!);
+                            }
+                          : null,
+                    ),
                   ),
                 );
               },
@@ -247,4 +290,4 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
       ),
     );
   }
-  }
+}
