@@ -124,8 +124,12 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           backgroundColor: Colors.green,
         ),
       );
+
+
     }
   }
+
+
 
   @override
   void dispose() {
@@ -151,9 +155,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           Center(
             child: _isInitialized && _controller != null
                 ? AspectRatio(
-                    aspectRatio: _controller!.value.aspectRatio,
-                    child: VideoPlayer(_controller!),
-                  )
+              aspectRatio: _controller!.value.aspectRatio,
+              child: VideoPlayer(_controller!),
+            )
                 : const CircularProgressIndicator(color: Colors.white),
           ),
 

@@ -146,8 +146,8 @@ class _SpecificCategoryPageState extends State<SpecificCategoryPage> {
             category: course['category'] ?? '',
             title: course['title'] ?? '',
             price: course['price']?.toString() ?? 'Free',
-            rating: 4.5,
-            students: '200', // dummy
+            rating: course['rating'],
+            students: course['students'], // dummy
             imagePath: course['imagePath'],
             instructorName: course['instructor_name'] ?? 'Unknown',
             isBookmarked: savedCourseTitles.contains(course['title']),

@@ -55,6 +55,10 @@ class _FilterScreenState extends State<FilterScreen> {
     '4.0 & Up Above',
     '3.5 & Up Above',
     '3.0 & Up Above',
+    '2.5 & Up Above',
+    '2.0 & Up Above',
+    '1.5 & Up Above',
+    '1.0 & Up Above',
   ];
 
   List<String> videoDuration=[
@@ -127,6 +131,8 @@ class _FilterScreenState extends State<FilterScreen> {
     });
   }
 
+
+
   @override
   Widget build(BuildContext context) {
 return Scaffold(
@@ -160,7 +166,7 @@ return Scaffold(
            CustomFilterModel(title: title[0], itemCount: subCategoriesList.length, checkBoxItem: subCategoriesList,containerHeight: 330,selectedItems: selectedCategories, onToggle: _toggleCategory,),
             CustomFilterModel(title: title[1], itemCount: price.length, checkBoxItem: price,containerHeight: 100,selectedItems: selectedPrices, onToggle: _togglePrice,),
             CustomFilterModel(title: title[2], itemCount: videoDuration.length, checkBoxItem: videoDuration,containerHeight: 180, selectedItems: selectedDurations, onToggle: _toggleDuration,),
-            CustomFilterModel(title: title[3], itemCount: rating.length, checkBoxItem: rating,containerHeight: 180,selectedItems: selectedRatings, onToggle: _toggleRating,),
+            CustomFilterModel(title: title[3], itemCount: rating.length, checkBoxItem: rating,containerHeight: 330,selectedItems: selectedRatings, onToggle: _toggleRating,),
            // CustomFilterModel(title: title[1], itemCount: levels.length, checkBoxItem: levels,containerHeight: 180,),
 
 

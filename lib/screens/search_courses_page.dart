@@ -43,6 +43,7 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
     await _fetchSavedCourseTitles();
     await _fetchCourses();
     await _fetchMentors();
+    await updateCourseStudentCounts();
   }
 
   Future<void> _fetchSavedCourseTitles() async {
@@ -81,7 +82,7 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
             'courseId': doc.$id,
             'imagePath': SearchPageState.getCourseCoverImageUrl(doc.data['title'] ?? ''),
             'instructorName': doc.data['name'] ?? '',
-            'rating': 4.2, // Default rating
+            'rating': doc.data['averageRating']?? 0.0, // Default rating
             'students': '1000 Std', // Default students count
             'duration': doc.data['courseDuration_inMins']?? 0
           };
@@ -95,6 +96,34 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
       });
     }
   }
+
+  Future<void> updateCourseStudentCounts() async {
+    for (int i = 0; i < courses.length; i++) {
+      final courseTitle = courses[i]['title'];
+
+      try {
+        final studentCount = await getTotalStudents(courseTitle);
+        setState(() {
+          courses[i]['students'] = '$studentCount Std';
+        });
+      } catch (e) {
+        print('Error getting students for $courseTitle: $e');
+      }
+    }
+  }
+
+  Future<int> getTotalStudents(String courseTitle) async {
+    final response = await Appwrite_service.databases.listDocuments(
+      databaseId: '67c029ce002c2d1ce046',
+      collectionId: '67c0cc3600114e71d658',
+      queries: [
+        appwrite.Query.contains('purchased_courses', courseTitle),
+      ],
+    );
+
+    return response.total;
+  }
+
 
 
   Future<void> _fetchMentors() async {
@@ -158,16 +187,14 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
 
     if (filters!['ratings']?.isNotEmpty ?? false) {
       filteredResults.addAll(result.where((course) {
-        double courseRating = double.tryParse(course['rating'].toString()) ?? 0;
+        double rating = double.tryParse(course['rating'].toString()) ?? 0;
         return filters!['ratings'].any((ratingFilter) {
-          if (ratingFilter == '4.5 & Up Above') return courseRating >= 4.5;
-          if (ratingFilter == '4.0 & Up Above') return courseRating >= 4.0;
-          if (ratingFilter == '3.5 & Up Above') return courseRating >= 3.5;
-          if (ratingFilter == '3.0 & Up Above') return courseRating >= 3.0;
-          return false;
+          final parsed = double.tryParse(ratingFilter.split(' ')[0]); // "4.5" from "4.5 & Up Above"
+          return parsed != null && rating >= parsed;
         });
       }));
     }
+
 
     if (filters!['durations']?.isNotEmpty ?? false) {
       filteredResults.addAll(result.where((course) {
@@ -197,6 +224,7 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
 
     return filteredResults;
   }
+
 
   List<Map<String, dynamic>> get filteredMentors {
     if (_searchQuery.isEmpty) return mentors;

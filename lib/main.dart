@@ -4,7 +4,6 @@ import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:mashrooa_takharog/firebase_options.dart';
 import 'package:mashrooa_takharog/providers/ThemeProvider.dart';
 import 'package:mashrooa_takharog/screens/CurriculumScreen.dart';
-import 'package:mashrooa_takharog/screens/DialougeTestScreen.dart';
 import 'package:mashrooa_takharog/screens/MyCoursesScreen.dart';
 import 'package:mashrooa_takharog/screens/PaymentDecisionScreen.dart';
 import 'package:mashrooa_takharog/screens/ReviewsScreen.dart';

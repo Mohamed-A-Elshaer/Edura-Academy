@@ -1,12 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mashrooa_takharog/auth/Appwrite_service.dart';
+import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import 'package:mashrooa_takharog/screens/popular_courses_page.dart';
 import 'package:mashrooa_takharog/screens/searchPage.dart';
 import 'package:mashrooa_takharog/screens/search_courses_page.dart';
 import 'package:mashrooa_takharog/screens/top_mentors_page.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-
+import 'package:appwrite/appwrite.dart' as appwrite;
 import 'SpecificCategoryPage.dart';
 import 'categoriesPage.dart';
 import '../widgets/coursecard.dart';
@@ -21,11 +23,12 @@ class Homepage extends StatefulWidget {
 }
 
 class HomepageState extends State<Homepage> {
+
   int currentIndex = 0;
   String? nickname = "Loading...";
   final PageController _pageController = PageController(viewportFraction: 0.9);
   final PageController _coursePageController =
-      PageController(viewportFraction: 0.6);
+  PageController(viewportFraction: 0.6);
   static int selectedCardIndex = -1;
   int selectedcategoryindex = -1;
   final List<Map<String, String>> mentors = [
@@ -41,7 +44,7 @@ class HomepageState extends State<Homepage> {
       "discount": "25% OFF*",
       "title": "Today's Special",
       "description":
-          "Get a discount for every course order only valid for today!",
+      "Get a discount for every course order only valid for today!",
       "backgroundColor": Colors.blue,
     },
     {
@@ -81,89 +84,18 @@ class HomepageState extends State<Homepage> {
     {"title": "Office productivity"},
   ];
 
-  static List<Map<String, dynamic>> coursecardList = [
-    {
-      'imagePath': 'assets/images/course1.png',
-      'category': 'Graphic Design',
-      'title': 'Graphic Design Advanced',
-      'price': 'EGP896',
-      'rating': 4.2,
-      'students': '7830 Std',
-    },
-    {
-      'imagePath': 'assets/images/course2.png',
-      'category': 'Graphic Design',
-      'title': 'Advance Diploma in Graphic Design',
-      'price': 'EGP800',
-      'rating': 4.3,
-      'students': '12680 Std',
-    },
-    {
-      'imagePath': 'assets/images/course3.png',
-      'category': 'Programming',
-      'title': 'Web Developement Full Diploma',
-      'price': 'EGP799',
-      'rating': 4.2,
-      'students': '990 Std',
-    },
-    {
-      'imagePath': 'assets/images/mediahandler.png',
-      'category': 'Arts & Humanities',
-      'title': 'Introdution to Arts',
-      'price': 'EGP1000',
-      'rating': 3.2,
-      'students': '2000 Std',
-    },
-    {
-      'imagePath': 'assets/images/mediahandler.png',
-      'category': 'Personal Development',
-      'title': 'How to Discover More About Yourself',
-      'price': 'EGP800',
-      'rating': 3.9,
-      'students': '12680 Std',
-    },
-    {
-      'imagePath': 'assets/images/mediahandler.png',
-      'category': 'SEO & Marketing',
-      'title': 'Introduction to Stocks',
-      'price': 'EGP1500',
-      'rating': 4.6,
-      'students': '990 Std',
-    },
-    {
-      'imagePath': 'assets/images/mediahandler.png',
-      'category': 'Office Productivity',
-      'title': 'How to Manage Your Time Effectively',
-      'price': 'EGP690',
-      'rating': 4.0,
-      'students': '12000 Std',
-    },
-    {
-      'imagePath': 'assets/images/advertisment.jpg',
-      'category': 'SEO & Marketing',
-      'title': 'Introduction to Social Marketing',
-      'price': 'EGP800',
-      'rating': 3.8,
-      'students': '12680 Std',
-    },
-    {
-      'imagePath': 'assets/images/mediahandler.png',
-      'category': 'Cooking',
-      'title': 'Healthy Cooking for a Healthy Family.',
-      'price': 'EGP799',
-      'rating': 4.4,
-      'students': '9990 Std',
-    },
-  ];
+  static List<Map<String, dynamic>> coursecardList = [];
 
-  List<Map<String, dynamic>> filteredCourses = [];
+
 
   @override
   void initState() {
     super.initState();
     _fetchUserData();
-    _filterCourses(0);
+    _fetchCoursesData(); // Add this to fetch courses from Appwrite
   }
+  List<Map<String, dynamic>> filteredCourses = [];
+
 
   Future<void> _fetchUserData() async {
     try {
@@ -194,21 +126,119 @@ class HomepageState extends State<Homepage> {
     }
   }
 
-  void _filterCourses(int index) {
+
+  // Add this new method to fetch courses from Appwrite
+  Future<void> _fetchCoursesData() async {
+    try {
+      final coursesResponse = await Appwrite_service.databases.listDocuments(
+        collectionId: '67c1c87c00009d84c6ff',
+        databaseId: '67c029ce002c2d1ce046',
+        queries: [
+          appwrite.Query.orderDesc('averageRating'),
+          appwrite.Query.limit(100)
+        ],
+      );
+
+      final usersResponse = await Appwrite_service.databases.listDocuments(
+        collectionId: '67c0cc3600114e71d658',
+        databaseId: '67c029ce002c2d1ce046',
+      );
+
+      final Map<String, int> coursePurchaseCounts = {};
+      for (final userDoc in usersResponse.documents) {
+        final purchasedCourses = List<String>.from(userDoc.data['purchased_courses'] ?? []);
+        for (final courseTitle in purchasedCourses) {
+          final lowerTitle = courseTitle.toLowerCase();
+          coursePurchaseCounts[lowerTitle] = (coursePurchaseCounts[lowerTitle] ?? 0) + 1;
+        }
+      }
+
+      final List<Map<String, dynamic>> fetchedCourses = [];
+      for (final doc in coursesResponse.documents) {
+        final courseTitle = doc.data['title'] ?? 'Untitled';
+        final purchaseCount = coursePurchaseCounts[courseTitle.toLowerCase()] ?? 0;
+
+        final coverUrl = await SupaAuthService.getCourseCoverImageUrl(courseTitle);
+
+        fetchedCourses.add({
+          'id': doc.$id,
+          'imagePath': coverUrl.isNotEmpty
+              ? coverUrl
+              : 'assets/images/mediahandler.png',
+          'category': doc.data['category'] ?? 'Unknown',
+          'title': courseTitle,
+          'price': 'EGP${doc.data['price']?.toString() ?? '0'}',
+          'rating': doc.data['averageRating']?.toDouble() ?? 0.0, // Add this
+          'students': purchaseCount,
+          'instructor_name': doc.data['instructorName'] ?? 'Unknown',
+        });
+      }
+
+      setState(() {
+        coursecardList = fetchedCourses;
+        _filterCourses(0);
+      });
+    } catch (e) {
+      print('Error fetching courses: $e');
+      setState(() {
+        _filterCourses(0);
+      });
+    }
+  }
+
+  // Modify the _filterCourses method to implement the top courses logic
+  void _filterCourses(int index) async {
     setState(() {
       selectedCardIndex = index;
+      filteredCourses = []; // Clear while loading
+    });
+
+    try {
+      // 1. First get fresh user data to count purchases
+      final usersResponse = await Appwrite_service.databases.listDocuments(
+        collectionId: '67c0cc3600114e71d658',
+        databaseId: '67c029ce002c2d1ce046',
+      );
+
+      // 2. Count purchases (same as in _fetchCoursesData)
+      final Map<String, int> coursePurchaseCounts = {};
+      for (final userDoc in usersResponse.documents) {
+        final purchasedCourses = List<String>.from(userDoc.data['purchased_courses'] ?? []);
+        for (final courseTitle in purchasedCourses) {
+          final lowerTitle = courseTitle.toLowerCase();
+          coursePurchaseCounts[lowerTitle] = (coursePurchaseCounts[lowerTitle] ?? 0) + 1;
+        }
+      }
+
+      // 3. Apply filtering
+      List<Map<String, dynamic>> resultCourses;
       if (index == 0) {
-        // Show all courses when "All" is selected
-        filteredCourses = List.from(coursecardList);
+        resultCourses = List.from(coursecardList);
       } else {
         String selectedCategory = categories[index]['title'];
-        filteredCourses = coursecardList
+        resultCourses = coursecardList
             .where((course) => course['category'] == selectedCategory)
             .toList();
       }
-    });
-  }
 
+      // 4. Update counts and sort
+      resultCourses = resultCourses.map((course) {
+        return {
+          ...course,
+          'students': coursePurchaseCounts[course['title'].toLowerCase()] ?? 0,
+        };
+      }).toList()
+        ..sort((a, b) => (b['rating'] ?? 0.0).compareTo(a['rating'] ?? 0.0));
+
+      setState(() {
+        filteredCourses = index == 0
+            ? resultCourses.take(10).toList()
+            : resultCourses.take(6).toList();
+      });
+    } catch (e) {
+      print('Error filtering courses: $e');
+    }
+  }
   @override
   void dispose() {
     _pageController.dispose();
@@ -270,7 +300,7 @@ class HomepageState extends State<Homepage> {
                     },
                     decoration: InputDecoration(
                       contentPadding:
-                          const EdgeInsets.symmetric(vertical: 20.0),
+                      const EdgeInsets.symmetric(vertical: 20.0),
                       prefixIcon: Icon(
                         Icons.search_outlined,
                       ),
@@ -518,39 +548,38 @@ class HomepageState extends State<Homepage> {
 
           SliverToBoxAdapter(
               child: SizedBox(
-            height: 300,
-            child: filteredCourses.isEmpty
-                ? Center(
-                    child: Text(
-                      "No courses available!",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  )
-                : ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: filteredCourses.length,
-                    itemBuilder: (context, index) {
-                      final course = filteredCourses[index];
-                      return Container(
-                        margin: const EdgeInsets.only(left: 2),
-                        width: MediaQuery.of(context).size.width * 0.8,
-                        child: CourseCard(
-                          title: course['title'],
-                          price: course['price'],
-                          rating: course['rating'],
-                          students: course['students'],
-                          imagePath: course['imagePath'],
-                          category: course['category'],
-                          instructorName:
-                              course['instructor_name'] ?? 'Unknown',
-                          isBookmarked: false,
-                          onBookmarkToggle: () {},
-                        ),
-                      );
-                    },
+                height: 360,
+                child: filteredCourses.isEmpty
+                    ? Center(
+                  child: Text(
+                    "No courses available!",
+                    style:
+                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-          )),
+                )
+                    : ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: filteredCourses.length,
+                  itemBuilder: (context, index) {
+                    final course = filteredCourses[index];
+                    return Container(
+                      margin: const EdgeInsets.only(left: 2),
+                      width: MediaQuery.of(context).size.width * 0.8,
+                      child: CourseCard(
+                        title: course['title'],
+                        price: course['price'],
+                        imagePath: course['imagePath'],
+                        category: course['category'],
+                        rating: course['rating'] ?? 0.0,
+                        instructorName:
+                        course['instructor_name'] ?? 'Unknown',
+                        isBookmarked: false,
+                        onBookmarkToggle: () {},
+                      ),
+                    );
+                  },
+                ),
+              )),
           const SliverToBoxAdapter(
             child: SizedBox(height: 20),
           ),
@@ -588,23 +617,23 @@ class HomepageState extends State<Homepage> {
 
           SliverToBoxAdapter(
               child: SizedBox(
-            height: 122,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: mentors.length,
-              itemBuilder: (context, index) {
-                final mentor = mentors[index];
-                return Container(
-                  width: MediaQuery.of(context).size.width * 0.3,
-                  margin: const EdgeInsets.only(right: 8),
-                  child: MentorCard(
-                    name: mentor['name']!,
-                    imagePath: mentor['imagePath']!,
-                  ),
-                );
-              },
-            ),
-          )),
+                height: 122,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: mentors.length,
+                  itemBuilder: (context, index) {
+                    final mentor = mentors[index];
+                    return Container(
+                      width: MediaQuery.of(context).size.width * 0.3,
+                      margin: const EdgeInsets.only(right: 8),
+                      child: MentorCard(
+                        name: mentor['name']!,
+                        imagePath: mentor['imagePath']!,
+                      ),
+                    );
+                  },
+                ),
+              )),
         ],
       ),
       /*   bottomNavigationBar: BottomNavigationBar(

@@ -179,6 +179,7 @@ class CourseLessonsScreen extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => VideoPlayerScreen(
+
                                       lessonTitle: lesson['title'] ?? '',
                                       videoUrl: lesson['videoUrl'] ?? '',
                                     ),

@@ -3,15 +3,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/screens/search_courses_page.dart';
+import '../auth/Appwrite_service.dart';
 import '../screens/CourseDetailScreen.dart';
 import '../screens/HomeScreen.dart';
+import 'package:appwrite/appwrite.dart' as appwrite;
 
 class CourseCard extends StatefulWidget {
   final String category;
   final String title;
   final String price;
-  final double rating;
-  final String students;
+   double? rating;
+   int? students;
   final String instructorName;
   String imagePath;
   final bool isBookmarked;
@@ -22,8 +24,8 @@ class CourseCard extends StatefulWidget {
     required this.category,
     required this.title,
     required this.price,
-    required this.rating,
-    required this.students,
+     this.rating,
+     this.students,
     required this.imagePath,
      required this.instructorName,
      required this.isBookmarked,
@@ -37,6 +39,48 @@ class CourseCard extends StatefulWidget {
 }
 
 class _CourseCardState extends State<CourseCard> {
+  @override
+  void initState() {
+    super.initState();
+    getAverageRating();
+    getTotalStudents();
+  }
+
+
+
+  Future<void> getAverageRating() async {
+    try {
+      final course = await Appwrite_service.databases.getDocument(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c1c87c00009d84c6ff', // courses collection
+        documentId: widget.courseId,
+      );
+      final ratingData = course.data['averageRating'];
+
+      setState(() {
+        widget.rating = (ratingData is int) ? ratingData.toDouble() : (ratingData ?? 0.0);
+      });
+    } catch (e) {
+      print('Error fetching average rating: $e');
+    }
+  }
+
+
+  Future<void> getTotalStudents() async {
+    try {
+      final result = await Appwrite_service.databases.listDocuments(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c0cc3600114e71d658', // users collection
+          queries: [appwrite.Query.contains('purchased_courses', widget.title)]
+      );
+      setState(() {
+        widget.students = result.total;
+      });
+    } catch (e) {
+      print('Error fetching total students: $e');
+    }
+  }
+
   void _toggleSavedCourse(String courseTitle) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -171,12 +215,14 @@ class _CourseCardState extends State<CourseCard> {
               const Icon(Icons.star, color: Colors.amber, size: 16),
               const SizedBox(width: 4),
               Text(
-                '${widget.rating} (${widget.students})',
+                '${(widget.rating ?? 0.0).toStringAsFixed(1)} '
+                    '(${int.tryParse(widget.students.toString() ?? '') ?? 0})',
                 style: const TextStyle(color: Colors.grey, fontSize: 12),
               ),
+
             ],
           ),
-         
+
 
 
           Transform(

@@ -46,18 +46,23 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
           );
 
           if (response.documents.isNotEmpty) {
-            final courseData = response.documents.first.data;
+            final doc = response.documents.first;
+            final courseData = doc.data;
+
+            // ✅ Attach the document ID!
+            courseData['courseId'] = doc.$id;
 
             // 🔥 Fetch and attach image URL
             final imageUrl = await SupaAuthService.getCourseCoverImageUrl(courseData['title']);
             courseData['imagePath'] = imageUrl;
 
             // 🔥 Set fallback/defaults
-            courseData['rating'] ??= 4.5;
-            courseData['students'] ??= '200';
+            courseData['rating'];
+            courseData['students'];
 
             fetchedCourses.add(courseData);
           }
+
         }
 
         // 🔥 Sync savedCourses globally
@@ -296,11 +301,12 @@ class _BookmarksScreenState extends State<BookmarksScreen> {
               itemBuilder: (context, index) {
                 final course = filteredCourses[index];
               return CourseCard(
+                courseId: course['courseId'],
                 category: course['category'] ?? '',
                 title: course['title'] ?? '',
                 price: course['price']?.toString() ?? 'Free',
-                rating: course['rating'] ?? 4.5,
-                students: course['students']?.toString() ?? '200',
+                rating: course['rating'],
+                students: course['students'],
                 imagePath: course['imagePath'] ?? '',
                 instructorName: course['instructor_name'] ?? 'Unknown',
                 isBookmarked: true, // ✅ Since this is the Bookmarks screen

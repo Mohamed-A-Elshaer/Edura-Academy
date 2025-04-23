@@ -13,12 +13,12 @@ import 'SpecificCategoryPage.dart';
 class Coursedetailscreen extends StatefulWidget {
   const Coursedetailscreen(
       {super.key,
-      required this.category,
-      required this.imagePath,
-      required this.title,
-      required this.courseId,
-      required this.price,
-      required this.instructorName});
+        required this.category,
+        required this.imagePath,
+        required this.title,
+        required this.courseId,
+        required this.price,
+        required this.instructorName});
   final String category;
   final String imagePath;
   final String title;
@@ -77,9 +77,9 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
 
       List<String> sectionNames = List<String>.from(course.data['sections']);
       List<String> sectionDurations =
-          List<String>.from(course.data['section_durations']);
+      List<String>.from(course.data['section_durations']);
       List<String> videoTitlesFromDb =
-          List<String>.from(course.data['videos'] ?? []);
+      List<String>.from(course.data['videos'] ?? []);
 
       List<Map<String, dynamic>> fetchedSections = [];
 
@@ -87,7 +87,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
         String rawSection = sectionNames[i];
         String sectionTitle = rawSection.replaceFirst(RegExp(r'^\d+-\s*'), '');
         String duration =
-            (i < sectionDurations.length) ? sectionDurations[i] : "0 Mins";
+        (i < sectionDurations.length) ? sectionDurations[i] : "0 Mins";
 
         // ✅ Fetch all files from Appwrite Storage for this section
         final files = await Appwrite_service.storage.listFiles(
@@ -118,9 +118,9 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
             if (!file.name.endsWith('.mp4')) continue;
 
             String storageFileName =
-                file.name.split('/').last.replaceAll('.mp4', '');
+            file.name.split('/').last.replaceAll('.mp4', '');
             String normalizedStorage =
-                storageFileName.replaceAll('_', ' ').toLowerCase().trim();
+            storageFileName.replaceAll('_', ' ').toLowerCase().trim();
 
             if (normalizedStorage == dbVideoNameOnly) {
               matchedFile = file;
@@ -215,11 +215,11 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     try {
       final courseDocument = await Appwrite_service.databases.getDocument(
         databaseId:
-            '67c029ce002c2d1ce046', // Replace with your actual database ID
+        '67c029ce002c2d1ce046', // Replace with your actual database ID
         collectionId:
-            '67c1c87c00009d84c6ff', // Replace with your actual collection ID
+        '67c1c87c00009d84c6ff', // Replace with your actual collection ID
         documentId:
-            widget.courseId, // Use the courseId to fetch the specific course
+        widget.courseId, // Use the courseId to fetch the specific course
       );
 
       List<dynamic> videos = courseDocument.data['videos'] ?? [];
@@ -235,11 +235,11 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     try {
       final courseDocument = await Appwrite_service.databases.getDocument(
         databaseId:
-            '67c029ce002c2d1ce046', // Replace with your actual database ID
+        '67c029ce002c2d1ce046', // Replace with your actual database ID
         collectionId:
-            '67c1c87c00009d84c6ff', // Replace with your actual collection ID
+        '67c1c87c00009d84c6ff', // Replace with your actual collection ID
         documentId:
-            widget.courseId, // Use the courseId to fetch the specific course
+        widget.courseId, // Use the courseId to fetch the specific course
       );
 
       setState(() {
@@ -254,11 +254,11 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     try {
       final courseDocument = await Appwrite_service.databases.getDocument(
         databaseId:
-            '67c029ce002c2d1ce046', // Replace with your actual database ID
+        '67c029ce002c2d1ce046', // Replace with your actual database ID
         collectionId:
-            '67c1c87c00009d84c6ff', // Replace with your actual collection ID
+        '67c1c87c00009d84c6ff', // Replace with your actual collection ID
         documentId:
-            widget.courseId, // Use the courseId to fetch the specific course
+        widget.courseId, // Use the courseId to fetch the specific course
       );
 
       setState(() {
@@ -286,7 +286,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
 
     tp.layout(
         maxWidth:
-            MediaQuery.of(context).size.width - 64); // padding 16 * 2 + margin
+        MediaQuery.of(context).size.width - 64); // padding 16 * 2 + margin
 
     if (tp.didExceedMaxLines) {
       _isDescriptionOverflowing = true;
@@ -346,7 +346,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
 
       // Check if course is in purchased_courses array
       List<String> purchasedCourses =
-          List<String>.from(userDoc.data['purchased_courses'] ?? []);
+      List<String>.from(userDoc.data['purchased_courses'] ?? []);
 
       setState(() {
         _isPurchased = purchasedCourses.contains(widget.title);
@@ -370,7 +370,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
 
       // Get existing purchased courses or initialize empty list
       List<String> purchasedCourses =
-          List<String>.from(userDoc.data['purchased_courses'] ?? []);
+      List<String>.from(userDoc.data['purchased_courses'] ?? []);
 
       // Add new course to the list
       purchasedCourses.add(widget.title);
@@ -461,7 +461,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
           ? null
           : 'Please enter a valid expiry date (MM/YY)';
       cvvError =
-          _validateCVV(cvvCode) ? null : 'Please enter a valid 3-digit CVV';
+      _validateCVV(cvvCode) ? null : 'Please enter a valid 3-digit CVV';
       cardHolderNameError = _validateCardHolderName(cardHolderName)
           ? null
           : 'Please enter a valid name (letters only)';
@@ -774,20 +774,20 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                   backgroundColor: const Color(0xFF167F71),
                   child: _isPurchased
                       ? IconButton(
-                          onPressed: () {
-                            Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => DisplayCourseLessons(
-                                        title: widget.title,
-                                        courseId: widget.courseId)));
-                          },
-                          icon:
-                              const Icon(Icons.play_arrow, color: Colors.white))
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => DisplayCourseLessons(
+                                    title: widget.title,
+                                    courseId: widget.courseId)));
+                      },
+                      icon:
+                      const Icon(Icons.play_arrow, color: Colors.white))
                       : IconButton(
-                          onPressed: null,
-                          icon: const Icon(Icons.lock, color: Colors.white),
-                        ),
+                    onPressed: null,
+                    icon: const Icon(Icons.lock, color: Colors.white),
+                  ),
                 ),
               ),
             ],
@@ -920,7 +920,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
-                                !_showCuric ? Colors.teal : Colors.grey[200],
+                            !_showCuric ? Colors.teal : Colors.grey[200],
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
@@ -943,7 +943,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
-                                _showCuric ? Colors.teal : Colors.grey[200],
+                            _showCuric ? Colors.teal : Colors.grey[200],
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
@@ -1003,10 +1003,10 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                   radius: 46,
                   backgroundColor: Colors.grey[200],
                   backgroundImage:
-                      avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+                  avatarUrl != null ? NetworkImage(avatarUrl!) : null,
                   child: avatarUrl == null
                       ? Icon(Icons.person_outline,
-                          color: Colors.grey[400], size: 30)
+                      color: Colors.grey[400], size: 30)
                       : null,
                 ),
                 const SizedBox(
@@ -1015,7 +1015,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                   // Ensures text takes only available space
                   child: Column(
                     crossAxisAlignment:
-                        CrossAxisAlignment.start, // Keeps text aligned left
+                    CrossAxisAlignment.start, // Keeps text aligned left
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
@@ -1100,7 +1100,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
             ReviewCard(
               name: 'Will',
               review:
-                  'This course has been very useful. Mentor was well spoken totally tuned.',
+              'This course has been very useful. Mentor was well spoken totally tuned.',
               timeAgo: '2 Weeks Ago',
               rating: 4.3,
             ),
@@ -1108,7 +1108,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
             ReviewCard(
               name: 'Martha E. Thompson',
               review:
-                  'This course has been very useful. Mentor was well spoken totally tuned in for live sessions.',
+              'This course has been very useful. Mentor was well spoken totally tuned in for live sessions.',
               timeAgo: '2 Weeks Ago',
               rating: 4.8,
             ),
@@ -1157,18 +1157,18 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                             isPurchased: _isPurchased,
                             onTap: _isPurchased
                                 ? () {
-                                    // Handle video playback when purchased
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            DisplayCourseLessons(
-                                          title: widget.title,
-                                          courseId: widget.courseId,
-                                        ),
+                              // Handle video playback when purchased
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      DisplayCourseLessons(
+                                        title: widget.title,
+                                        courseId: widget.courseId,
                                       ),
-                                    );
-                                  }
+                                ),
+                              );
+                            }
                                 : null,
                           );
                         },

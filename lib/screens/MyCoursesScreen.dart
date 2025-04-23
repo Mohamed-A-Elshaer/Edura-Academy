@@ -48,9 +48,9 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
 
       // Get purchased courses array and completed videos
       List<String> purchasedCourseTitles =
-          List<String>.from(userDoc.data['purchased_courses'] ?? []);
+      List<String>.from(userDoc.data['purchased_courses'] ?? []);
       List<String> completedVideos =
-          List<String>.from(userDoc.data['completed_videos'] ?? []);
+      List<String>.from(userDoc.data['completed_videos'] ?? []);
 
       print('Purchased courses: $purchasedCourseTitles');
       print('Completed videos: $completedVideos');
@@ -81,7 +81,7 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
             );
 
             List<String> courseVideoIds =
-                files.files.map((file) => file.$id).toList();
+            files.files.map((file) => file.$id).toList();
 
             // Count completed videos for this course
             int completedCount = courseVideoIds
@@ -107,7 +107,7 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
               'courseId': course.$id,
               'price': course.data['price'] ?? '0',
               'instructorName':
-                  course.data['instructorName'] ?? 'Unknown Instructor',
+              course.data['instructorName'] ?? 'Unknown Instructor',
               'videoCount': courseVideoIds.length,
               'completedVideos': completedCount,
               'duration': course.data['courseDuration_inMins'] ?? 0,
@@ -170,9 +170,9 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
 
       // Get current lists
       List<String> completedCourses =
-          List<String>.from(userDoc.data['completed_courses'] ?? []);
+      List<String>.from(userDoc.data['completed_courses'] ?? []);
       List<String> ongoingCourses =
-          List<String>.from(userDoc.data['ongoing_courses'] ?? []);
+      List<String>.from(userDoc.data['ongoing_courses'] ?? []);
 
       // Get course details
       final courseResponse = await Appwrite_service.databases.listDocuments(
@@ -196,7 +196,7 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
         );
 
         List<String> courseVideoIds =
-            files.files.map((file) => file.$id).toList();
+        files.files.map((file) => file.$id).toList();
 
         // Check if all videos are completed
         bool isFullyCompleted = true;
@@ -261,7 +261,7 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
 
       // Get completed videos list
       List<String> completedVideos =
-          List<String>.from(userDoc.data['completed_videos'] ?? []);
+      List<String>.from(userDoc.data['completed_videos'] ?? []);
 
       // Add video to completed list if not already there
       if (!completedVideos.contains(videoId)) {
@@ -383,7 +383,7 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
-                              !_showOngoing ? Colors.teal : Colors.grey[200],
+                          !_showOngoing ? Colors.teal : Colors.grey[200],
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -408,7 +408,7 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
-                              _showOngoing ? Colors.teal : Colors.grey[200],
+                          _showOngoing ? Colors.teal : Colors.grey[200],
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -433,252 +433,252 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                 child: isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : enrolledCourses.isEmpty
-                        ? Center(
-                            child: Text(
-                              _showOngoing
-                                  ? 'No ongoing courses'
-                                  : 'No completed courses yet',
-                              style: const TextStyle(fontSize: 18),
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: _fetchEnrolledCourses,
-                            child: ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: enrolledCourses.length,
-                              itemBuilder: (context, index) {
-                                final course = enrolledCourses[index];
-                                return Card(
-                                  margin: const EdgeInsets.only(bottom: 16),
-                                  elevation: 4,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: InkWell(
-                                    onTap: () {
+                    ? Center(
+                  child: Text(
+                    _showOngoing
+                        ? 'No ongoing courses'
+                        : 'No completed courses yet',
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                )
+                    : RefreshIndicator(
+                  onRefresh: _fetchEnrolledCourses,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: enrolledCourses.length,
+                    itemBuilder: (context, index) {
+                      final course = enrolledCourses[index];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: InkWell(
+                          onTap: () {
+                            print(
+                                'Tapping on course: ${course['title']}');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) {
+                                  print(
+                                      'Building DisplayCourseLessons screen');
+                                  return DisplayCourseLessons(
+                                    title: course['title'],
+                                    courseId: course['courseId'],
+                                    onVideoCompleted: (videoId) {
                                       print(
-                                          'Tapping on course: ${course['title']}');
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) {
-                                            print(
-                                                'Building DisplayCourseLessons screen');
-                                            return DisplayCourseLessons(
-                                              title: course['title'],
-                                              courseId: course['courseId'],
-                                              onVideoCompleted: (videoId) {
-                                                print(
-                                                    'Video completed callback received in MyCoursesScreen');
-                                                _markVideoAsCompleted(
-                                                        course['title'],
-                                                        videoId)
-                                                    .then((_) {
-                                                  print(
-                                                      'Course list refreshed after video completion');
-                                                });
-                                              },
-                                            );
-                                          },
-                                        ),
-                                      ).then((_) {
+                                          'Video completed callback received in MyCoursesScreen');
+                                      _markVideoAsCompleted(
+                                          course['title'],
+                                          videoId)
+                                          .then((_) {
                                         print(
-                                            'Returned from DisplayCourseLessons');
-                                        _fetchEnrolledCourses();
+                                            'Course list refreshed after video completion');
                                       });
                                     },
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius:
-                                              const BorderRadius.vertical(
-                                            top: Radius.circular(12),
-                                          ),
-                                          child: Image.network(
-                                            course['imagePath'] ??
-                                                'https://via.placeholder.com/300x200',
-                                            height: 200,
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (BuildContext context,
-                                                Object error,
-                                                StackTrace? stackTrace) {
-                                              print(
-                                                  'Error loading image: $error');
-                                              return Container(
-                                                height: 200,
-                                                width: double.infinity,
-                                                color: Colors.grey[200],
-                                                child: const Icon(
-                                                  Icons.image_not_supported,
-                                                  size: 50,
-                                                  color: Colors.grey,
-                                                ),
-                                              );
-                                            },
-                                            loadingBuilder:
-                                                (BuildContext context,
-                                                    Widget child,
-                                                    ImageChunkEvent?
-                                                        loadingProgress) {
-                                              if (loadingProgress == null)
-                                                return child;
-                                              return Container(
-                                                height: 200,
-                                                width: double.infinity,
-                                                color: Colors.grey[200],
-                                                child: Center(
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                    value: loadingProgress
-                                                                .expectedTotalBytes !=
-                                                            null
-                                                        ? loadingProgress
-                                                                .cumulativeBytesLoaded /
-                                                            loadingProgress
-                                                                .expectedTotalBytes!
-                                                        : null,
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          ),
+                                  );
+                                },
+                              ),
+                            ).then((_) {
+                              print(
+                                  'Returned from DisplayCourseLessons');
+                              _fetchEnrolledCourses();
+                            });
+                          },
+                          child: Column(
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                            children: [
+                              ClipRRect(
+                                borderRadius:
+                                const BorderRadius.vertical(
+                                  top: Radius.circular(12),
+                                ),
+                                child: Image.network(
+                                  course['imagePath'] ??
+                                      'https://via.placeholder.com/300x200',
+                                  height: 200,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (BuildContext context,
+                                      Object error,
+                                      StackTrace? stackTrace) {
+                                    print(
+                                        'Error loading image: $error');
+                                    return Container(
+                                      height: 200,
+                                      width: double.infinity,
+                                      color: Colors.grey[200],
+                                      child: const Icon(
+                                        Icons.image_not_supported,
+                                        size: 50,
+                                        color: Colors.grey,
+                                      ),
+                                    );
+                                  },
+                                  loadingBuilder:
+                                      (BuildContext context,
+                                      Widget child,
+                                      ImageChunkEvent?
+                                      loadingProgress) {
+                                    if (loadingProgress == null)
+                                      return child;
+                                    return Container(
+                                      height: 200,
+                                      width: double.infinity,
+                                      color: Colors.grey[200],
+                                      child: Center(
+                                        child:
+                                        CircularProgressIndicator(
+                                          value: loadingProgress
+                                              .expectedTotalBytes !=
+                                              null
+                                              ? loadingProgress
+                                              .cumulativeBytesLoaded /
+                                              loadingProgress
+                                                  .expectedTotalBytes!
+                                              : null,
                                         ),
-                                        Padding(
-                                          padding: const EdgeInsets.all(16),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                course['category'],
-                                                style: const TextStyle(
-                                                  color: Colors.orange,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                course['title'],
-                                                style: const TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Row(
-                                                children: [
-                                                  const Icon(
-                                                    Icons.person_outline,
-                                                    size: 20,
-                                                    color: Colors.grey,
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    course['instructorName'],
-                                                    style: const TextStyle(
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 12),
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      const Icon(
-                                                        Icons.video_library,
-                                                        size: 20,
-                                                        color: Colors.grey,
-                                                      ),
-                                                      const SizedBox(width: 4),
-                                                      Text(
-                                                        '${course['completedVideos']}/${course['videoCount']} Lessons',
-                                                        style: const TextStyle(
-                                                          color: Colors.grey,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  Row(
-                                                    children: [
-                                                      const Icon(
-                                                        Icons.access_time,
-                                                        size: 20,
-                                                        color: Colors.grey,
-                                                      ),
-                                                      const SizedBox(width: 4),
-                                                      Text(
-                                                        '${course['duration']} Mins',
-                                                        style: const TextStyle(
-                                                          color: Colors.grey,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 8),
-                                              LinearProgressIndicator(
-                                                value: course[
-                                                        'completionPercentage'] /
-                                                    100,
-                                                backgroundColor:
-                                                    Colors.grey[200],
-                                                valueColor:
-                                                    AlwaysStoppedAnimation<
-                                                        Color>(
-                                                  course['completionPercentage'] >=
-                                                          100
-                                                      ? Colors.green
-                                                      : Colors.blue,
-                                                ),
-                                                minHeight: 8,
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: [
-                                                  Text(
-                                                    '${course['completionPercentage'].toStringAsFixed(1)}% Complete',
-                                                    style: TextStyle(
-                                                      color:
-                                                          course['completionPercentage'] >=
-                                                                  100
-                                                              ? Colors.green
-                                                              : Colors.blue,
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    '${course['completedVideos']}/${course['videoCount']} Videos',
-                                                    style: TextStyle(
-                                                      color: Colors.grey[600],
-                                                      fontSize: 14,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      course['category'],
+                                      style: const TextStyle(
+                                        color: Colors.orange,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      course['title'],
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.person_outline,
+                                          size: 20,
+                                          color: Colors.grey,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          course['instructorName'],
+                                          style: const TextStyle(
+                                            color: Colors.grey,
                                           ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                );
-                              },
-                            ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      mainAxisAlignment:
+                                      MainAxisAlignment
+                                          .spaceBetween,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.video_library,
+                                              size: 20,
+                                              color: Colors.grey,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${course['completedVideos']}/${course['videoCount']} Lessons',
+                                              style: const TextStyle(
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.access_time,
+                                              size: 20,
+                                              color: Colors.grey,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${course['duration']} Mins',
+                                              style: const TextStyle(
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    LinearProgressIndicator(
+                                      value: course[
+                                      'completionPercentage'] /
+                                          100,
+                                      backgroundColor:
+                                      Colors.grey[200],
+                                      valueColor:
+                                      AlwaysStoppedAnimation<
+                                          Color>(
+                                        course['completionPercentage'] >=
+                                            100
+                                            ? Colors.green
+                                            : Colors.blue,
+                                      ),
+                                      minHeight: 8,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      mainAxisAlignment:
+                                      MainAxisAlignment
+                                          .spaceBetween,
+                                      children: [
+                                        Text(
+                                          '${course['completionPercentage'].toStringAsFixed(1)}% Complete',
+                                          style: TextStyle(
+                                            color:
+                                            course['completionPercentage'] >=
+                                                100
+                                                ? Colors.green
+                                                : Colors.blue,
+                                            fontSize: 14,
+                                            fontWeight:
+                                            FontWeight.w500,
+                                          ),
+                                        ),
+                                        Text(
+                                          '${course['completedVideos']}/${course['videoCount']} Videos',
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
             ],
           ),

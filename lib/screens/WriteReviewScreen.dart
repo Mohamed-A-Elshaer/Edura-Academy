@@ -4,7 +4,11 @@ import 'package:mashrooa_takharog/screens/ReviewsScreen.dart';
 import 'package:mashrooa_takharog/widgets/CourseOnAction.dart';
 import 'package:mashrooa_takharog/widgets/customElevatedBtn.dart';
 
+import '../auth/Appwrite_service.dart';
+
 class WriteReviewScreen extends StatefulWidget{
+  String courseId;
+  WriteReviewScreen({required this.courseId});
   @override
   State<WriteReviewScreen> createState() => _WriteReviewScreenState();
 }
@@ -14,14 +18,22 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   final TextEditingController _controller = TextEditingController();
   bool _isTyping = false;
   int _maxChars = 131;
+
+  Future<String> getAppwriteUserID() async{
+
+    final currentUser = await Appwrite_service.account.get();
+    return currentUser.$id;
+  }
+
   @override
   Widget build(BuildContext context) {
    return Scaffold(
      appBar: AppBar(
        leading: IconButton(
            icon: const Icon(Icons.arrow_back),
-           onPressed: (){
-             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>ReviewsScreen()));
+           onPressed: () async{
+             String userId = await getAppwriteUserID();
+             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>ReviewsScreen(courseId:widget.courseId, userId:userId )));
            }
        ),
        title: const Text('Write a Review'),

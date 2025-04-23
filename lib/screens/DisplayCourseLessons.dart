@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:appwrite/models.dart' as models;
 import 'package:mashrooa_takharog/screens/video_player_screen.dart';
 import '../auth/Appwrite_service.dart';
+import '../widgets/customElevatedBtn.dart';
+import 'ReviewsScreen.dart';
 
 class DisplayCourseLessons extends StatefulWidget {
+
   final String title;
   final String courseId;
   final Function(String)? onVideoCompleted;
@@ -24,6 +27,7 @@ class DisplayCourseLessons extends StatefulWidget {
 class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
   List<Map<String, dynamic>> sections = [];
 
+
   @override
   void initState() {
     super.initState();
@@ -41,9 +45,9 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
 
       List<String> sectionNames = List<String>.from(course.data['sections']);
       List<String> sectionDurations =
-          List<String>.from(course.data['section_durations']);
+      List<String>.from(course.data['section_durations']);
       List<String> videoTitlesFromDb =
-          List<String>.from(course.data['videos'] ?? []);
+      List<String>.from(course.data['videos'] ?? []);
 
       List<Map<String, dynamic>> fetchedSections = [];
 
@@ -51,7 +55,7 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
         String rawSection = sectionNames[i];
         String sectionTitle = rawSection.replaceFirst(RegExp(r'^\d+-\s*'), '');
         String duration =
-            (i < sectionDurations.length) ? sectionDurations[i] : "0 Mins";
+        (i < sectionDurations.length) ? sectionDurations[i] : "0 Mins";
 
         // ✅ Fetch all files from Appwrite Storage for this section
         final files = await Appwrite_service.storage.listFiles(
@@ -79,7 +83,7 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
               .replaceAll('.mp4', '')
               .toLowerCase();
           String normalizedDbVideo =
-              dbVideoNameOnly.replaceAll('_', ' ').toLowerCase();
+          dbVideoNameOnly.replaceAll('_', ' ').toLowerCase();
 
           // ✅ Try to find matching file in storage
           models.File? matchedFile;
@@ -87,14 +91,14 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
             if (!file.name.endsWith('.mp4')) continue;
 
             String storageFileName =
-                file.name.split('/').last.replaceAll('.mp4', '');
+            file.name.split('/').last.replaceAll('.mp4', '');
 
             // ✅ Remove first 4 characters from storage filename
             String trimmedStorageName = storageFileName.length > 4
                 ? storageFileName.substring(4)
                 : storageFileName;
             String normalizedStorage =
-                trimmedStorageName.replaceAll('_', ' ').toLowerCase().trim();
+            trimmedStorageName.replaceAll('_', ' ').toLowerCase().trim();
 
             print('🔍 Comparing:');
             print('   DB: $normalizedDbVideo');
@@ -154,6 +158,12 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
     }
   }
 
+  Future<String> getAppwriteUserID() async{
+
+    final currentUser = await Appwrite_service.account.get();
+    return currentUser.$id;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -174,49 +184,81 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: sections.length,
-        itemBuilder: (context, sectionIndex) {
-          final section = sections[sectionIndex];
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text(
-                  section['title'],
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                Text(
-                  section['duration'],
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
-                ),
-              ]),
-              SizedBox(
-                height: 20,
-              ),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: (section['lessons'] as List).length,
-                itemBuilder: (context, lessonIndex) {
-                  final lesson = section['lessons'][lessonIndex];
-                  return _buildLessonTile(
-                      lesson['number'],
-                      lesson['title'].toString().substring(4),
-                      lesson['videoUrl']);
-                },
-              ),
-            ],
-          );
-        },
-      ),
+      body: Stack(
+    children: [
+    Padding(
+    padding: const EdgeInsets.only(bottom: 80.0), // leave space for the button
+    child: ListView.builder(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    itemCount: sections.length,
+    itemBuilder: (context, sectionIndex) {
+    final section = sections[sectionIndex];
+    return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+    Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+    Text(
+    section['title'],
+    style: const TextStyle(
+    fontWeight: FontWeight.bold,
+    fontSize: 16,
+    ),
+    ),
+    Text(
+    section['duration'],
+    style: TextStyle(
+    color: Colors.grey[600],
+    fontSize: 14,
+    ),
+    ),
+    ],
+    ),
+    const SizedBox(height: 20),
+    ListView.builder(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    itemCount: (section['lessons'] as List).length,
+    itemBuilder: (context, lessonIndex) {
+    final lesson = section['lessons'][lessonIndex];
+    return _buildLessonTile(
+    lesson['number'],
+    lesson['title'].toString().substring(4),
+    lesson['videoUrl'],
+    );
+    },
+    ),
+    ],
+    );
+    },
+    ),
+    ),
+
+    // 🔳 Floating button at the bottom center
+    Positioned(
+    bottom: 7,
+    left: 0,
+    right: 0,
+    child: Center(
+    child: CustomElevatedBtn(
+    btnDesc: 'Rate/Write a Review',
+    btnWidth: 290,
+    onPressed: () async {
+      String userId = await getAppwriteUserID();
+    Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+    builder: (context) => ReviewsScreen(courseId: widget.courseId, userId:userId ),
+    ),
+    );
+    },
+    ),
+    ),
+    ),
+    ],
+    ),
+
     );
   }
 
@@ -265,12 +307,12 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
                         child: isCompleted
                             ? const Icon(Icons.check, color: Colors.white)
                             : Text(
-                                number,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                          number,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -306,7 +348,7 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
         documentId: currentUser.$id,
       );
       List<String> completedVideos =
-          List<String>.from(userDoc.data['completed_videos'] ?? []);
+      List<String>.from(userDoc.data['completed_videos'] ?? []);
       return completedVideos.contains(videoId);
     } catch (e) {
       print('Error checking video completion status: $e');
