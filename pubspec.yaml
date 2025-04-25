@@ -52,7 +52,7 @@ dependencies:
   image_picker: ^1.1.2
   supabase_flutter: ^2.8.3
   flutter_rating_bar: ^4.0.1
-
+ 
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -101,6 +101,7 @@ flutter:
     - family: Mulish
       fonts:
         - asset: assets/fonts/Mulish-Bold.ttf
+
     - family: Pacifico
       fonts:
          - asset: assets/fonts/Pacifico-Regular.ttf
