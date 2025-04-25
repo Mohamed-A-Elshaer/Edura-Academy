@@ -1,8 +1,27 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CourseComment extends StatefulWidget{
+  final String userName;
+  final double rating;
+  final String comment;
+  final String timestamp;
+  final String? supabaseUserId;
+  final String userId;
+  final String? currentUserId;
+  final VoidCallback onDelete;
 
+  const CourseComment({
+    required this.userName,
+    required this.rating,
+    required this.comment,
+    required this.timestamp,
+    required this.supabaseUserId,
+    required this.userId,
+    required this.onDelete,
+    required this.currentUserId,
+  });
   @override
   State<CourseComment> createState() => _CourseCommentState();
 }
@@ -10,23 +29,82 @@ class CourseComment extends StatefulWidget{
 class _CourseCommentState extends State<CourseComment> {
   bool iconOn=false;
   bool isExpanded = false;
-  final String fullText =
-      'The Course is Very Good dolor sit amet, con sect tur adipiscing elit. Naturales divitias dixit parab les esseaaaaaaaaaaaaaaaaaaaaaaaaspppppppppppppppppppppppppppppppppppppppppppppppppppppsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss';
+  String? _imageUrl;
+  bool get isCurrentUser {
+    return widget.currentUserId != null &&
+        widget.userId != null &&
+        widget.currentUserId == widget.userId;
+  }  @override
+  void initState() {
+    super.initState();
+    _fetchProfileAvatar();
+  }
+  Future<void> _fetchProfileAvatar() async {
+    SupabaseClient supabase=Supabase.instance.client;
+    try {
+      final imagePath = '${widget.supabaseUserId}/profile';
+
+      // Check if the file exists in Supabase Storage
+      final files = await supabase.storage
+          .from('profiles')
+          .list(path: widget.supabaseUserId!);
+
+      final fileExists = files.any((file) => file.name == 'profile');
+
+      if (!fileExists) {
+        setState(() {
+          _imageUrl = null;
+        });
+        return;
+      }
+
+      // If file exists, generate the URL
+      String imageUrl = supabase.storage
+          .from('profiles')
+          .getPublicUrl(imagePath);
+
+      imageUrl = Uri.parse(imageUrl).replace(queryParameters: {
+        't': DateTime.now().millisecondsSinceEpoch.toString()
+      }).toString();
+
+      setState(() {
+        _imageUrl = imageUrl;
+      });
+    } catch (e) {
+      print("Error fetching avatar: $e");
+      setState(() {
+        _imageUrl = null;
+      });
+    }
+  }
+
+  String _formatTimeAgo(String isoDate) {
+    final date = DateTime.parse(isoDate);
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays > 30) {
+      return '${(difference.inDays / 30).floor()} months ago';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays} days ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} hours ago';
+    } else {
+      return 'Just now';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
 
-    bool shouldShowSeeAll = fullText.length > 131;
+    bool shouldShowSeeAll = widget.comment.length > 131;
     String displayedText = isExpanded
-        ? fullText
-        : (shouldShowSeeAll ? fullText.substring(0, 120) + '...' : fullText);
+        ? widget.comment
+        : (shouldShowSeeAll ? widget.comment.substring(0, 120) + '...' : widget.comment);
 
-
-    // Estimate number of lines based on text length (40 characters per line)
     int lineCount = (displayedText.length / 40).ceil();
-
-    // Calculate dynamic height (each line ~18 pixels)
     double textHeight = lineCount * 18.0;
-    double baseHeight = 120; // Base height without text
+    double baseHeight = 120;
     double totalHeight = baseHeight + textHeight;
 
     return Container(
@@ -49,10 +127,21 @@ decoration: BoxDecoration(
         children: [
           Padding(
             padding: const EdgeInsets.all(18.0),
-            child: CircleAvatar(
+            child:  CircleAvatar(
               backgroundColor: Colors.grey.withOpacity(0.2),
               radius: 23,
-              child: Image.asset('assets/images/ProfilePic.png',height: 30,),
+              child: _imageUrl != null
+                  ? ClipOval(
+                child: Image.network(
+                  _imageUrl!,
+                  height: 46,
+                  width: 46,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      Icon(Icons.person, color: Colors.grey),
+                ),
+              )
+                  : Icon(Icons.person, color: Colors.grey),
             ),
           ),
           Column(
@@ -62,7 +151,7 @@ decoration: BoxDecoration(
                 transform: Matrix4.translationValues(-12, 0, 0),
                 child: Row(
                   children: [
-                    Text('Ahmed Mohamed',style: TextStyle(fontFamily: 'Jost',fontSize: 17,fontWeight: FontWeight.w600),),
+                    Text(widget.userName,style: TextStyle(fontFamily: 'Jost',fontSize: 17,fontWeight: FontWeight.w600),),
                    SizedBox(width: 57,),
                     Container(
                       height: 26,
@@ -79,7 +168,7 @@ decoration: BoxDecoration(
                        children: [
                          SizedBox(width: 4,),
                          Icon(Icons.star,color: Colors.amber,size: 17,),
-                Text('4.2',style: TextStyle(fontFamily: 'Jost',fontSize: 13,fontWeight: FontWeight.w600,color: Color(0xff202244)),),
+                Text(widget.rating.toStringAsFixed(1),style: TextStyle(fontFamily: 'Jost',fontSize: 13,fontWeight: FontWeight.w600,color: Color(0xff202244)),),
 
                 ],
 
@@ -129,14 +218,35 @@ decoration: BoxDecoration(
               ),
 
               SizedBox(height: 15,),
-               Transform.translate(
-                
-                 offset: Offset(60, 0),
-                 child:
-                      Text('2 Weeks Ago',style: TextStyle(fontWeight:FontWeight.w800,fontFamily: 'Mulish',fontSize: 14,color: Color(0xff202244)),)
-
-
-               ),
+              Transform.translate(
+                offset: Offset(60, 0),
+                child: Row(
+                  children: [
+                    if (isCurrentUser) // Only show delete for current user
+                      TextButton(
+                        onPressed: widget.onDelete,
+                        child: Text(
+                          'Delete',
+                          style: TextStyle(
+                            color:Color(0xff202244),
+                            fontWeight: FontWeight.w800,
+                            fontFamily: 'Mulish',
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    if (isCurrentUser) SizedBox(width: 8),
+                    Text(
+                      _formatTimeAgo(widget.timestamp),
+                      style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'Mulish',
+                          fontSize: 14,
+                          color: Color(0xff202244)),
+                    ),
+                  ],
+                ),
+              ),
               
 
             ],

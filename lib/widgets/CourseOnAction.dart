@@ -2,6 +2,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class CourseOnAction extends StatelessWidget{
+  final String title;
+  final String category;
+  final String imagePath;
+
+  CourseOnAction({
+    required this.title,
+    required this.category,
+    required this.imagePath,
+  });
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -21,34 +30,55 @@ class CourseOnAction extends StatelessWidget{
         ),
 
         child: Row(
-        children: [
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 20),
-            height: 86,
-
-
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20), // Ensure the image is clipped
-              child: Image.asset(
-                'assets/images/advertisment.jpg',
-                height: 60,
-                fit: BoxFit.cover, // Ensures the image fills the container properly
+          children: [
+            // Add Expanded to the image container to limit its width
+            Expanded(
+              flex: 2, // Gives 2 parts of space to image
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 20),
+                height: 86,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.network(
+                    imagePath,
+                    height: 60,
+                    width: 100, // Add fixed width
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
             ),
-
-    ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 40,),
-              Text('Graphic Design',style: TextStyle(fontFamily: 'Mulish',fontSize: 12,color: Color(0xffFF6B00),fontWeight: FontWeight.w700),),
-             SizedBox(height: 10,),
-              Text('Setup your Graphic Desig..',style: TextStyle(fontFamily: 'Jost',fontSize: 14,color: Color(0xff202244),fontWeight: FontWeight.w600),),
-
-            ],
-          )
-
-      ],
+            // Add Expanded to the text column
+            Expanded(
+              flex: 3, // Gives 3 parts of space to text
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    category,
+                    style: TextStyle(
+                        fontFamily: 'Mulish',
+                        fontSize: 12,
+                        color: Color(0xffFF6B00),
+                        fontWeight: FontWeight.w700),
+                    overflow: TextOverflow.ellipsis, // Prevent text overflow
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    title,
+                    style: TextStyle(
+                        fontFamily: 'Jost',
+                        fontSize: 14,
+                        color: Color(0xff202244),
+                        fontWeight: FontWeight.w600),
+                    overflow: TextOverflow.ellipsis, // Prevent text overflow
+                    maxLines: 2, // Limit to 2 lines
+                  ),
+                ],
+              ),
+            ),
+          ],
     ),
     );
   }
