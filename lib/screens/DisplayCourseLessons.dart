@@ -12,12 +12,16 @@ class DisplayCourseLessons extends StatefulWidget {
   final String title;
   final String courseId;
   final Function(String)? onVideoCompleted;
+  final String courseCategory;
+  final String courseImagePath;
 
   const DisplayCourseLessons({
     super.key,
     required this.title,
     required this.courseId,
     this.onVideoCompleted,
+     required this.courseCategory,
+    required this.courseImagePath
   });
 
   @override
@@ -249,7 +253,7 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
     Navigator.pushReplacement(
     context,
     MaterialPageRoute(
-    builder: (context) => ReviewsScreen(courseId: widget.courseId, userId:userId ),
+    builder: (context) => ReviewsScreen(courseId: widget.courseId, userId:userId, courseTitle: widget.title, courseCategory: widget.courseCategory, courseImagePath: widget.courseImagePath, ),
     ),
     );
     },

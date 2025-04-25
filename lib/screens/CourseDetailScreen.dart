@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 //import 'package:flutter_credit_card/flutter_credit_card.dart';
 
 import '../auth/Appwrite_service.dart';
+import '../auth/supaAuth_service.dart';
 import 'SpecificCategoryPage.dart';
 
 class Coursedetailscreen extends StatefulWidget {
@@ -53,6 +54,8 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
   String? expiryDateError;
   String? cvvError;
   String? cardHolderNameError;
+  double averageRating = 0.0;
+  List<Map<String, dynamic>> _allComments = [];
 
   @override
   void initState() {
@@ -64,11 +67,88 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     fetchInstructorProfAvatar();
     fetchSectionsAndVideos();
     _checkPurchaseStatus();
+    _fetchAverageRating();
+    _fetchAllComments();
+  }
+
+
+  Future<void> _fetchAverageRating() async {
+    try {
+      final courseDoc = await Appwrite_service.databases.getDocument(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c1c87c00009d84c6ff',
+        documentId: widget.courseId,
+      );
+
+      setState(() {
+        averageRating = courseDoc.data['averageRating']?.toDouble() ?? 0.0;
+      });
+    } catch (e) {
+      print('Error fetching average rating: $e');
+    }
+  }
+
+  Future<void> _fetchAllComments() async {
+    try {
+      final ratings = await Appwrite_service.databases.listDocuments(
+        collectionId: '6808c1e500186c675d9b',
+        queries: [
+          Query.equal('courseId', widget.courseId),
+          Query.orderDesc('timestamp'),
+        ],
+        databaseId: '67c029ce002c2d1ce046',
+      );
+
+      List<Map<String, dynamic>> commentsWithUserData = [];
+
+      for (var ratingDoc in ratings.documents) {
+        final userDoc = await Appwrite_service.databases.getDocument(
+          databaseId: '67c029ce002c2d1ce046',
+          collectionId: '67c0cc3600114e71d658',
+          documentId: ratingDoc.data['userId'],
+        );
+
+        final email = userDoc.data['email'];
+        final supabaseUserId = await SupaAuthService.getSupabaseUserId(email);
+
+
+        List<String> comments = List<String>.from(ratingDoc.data['comments'] ?? []);
+
+
+
+
+        for (var comment in comments) {
+          String? avatarUrl;
+          if (supabaseUserId != null) {
+            final imagePath = '$supabaseUserId/profile';
+            avatarUrl = supabase.storage.from('profiles').getPublicUrl(imagePath);
+            // Add timestamp to force refresh
+            avatarUrl = Uri.parse(avatarUrl).replace(queryParameters: {
+              't': DateTime.now().millisecondsSinceEpoch.toString()
+            }).toString();
+          }
+
+          commentsWithUserData.add({
+            'userName': userDoc.data['name'],
+            'comment': comment,
+            'rating': ratingDoc.data['rating']?.toDouble() ?? 0.0,
+            'timestamp': ratingDoc.data['timestamp'],
+            'avatarUrl': avatarUrl,
+          });
+        }
+      }
+
+      setState(() {
+        _allComments = commentsWithUserData;
+      });
+    } catch (e) {
+      print('Error fetching comments: $e');
+    }
   }
 
   Future<void> fetchSectionsAndVideos() async {
     try {
-      // ✅ Fetch course details from Appwrite database
+      // 1. Fetch course details
       final course = await Appwrite_service.databases.getDocument(
         databaseId: '67c029ce002c2d1ce046',
         collectionId: '67c1c87c00009d84c6ff',
@@ -76,61 +156,62 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
       );
 
       List<String> sectionNames = List<String>.from(course.data['sections']);
-      List<String> sectionDurations =
-      List<String>.from(course.data['section_durations']);
-      List<String> videoTitlesFromDb =
-      List<String>.from(course.data['videos'] ?? []);
+      List<String> sectionDurations = List<String>.from(course.data['section_durations']);
+      List<String> videoTitlesFromDb = List<String>.from(course.data['videos'] ?? []);
 
       List<Map<String, dynamic>> fetchedSections = [];
 
+      // 2. Process each section
       for (int i = 0; i < sectionNames.length; i++) {
         String rawSection = sectionNames[i];
         String sectionTitle = rawSection.replaceFirst(RegExp(r'^\d+-\s*'), '');
-        String duration =
-        (i < sectionDurations.length) ? sectionDurations[i] : "0 Mins";
+        String duration = (i < sectionDurations.length) ? sectionDurations[i] : "0 Mins";
 
-        // ✅ Fetch all files from Appwrite Storage for this section
+        // 3. Normalize section name for storage lookup
+        String storageSectionName = rawSection
+            .replaceAll(' ', '_')
+            .toLowerCase();
+
+        // 4. Find all videos for this section
+        List<Map<String, dynamic>> lessons = [];
+        int lessonNumber = 1;
+
+        // 5. Get all files in this section's directory
         final files = await Appwrite_service.storage.listFiles(
           bucketId: '67ac838900066b15fc99',
           queries: [
             Query.startsWith(
               'name',
-              '${widget.title.replaceAll(' ', '')}/${rawSection.replaceAll(' ', '')}',
+              '${widget.title.replaceAll(' ', '_')}/$storageSectionName/',
             ),
           ],
         );
 
-        List<Map<String, dynamic>> lessons = [];
-        int lessonNumber = 1;
-
+        // 6. Match DB video titles with storage files
         for (String dbVideoTitle in videoTitlesFromDb) {
-          // ✅ Extract filename (e.g., '01- Introduction to Flutter')
-          String dbVideoNameOnly = dbVideoTitle
-              .trim()
-              .split('/')
-              .last
-              .replaceAll('.mp4', '')
-              .toLowerCase();
+          // Normalize DB video title for comparison
+          String normalizedDbTitle = dbVideoTitle
+              .replaceAll(' ', '_')
+              .toLowerCase()
+              .replaceAll('.mp4', '');
 
-          // ✅ Try to find matching file in storage
+          // Find matching file in storage
           models.File? matchedFile;
           for (var file in files.files) {
-            if (!file.name.endsWith('.mp4')) continue;
+            String storageFileName = file.name
+                .split('/')
+                .last
+                .replaceAll('.mp4', '')
+                .toLowerCase();
 
-            String storageFileName =
-            file.name.split('/').last.replaceAll('.mp4', '');
-            String normalizedStorage =
-            storageFileName.replaceAll('_', ' ').toLowerCase().trim();
-
-            if (normalizedStorage == dbVideoNameOnly) {
+            if (storageFileName.contains(normalizedDbTitle)) {
               matchedFile = file;
               break;
             }
           }
 
           if (matchedFile != null) {
-            String videoUrl =
-                'https://cloud.appwrite.io/v1/storage/buckets/67ac838900066b15fc99/files/${matchedFile.$id}/view?project=67ac8356002648e5b7e9';
+            String videoUrl = 'https://cloud.appwrite.io/v1/storage/buckets/67ac838900066b15fc99/files/${matchedFile.$id}/view?project=67ac8356002648e5b7e9';
 
             lessons.add({
               'number': lessonNumber.toString().padLeft(2, '0'),
@@ -139,7 +220,6 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
               'videoUrl': videoUrl,
               'filePath': matchedFile.name,
             });
-
             lessonNumber++;
           }
         }
@@ -158,7 +238,6 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
       print('❌ Error fetching sections and videos: $e');
     }
   }
-
   Future<void> fetchInstructorProfAvatar() async {
     try {
       // Step 1: Get course data from Appwrite
@@ -735,6 +814,29 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     );
   }
 
+  String _formatTimeAgo(String isoDate) {
+    try {
+      final date = DateTime.parse(isoDate);
+      final now = DateTime.now();
+      final difference = now.difference(date);
+
+      if (difference.inDays > 30) {
+        final months = (difference.inDays / 30).floor();
+        return '$months ${months == 1 ? 'month' : 'months'} ago';
+      } else if (difference.inDays > 0) {
+        return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
+      } else if (difference.inHours > 0) {
+        return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
+      } else if (difference.inMinutes > 0) {
+        return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
+      } else {
+        return 'Just now';
+      }
+    } catch (e) {
+      return 'Recently';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -780,7 +882,8 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                             MaterialPageRoute(
                                 builder: (context) => DisplayCourseLessons(
                                     title: widget.title,
-                                    courseId: widget.courseId)));
+                                    courseId: widget.courseId, courseCategory: widget.category, courseImagePath: widget.imagePath,
+                                )));
                       },
                       icon:
                       const Icon(Icons.play_arrow, color: Colors.white))
@@ -830,7 +933,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                           size: 18,
                         ),
                         Text(
-                          '4.2',
+                          averageRating.toStringAsFixed(1),
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[600],
@@ -1002,12 +1105,25 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                 CircleAvatar(
                   radius: 46,
                   backgroundColor: Colors.grey[200],
-                  backgroundImage:
-                  avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-                  child: avatarUrl == null
-                      ? Icon(Icons.person_outline,
-                      color: Colors.grey[400], size: 30)
-                      : null,
+                  child: avatarUrl != null
+                      ? ClipOval(
+                    child: Image.network(
+                      avatarUrl!,
+                      fit: BoxFit.cover,
+                      width: 92,
+                      height: 92,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.person_outline,
+                        color: Colors.grey[400],
+                        size: 30,
+                      ),
+                    ),
+                  )
+                      : Icon(
+                    Icons.person_outline,
+                    color: Colors.grey[400],
+                    size: 30,
+                  ),
                 ),
                 const SizedBox(
                     width: 12), // Gives space between avatar and text
@@ -1097,35 +1213,44 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            ReviewCard(
-              name: 'Will',
-              review:
-              'This course has been very useful. Mentor was well spoken totally tuned.',
-              timeAgo: '2 Weeks Ago',
-              rating: 4.3,
-            ),
-            const SizedBox(height: 8),
-            ReviewCard(
-              name: 'Martha E. Thompson',
-              review:
-              'This course has been very useful. Mentor was well spoken totally tuned in for live sessions.',
-              timeAgo: '2 Weeks Ago',
-              rating: 4.8,
-            ),
+            if (_allComments.isEmpty)
+              Text('No reviews yet', style: TextStyle(color: Colors.grey)),
+            if (_allComments.isNotEmpty)
+              SizedBox(
+                height: 215, // Set a fixed height or use constraints
+                child: ListView.builder(
+                  physics: const BouncingScrollPhysics(), // For smooth scrolling
+                  itemCount: _allComments.length,
+                  itemBuilder: (context, index) {
+                    final comment = _allComments[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: ReviewCard(
+                        name: comment['userName'],
+                        review: comment['comment'],
+                        timeAgo: _formatTimeAgo(comment['timestamp']),
+                        rating: comment['rating'],
+                        avatarUrl: comment['avatarUrl'],
+                      ),
+                    );
+                  },
+                ),
+              ),
           ],
           if (_showCuric) ...[
             const SizedBox(height: 16),
-            Container(
-              height: 400,
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: sections.length,
-                itemBuilder: (context, sectionIndex) {
-                  final section = sections[sectionIndex];
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: sections.length,
+              itemBuilder: (context, sectionIndex) {
+                final section = sections[sectionIndex];
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
@@ -1144,39 +1269,44 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 20),
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: (section['lessons'] as List).length,
-                        itemBuilder: (context, lessonIndex) {
-                          final lesson = section['lessons'][lessonIndex];
-                          return _buildLessonTile(
-                            lesson['number'],
-                            lesson['title'].toString().substring(4),
-                            isPurchased: _isPurchased,
-                            onTap: _isPurchased
-                                ? () {
-                              // Handle video playback when purchased
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      DisplayCourseLessons(
-                                        title: widget.title,
-                                        courseId: widget.courseId,
-                                      ),
-                                ),
-                              );
-                            }
-                                : null,
-                          );
-                        },
-                      ),
-                    ],
-                  );
-                },
-              ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...section['lessons'].map<Widget>((lesson) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: CircleAvatar(
+                            radius: 16,
+                            backgroundColor: _isPurchased ? Colors.blue : Colors.grey,
+                            child: Text(
+                              (section['lessons'].indexOf(lesson) + 1).toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            lesson['title'].length > 4
+                                ? lesson['title'].substring(4)
+                                : lesson['title'],
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: _isPurchased ? Colors.black : Colors.grey,
+                            ),
+                          ),
+                          trailing: _isPurchased
+                              ? null
+                              : const Icon(Icons.lock, color: Colors.grey, size: 20),
+                        ),
+                      );
+                    }).toList(),
+                    const SizedBox(height: 20),
+                  ],
+                );
+              },
             ),
           ],
           const SizedBox(height: 16),
@@ -1198,21 +1328,36 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
   }
 }
 
-class ReviewCard extends StatelessWidget {
+class ReviewCard extends StatefulWidget {
   final String name;
   final String review;
   final String timeAgo;
   final double rating;
-
+  final String? avatarUrl;
+  final int maxChars;
   ReviewCard({
     required this.name,
     required this.review,
     required this.timeAgo,
     required this.rating,
+    this.avatarUrl,
+    this.maxChars = 150,
   });
 
   @override
+  State<ReviewCard> createState() => _ReviewCardState();
+}
+
+class _ReviewCardState extends State<ReviewCard> {
+  bool _isExpanded = false;
+  @override
   Widget build(BuildContext context) {
+    final bool isLongComment = widget.review.length > widget.maxChars;
+    final String displayText = _isExpanded
+        ? widget.review
+        : (isLongComment
+        ? '${widget.review.substring(0, widget.maxChars)}...'
+        : widget.review);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -1222,9 +1367,28 @@ class ReviewCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 25,
-            backgroundImage: AssetImage("assets/images/mentor.jpg"),
+            backgroundColor: Colors.grey[200],
+            child: widget.avatarUrl != null
+                ? ClipOval(
+              child: Image.network(
+                widget.avatarUrl!,
+                fit: BoxFit.cover,
+                width: 50,
+                height: 50,
+                errorBuilder: (context, error, stackTrace) => Icon(
+                  Icons.person_outline,
+                  color: Colors.grey[400],
+                  size: 30,
+                ),
+              ),
+            )
+                : Icon(
+              Icons.person_outline,
+              color: Colors.grey[400],
+              size: 30,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1232,22 +1396,37 @@ class ReviewCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
+                  widget.name,
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  review,
+                  displayText,
                   style: const TextStyle(fontSize: 14),
                 ),
+                if (isLongComment) // Show toggle button only if comment is long
+                  TextButton(
+                    onPressed: () => setState(() => _isExpanded = !_isExpanded),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: Size.zero,
+                    ),
+                    child: Text(
+                      _isExpanded ? 'See Less' : 'See All',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     const Icon(Icons.star, color: Colors.yellow, size: 20),
-                    Text(' $rating', style: const TextStyle(fontSize: 16)),
+                    Text(' ${widget.rating}', style: const TextStyle(fontSize: 16)),
                     const Spacer(),
-                    Text(timeAgo, style: const TextStyle(color: Colors.grey)),
+                    Text(widget.timeAgo, style: const TextStyle(color: Colors.grey)),
                   ],
                 ),
               ],
