@@ -53,4 +53,20 @@ return await supabase.auth.signUp(email: email,password: password);
   }
 
 
+  static Future<String?> getSupabaseUserId(String email) async {
+    try {
+      final response = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', email)
+          .single();
+
+      return response['id'] as String?;
+    } catch (e) {
+      print('Error finding user in Supabase: $e');
+      return null;
+    }
+  }
+
+
 }

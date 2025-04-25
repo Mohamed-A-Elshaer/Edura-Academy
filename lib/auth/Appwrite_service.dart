@@ -309,6 +309,15 @@ class Appwrite_service{
     }
   }
 
+  static Future<String?> getCurrentAppwriteUserId() async {
+    try {
+      final user = await account.get();
+      return user.$id;
+    } catch (e) {
+      print('Error fetching current Appwrite user: $e');
+      return null;
+    }
+  }
 
 
 

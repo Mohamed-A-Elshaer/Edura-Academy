@@ -1,3 +1,4 @@
+import 'package:appwrite/appwrite.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/screens/ReviewsScreen.dart';
@@ -7,8 +8,12 @@ import 'package:mashrooa_takharog/widgets/customElevatedBtn.dart';
 import '../auth/Appwrite_service.dart';
 
 class WriteReviewScreen extends StatefulWidget{
-  String courseId;
-  WriteReviewScreen({required this.courseId});
+  final String courseId;
+  final String courseTitle;
+  final String courseCategory;
+  final String courseImagePath;
+
+  WriteReviewScreen({required this.courseId, required this.courseTitle, required this.courseCategory, required this.courseImagePath});
   @override
   State<WriteReviewScreen> createState() => _WriteReviewScreenState();
 }
@@ -17,7 +22,84 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
 
   final TextEditingController _controller = TextEditingController();
   bool _isTyping = false;
-  int _maxChars = 131;
+  int _maxChars = 30000;
+
+  Future<void> _submitReview() async {
+    if (_controller.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please write a comment')),
+      );
+      return;
+    }
+
+    try {
+      final currentUser = await Appwrite_service.account.get();
+
+      // 1. Check for existing rating document
+      final existingRatings = await Appwrite_service.databases.listDocuments(
+        collectionId: '6808c1e500186c675d9b',
+        queries: [
+          Query.equal('courseId', widget.courseId),
+          Query.equal('userId', currentUser.$id),
+        ],
+        databaseId: '67c029ce002c2d1ce046',
+      );
+
+      if (existingRatings.documents.isEmpty) {
+        // Case 1: No existing document - create new one with comment only
+        await Appwrite_service.databases.createDocument(
+          collectionId: '6808c1e500186c675d9b',
+          documentId: ID.unique(),
+          data: {
+            'courseId': widget.courseId,
+            'userId': currentUser.$id,
+            'rating': 0, // Default rating (not rated yet)
+            'comments': [_controller.text], // Initialize with first comment
+            'timestamp': DateTime.now().toUtc().toIso8601String(),
+            'hasRated': false,
+          },
+          databaseId: '67c029ce002c2d1ce046',
+        );
+      } else {
+        // Case 2: Existing document found - add new comment
+        final existingDoc = existingRatings.documents.first;
+        List<dynamic> existingComments = existingDoc.data['comments'] ?? [];
+
+        await Appwrite_service.databases.updateDocument(
+          collectionId: '6808c1e500186c675d9b',
+          documentId: existingDoc.$id,
+          data: {
+            'comments': [...existingComments, _controller.text],
+            'timestamp': DateTime.now().toUtc().toIso8601String(),
+          },
+          databaseId: '67c029ce002c2d1ce046',
+        );
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Review submitted!'),backgroundColor: Colors.green,),
+      );
+      // Navigate back to ReviewsScreen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ReviewsScreen(
+            courseId: widget.courseId,
+            userId: currentUser.$id,
+            courseTitle: widget.courseTitle,
+            courseCategory: widget.courseCategory,
+            courseImagePath: widget.courseImagePath,
+          ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error submitting review: $e')),
+      );
+    }
+  }
+
+
+
 
   Future<String> getAppwriteUserID() async{
 
@@ -33,7 +115,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
            icon: const Icon(Icons.arrow_back),
            onPressed: () async{
              String userId = await getAppwriteUserID();
-             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>ReviewsScreen(courseId:widget.courseId, userId:userId )));
+             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>ReviewsScreen(courseId:widget.courseId, userId:userId, courseTitle: widget.courseTitle, courseCategory: widget.courseCategory, courseImagePath: widget.courseImagePath, )));
            }
        ),
        title: const Text('Write a Review'),
@@ -49,7 +131,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
        
        
            children: [
-       CourseOnAction(),
+       CourseOnAction(title: widget.courseTitle, category: widget.courseCategory, imagePath: widget.courseImagePath,),
          SizedBox(height: 40,),
          Align(
              alignment: Alignment.centerLeft,
@@ -91,24 +173,12 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                          counterText: '', // Hides default Flutter counter
                        ),
                      ),
-                     Positioned(
-                       bottom: 8,
-                       right: 8,
-                       child: Text(
-                         '${_maxChars - _controller.text.length} characters left',
-                         style: TextStyle(
-                           color: Colors.grey[600],
-                           fontSize: 12,
-                           fontWeight: FontWeight.w600,
-                         ),
-                       ),
-                     ),
                    ],
                  ),
                ),
          ),
              SizedBox(height: 50,),
-             CustomElevatedBtn(btnDesc: 'Submit Review',horizontalPad: 40,)
+             CustomElevatedBtn(btnDesc: 'Submit Review',horizontalPad: 40,onPressed: _submitReview,)
            ],
          ),
        ),

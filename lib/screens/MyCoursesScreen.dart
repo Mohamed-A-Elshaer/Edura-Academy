@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:appwrite/appwrite.dart';
+import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import '../auth/Appwrite_service.dart';
 import 'CourseDetailScreen.dart';
 import 'DisplayCourseLessons.dart';
@@ -98,12 +99,11 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
             print('Total Videos: ${courseVideoIds.length}');
             print('Completed Videos: $completedCount');
             print('Completion Percentage: $completionPercentage%');
-
+            final imagePath = await SupaAuthService.getCourseCoverImageUrl(course.data['title']);
             courses.add({
               'title': course.data['title'] ?? 'Untitled Course',
               'category': course.data['category'] ?? 'Uncategorized',
-              'imagePath': course.data['imagePath'] ??
-                  'https://via.placeholder.com/300x200',
+              'imagePath': imagePath,
               'courseId': course.$id,
               'price': course.data['price'] ?? '0',
               'instructorName':
@@ -331,7 +331,7 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
         children: [
           Column(
             children: [
-              Padding(
+            /*  Padding(
                 padding: const EdgeInsets.all(16),
                 child: TextField(
                   controller: _searchController,
@@ -366,7 +366,7 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                     fillColor: Colors.grey[100],
                   ),
                 ),
-              ),
+              ),*/
 
               // Toggle Buttons
               Padding(
@@ -478,6 +478,9 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                                             'Course list refreshed after video completion');
                                       });
                                     },
+                                    courseCategory: course['category'],
+                                    courseImagePath: course['imagePath'],
+
                                   );
                                 },
                               ),
