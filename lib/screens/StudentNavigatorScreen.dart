@@ -4,10 +4,11 @@ import 'package:mashrooa_takharog/screens/BookmarksScreen.dart';
 import 'package:mashrooa_takharog/screens/HomeScreen.dart';
 import 'package:mashrooa_takharog/screens/MyCoursesScreen.dart';
 import 'package:mashrooa_takharog/screens/ProfileScreen.dart';
+import 'package:mashrooa_takharog/screens/plogspage.dart';
 
 class NavigatorScreen extends StatefulWidget {
   String? password;
-   NavigatorScreen({super.key,this.password});
+  NavigatorScreen({super.key, this.password});
 
   @override
   _MyNavigatorScreenState createState() => _MyNavigatorScreenState();
@@ -20,25 +21,28 @@ class _MyNavigatorScreenState extends State<NavigatorScreen> {
   @override
   void initState() {
     super.initState();
-     _screens = [
+    _screens = [
       Homepage(),
       MyCoursesScreen(),
       BookmarksScreen(),
+      PlogsPage(),
       null,
-      null,
-      ProfileScreen(userType: 'student', password: widget.password,)
+      ProfileScreen(
+        userType: 'student',
+        password: widget.password,
+      )
     ];
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    body: _screens[currentIndex],
-         bottomNavigationBar: BottomNavigationBar(
+      body: _screens[currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
         onTap: (index) {
           setState(() {
             currentIndex = index;
           });
-
         },
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
@@ -47,12 +51,15 @@ class _MyNavigatorScreenState extends State<NavigatorScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.book), label: 'My Courses'),
-          BottomNavigationBarItem(icon: Icon(Icons.bookmark_border_outlined), label: 'Bookmarks'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.bookmark_border_outlined), label: 'Bookmarks'),
           BottomNavigationBarItem(icon: Icon(Icons.article), label: 'Blogs'),
-
           BottomNavigationBarItem(
               icon: Icon(Icons.payment), label: 'Transaction'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile',),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
         ],
       ),
     );
