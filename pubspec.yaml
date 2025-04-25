@@ -103,7 +103,7 @@ flutter:
         - asset: assets/fonts/Mulish-Bold.ttf
     - family: Pacifico
       fonts:
-         - asset: fonts/Pacifico-Regular.ttf
+         - asset: assets/fonts/Pacifico-Regular.ttf
 
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

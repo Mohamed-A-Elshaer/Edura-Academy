@@ -10,7 +10,7 @@ class PlogsCategoryCardListview extends StatelessWidget {
     PlogsCategoryModel(
         image: 'assets/images/javascript.png', name: 'JavaScript'),
     PlogsCategoryModel(image: 'assets/images/python.png', name: 'Python'),
-    PlogsCategoryModel(image: 'assets/mages/software.jpeg', name: 'SoftWare'),
+    PlogsCategoryModel(image: 'assets/images/software.jpeg', name: 'SoftWare'),
     PlogsCategoryModel(image: 'assets/images/Database.jpeg', name: 'DataBase'),
     PlogsCategoryModel(image: 'assets/images/AI.jpeg', name: 'AI')
   ];

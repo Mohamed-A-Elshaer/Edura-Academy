@@ -1,11 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/widgets/articlemodel.dart';
-
 import 'package:url_launcher/url_launcher.dart';
 
 class PlogsNewsTile extends StatelessWidget {
   const PlogsNewsTile({super.key, required this.articlemodel});
   final Articlemodel articlemodel;
+
+  Future<void> _launchURL(BuildContext context) async {
+    final url = articlemodel.url;
+    if (url == null || url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No URL available')),
+      );
+      return;
+    }
+
+    try {
+      final uri = Uri.parse(url);
+      if (!await canLaunchUrl(uri)) {
+        throw Exception('Could not launch $url');
+      }
+      await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+        webOnlyWindowName: '_blank',
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open URL: ${e.toString()}')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(mainAxisSize: MainAxisSize.min, children: [
@@ -49,16 +75,7 @@ class PlogsNewsTile extends StatelessWidget {
       ),
       const SizedBox(height: 6),
       GestureDetector(
-        onTap: () async {
-          final uri = Uri.tryParse(articlemodel.url ?? '');
-          if (uri != null && await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Invalid or unavailable URL')),
-            );
-          }
-        },
+        onTap: () => _launchURL(context),
         child: Text(
           'Read more',
           style: TextStyle(
