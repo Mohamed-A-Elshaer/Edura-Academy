@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/screens/AdminDashboardScreen.dart';
-//import 'package:mashrooa_takharog/screens/AdminProfileScreen.dart';
+import 'package:mashrooa_takharog/screens/AdminProfileScreen.dart';
 
 class AdminNavigatorScreen extends StatefulWidget {
   const AdminNavigatorScreen({super.key});
@@ -14,7 +14,7 @@ class _AdminNavigatorScreenState extends State<AdminNavigatorScreen> {
 
   final List<Widget> _screens = [
     const AdminDashboardScreen(),
-    //const AdminProfileScreen(),
+    const AdminProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -45,4 +45,4 @@ class _AdminNavigatorScreenState extends State<AdminNavigatorScreen> {
       ),
     );
   }
-} 
+}
