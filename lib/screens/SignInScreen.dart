@@ -171,6 +171,7 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
+
   void login(BuildContext context, String intendedRole) async {
     final authService = AuthService();
     final account = Appwrite_service.account;
@@ -232,6 +233,64 @@ class _SignInScreenState extends State<SignInScreen> {
             .get();
 
         if (adminQuery.docs.isNotEmpty) {
+
+          if (intendedRole != 'admin') {
+            // Show access denied dialog
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text(
+                    'Access Denied',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 48,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        'This email belongs to an admin account. Please sign in from the admin panel.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Text(
+                        'OK',
+                        style: TextStyle(color: Theme.of(context).primaryColor),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+
+            // Sign out from all services
+            await FirebaseAuth.instance.signOut();
+            await SupaAuthService.signOut();
+            try {
+              final sessions = await account.listSessions();
+              if (sessions.sessions.isNotEmpty) {
+                await account.deleteSession(sessionId: 'current');
+                print("Appwrite session deleted successfully");
+              } else {
+                print("No active Appwrite session found");
+              }
+            } catch (e) {
+              print("Error deleting Appwrite session: $e");
+            }
+            return;
+          }
           // If email found in admin collection, navigate to admin screen
           Navigator.pushReplacement(
             context,
@@ -438,46 +497,7 @@ class _SignInScreenState extends State<SignInScreen> {
     return null; // Return null if no matching document is found
   }*/
 
-  void _showAccessDeniedDialog(BuildContext context, String intendedRole) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Access Denied',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.error_outline,
-                color: Colors.red,
-                size: 48,
-              ),
-              SizedBox(height: 16),
-              Text(
-                'You are not authorized to log in as a/an $intendedRole.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                'OK',
-                style: TextStyle(color: Theme.of(context).primaryColor),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
+
 
   /* Future<bool> _isFirestoreEmailMatch(String userId, String enteredEmail) async {
     try {
