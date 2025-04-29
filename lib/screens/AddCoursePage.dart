@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io' as file_conflict;
 import 'dart:io';
@@ -231,7 +230,10 @@ class AddCoursePageState extends State<AddCoursePage> {
           "sections": sections.map((s) => s['title']).toList(),
           'section_durations': sectionDurations,
           "videos": videoTitles,
-          "video_durations":videoDurations
+          "video_durations":videoDurations,
+          "status": "pending",
+          "upload_status": "pending",
+          "created_at": DateTime.now().toIso8601String()
         }
       );
 
