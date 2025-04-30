@@ -6,6 +6,7 @@ import 'package:mashrooa_takharog/screens/video_player_screen.dart';
 import '../auth/Appwrite_service.dart';
 import '../widgets/customElevatedBtn.dart';
 import 'ReviewsScreen.dart';
+import 'StudentNavigatorScreen.dart';
 
 class DisplayCourseLessons extends StatefulWidget {
 
@@ -175,7 +176,7 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pushReplacement(context,MaterialPageRoute(builder: (context)=> NavigatorScreen())),
         ),
         title: const Text(
           'Course Lessons',
