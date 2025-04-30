@@ -4,7 +4,7 @@ import 'package:mashrooa_takharog/auth/Appwrite_service.dart';
 
 class AppwriteTableCreate{
 
- static Future<void> insertAppwriteUserDatabase(String? name, String? email, String? userType, String? userId) async {
+ static Future<void> insertAppwriteUserDatabase(String? name, String? email, String? userType, String? userId,{String? major}) async {
 
 
     try {
@@ -18,7 +18,8 @@ class AppwriteTableCreate{
           'name': name,
           'email': email,
           'user_type': userType,
-          'id':userId
+          'id':userId,
+          'major':major,
         },
       );
 

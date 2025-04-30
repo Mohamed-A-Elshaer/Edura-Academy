@@ -22,8 +22,8 @@ class _IntroScreenState extends State<IntroScreen> {
         titleText: 'Learn Anytime',
         descriptionText: 'Book or Save Lectures for Future Reference.'),
     IntroWidget(
-        titleText: 'Get Online Certificate',
-        descriptionText: 'Analyze your scores and track your results.'),
+        titleText: 'Live the Full Experience',
+        descriptionText: 'Every moment. Every lesson. All in your hands.'),
   ];
 
   @override

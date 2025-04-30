@@ -330,7 +330,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     SizedBox(height: 16),
                     Text(
-                      'This email is registered as a ${oppositeCollection == 'instructors' ? 'instructor' : 'student'}. Please sign in with the appropriate account type.',
+                      'This email is registered as a/an ${oppositeCollection == 'instructors' ? 'instructor' : 'student'}. Please sign in with the appropriate account type.',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 16),
                     ),
@@ -757,16 +757,6 @@ class _SignInScreenState extends State<SignInScreen> {
                         'assets/images/googleCircle.png',
                         height: 55,
                       )),
-                  SizedBox(
-                    width: 40,
-                  ),
-                  Transform(
-                      transform: Matrix4.translationValues(0, -9, 0),
-                      child: GestureDetector(
-                          child: Image.asset(
-                        'assets/images/appleCircle.png',
-                        height: 55,
-                      ))),
                 ],
               ),
               SizedBox(

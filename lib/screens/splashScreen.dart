@@ -85,7 +85,8 @@ class _SplashScreenState extends State<SplashScreen> {
                 MaterialPageRoute(
                     builder: (context) => InstructorNavigatorScreen()),
               );
-            } else {
+            }
+            else {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => IntroScreen()),

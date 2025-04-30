@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import 'package:mashrooa_takharog/screens/FillYourProfile.dart';
 import 'package:mashrooa_takharog/screens/SignInScreen.dart';
 import 'package:mashrooa_takharog/screens/StudentOrInstructor.dart';
@@ -44,7 +43,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final supabase = Supabase.instance.client;
 
-  //final supaAuth=SupaAuthService();
 
 
 
@@ -58,22 +56,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _phoneController.dispose();
     super.dispose();
   }
- /* Future<bool> isPhoneNumberExists(String phone) async {
-    String formattedPhone = '+20$phone';
-
-    // Check both collections for existing phone number
-    final studentQuery = await FirebaseFirestore.instance
-        .collection('students')
-        .where('phone', isEqualTo: formattedPhone)
-        .get();
-
-    final instructorQuery = await FirebaseFirestore.instance
-        .collection('instructors')
-        .where('phone', isEqualTo: formattedPhone)
-        .get();
-
-    return studentQuery.docs.isNotEmpty || instructorQuery.docs.isNotEmpty;
-  }*/
 
   void register(BuildContext context) async {
 
@@ -552,9 +534,7 @@ showDialog(
     onTap: ()=>AuthService().signInWithGoogle(context,widget.userType!),
                     child: Image.asset('assets/images/googleCircle.png',height: 55,)),
                 SizedBox(width: 40,),
-                Transform(
-                    transform: Matrix4.translationValues(0, -9, 0),
-                    child: GestureDetector(child: Image.asset('assets/images/appleCircle.png',height: 55,))),
+
               ],
             ),
             SizedBox(height: 7,),
