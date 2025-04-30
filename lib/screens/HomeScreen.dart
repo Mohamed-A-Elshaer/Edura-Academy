@@ -231,7 +231,7 @@ class HomepageState extends State<Homepage> {
           'category': doc.data['category'] ?? 'Unknown',
           'title': courseTitle,
           'price': '${doc.data['price']?.toString() ?? '0'}',
-          'rating': doc.data['averageRating']?.toDouble() ?? 0.0, // Add this
+          'rating': doc.data['averageRating']?.toDouble() ?? 0.0,
           'students': purchaseCount,
           'instructor_name': doc.data['instructor_name'] ?? 'Unknown',
         });

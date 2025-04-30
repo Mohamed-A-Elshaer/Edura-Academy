@@ -64,7 +64,10 @@ class _SpecificCategoryPageState extends State<SpecificCategoryPage> {
           await Appwrite_service.databases.listDocuments(
         databaseId: '67c029ce002c2d1ce046', // Replace with your DB ID
         collectionId: '67c1c87c00009d84c6ff',
-        queries: [appwrite.Query.equal('category', widget.category)],
+        queries: [
+          appwrite.Query.equal('category', widget.category),
+          appwrite.Query.equal('upload_status', 'approved')
+        ],
       );
       final List<Map<String, dynamic>> loadedCourses = [];
 

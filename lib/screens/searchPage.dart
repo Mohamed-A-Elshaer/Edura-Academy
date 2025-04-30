@@ -22,68 +22,43 @@ class SearchPageState extends State<SearchPage> {
   String currentQuery = '';
   String? userId;
 
-
-
-
   // Example course and mentor data
   final List<Map<String, String>> courses = [
     {
-
       'category': 'Graphic Design',
       'title': 'Graphic Design Advanced',
-
     },
     {
-
       'category': 'Graphic Design',
       'title': 'Advance Diploma in Graphic Design',
-
     },
     {
-
       'category': 'Programming',
       'title': 'Web Developement Full Diploma',
-
     },
     {
-
       'category': 'Arts & Humanities',
       'title': 'Introdution to Arts',
-
     },
     {
-
       'category': 'Personal Development',
       'title': 'How to Discover More About Yourself',
-
     },
     {
-
       'category': 'SEO & Marketing',
       'title': 'Introduction to Stocks',
-
     },
     {
-
       'category': 'Office Productivity',
       'title': 'How to Manage Your Time Effectively',
-
     },
     {
-
       'category': 'SEO & Marketing',
       'title': 'Introduction to Social Marketing',
-
-
-
     },
     {
-
       'category': 'Cooking',
       'title': 'Healthy Cooking for a Healthy Family.',
-
-
-
     },
   ];
 
@@ -101,11 +76,13 @@ class SearchPageState extends State<SearchPage> {
     super.initState();
     _initUserAndLoadHistory();
   }
+
   static String getCourseCoverImageUrl(String courseName) {
     try {
-      String formattedCourseName= courseName.replaceAll(' ', '_');
+      String formattedCourseName = courseName.replaceAll(' ', '_');
       final path = '$formattedCourseName/course_cover.jpg';
-      final publicUrl = SupaAuthService.supabase.storage.from('profiles').getPublicUrl(path);
+      final publicUrl =
+          SupaAuthService.supabase.storage.from('profiles').getPublicUrl(path);
       print(publicUrl);
       return publicUrl;
     } catch (e) {
@@ -137,7 +114,8 @@ class SearchPageState extends State<SearchPage> {
       );
 
       setState(() {
-        searchHistory = List<String>.from(response.data['searches_history'] ?? []);
+        searchHistory =
+            List<String>.from(response.data['searches_history'] ?? []);
       });
       print('Loaded search history: $searchHistory');
     } catch (e) {
@@ -156,7 +134,8 @@ class SearchPageState extends State<SearchPage> {
         documentId: userId!,
       );
 
-      List<String> history = List<String>.from(currentDoc.data['searches_history'] ?? []);
+      List<String> history =
+          List<String>.from(currentDoc.data['searches_history'] ?? []);
 
       // Avoid duplicates
       history.remove(keyword);
@@ -207,8 +186,6 @@ class SearchPageState extends State<SearchPage> {
     }
   }
 
-
-
   void _goToSearchResultsPage(String query) {
     saveSearchToHistory(query);
     Navigator.push(
@@ -216,7 +193,6 @@ class SearchPageState extends State<SearchPage> {
       MaterialPageRoute(builder: (context) => SearchCoursesPage()),
     );
   }
-
 
   void _search(String query) async {
     setState(() {
@@ -246,12 +222,12 @@ class SearchPageState extends State<SearchPage> {
 
     // Check if the query matches any enum category value
     String? matchedCategory = allowedCategories.firstWhere(
-          (category) => category.toLowerCase().contains(query.toLowerCase()),
+      (category) => category.toLowerCase().contains(query.toLowerCase()),
       orElse: () => '',
     );
 
-    if (matchedCategory.isEmpty) matchedCategory = null; // convert empty string to null
-
+    if (matchedCategory.isEmpty)
+      matchedCategory = null; // convert empty string to null
 
     try {
       // ---- Fetch courses ----
@@ -259,9 +235,9 @@ class SearchPageState extends State<SearchPage> {
         Query.or([
           Query.search('title', query),
           Query.equal('category', matchedCategory ?? '__no_match__'),
-        ])
+        ]),
+        Query.equal('upload_status', 'approved')
       ];
-
 
       final courseResponse = await Appwrite_service.databases.listDocuments(
         databaseId: '67c029ce002c2d1ce046',
@@ -270,15 +246,14 @@ class SearchPageState extends State<SearchPage> {
       );
 
       results.addAll(courseResponse.documents.map((doc) => {
-        'type': 'course',
-        'title': doc.data['title'] ?? '',
-        'category': doc.data['category'] ?? '',
-        'price': (doc.data['price'] ?? 0).toString(),
-        'courseId': doc.$id,
-        'imagePath': getCourseCoverImageUrl(doc.data['title'] ?? ''),
-        'instructorName': doc.data['name'] ?? '',
-      }));
-
+            'type': 'course',
+            'title': doc.data['title'] ?? '',
+            'category': doc.data['category'] ?? '',
+            'price': (doc.data['price'] ?? 0).toString(),
+            'courseId': doc.$id,
+            'imagePath': getCourseCoverImageUrl(doc.data['title'] ?? ''),
+            'instructorName': doc.data['name'] ?? '',
+          }));
 
       // ---- Fetch instructors ----
       final instructorResponse = await Appwrite_service.databases.listDocuments(
@@ -294,10 +269,10 @@ class SearchPageState extends State<SearchPage> {
       );
 
       results.addAll(instructorResponse.documents.map((doc) => {
-        'type': 'instructor',
-        'name': doc.data['name'],
-        'specialty': doc.data['major'],
-      }));
+            'type': 'instructor',
+            'name': doc.data['name'],
+            'specialty': doc.data['major'],
+          }));
     } catch (e) {
       print('Error fetching search results: $e');
     }
@@ -307,9 +282,6 @@ class SearchPageState extends State<SearchPage> {
     });
   }
 
-
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -318,7 +290,8 @@ class SearchPageState extends State<SearchPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>NavigatorScreen()));
+            Navigator.pushReplacement(context,
+                MaterialPageRoute(builder: (context) => NavigatorScreen()));
           },
         ),
         title: const Text('Search'),
@@ -363,7 +336,9 @@ class SearchPageState extends State<SearchPage> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Recent Searches", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text("Recent Searches",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   Wrap(
                     spacing: 8,
                     children: searchHistory.map((query) {
@@ -383,123 +358,137 @@ class SearchPageState extends State<SearchPage> {
 
             // Search Results
             Expanded(
-              child: searchResults.isEmpty && currentQuery.isNotEmpty
-                  ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 10),
-                  const Text("No matching results found"),
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: () {
-                      saveSearchToHistory(currentQuery);
-                      _goToSearchResultsPage(currentQuery);},
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
+                child: searchResults.isEmpty && currentQuery.isNotEmpty
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.search, color: Colors.blue),
-                          const SizedBox(width: 10),
-                          Text(
-                            "Search for \"$currentQuery\"",
-                            style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-                          ),
-                          Spacer(),
-                          CircleAvatar(
-                              backgroundColor: Colors.white,
-                              radius: 14,
-                              child:  Icon(Icons.arrow_forward_ios_sharp)
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              )
-                  : ListView.builder(
-                itemCount: searchResults.length + 1,
-                itemBuilder: (context, index) {
-                  if (index < searchResults.length) {
-                    final result = searchResults[index];
-                    if (result['type'] == 'course') {
-                      return Column(
-                        children: [
-                          ListTile(
-                            leading: Icon(Icons.school, color: Colors.blue),
-                            title: Text(result['title'] ?? ''),
-                            subtitle: Text(result['category'] ?? ''),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => Coursedetailscreen(
-                                      title: result['title'] ?? '',
-                                      category: result['category'] ?? '',
-                                      imagePath: getCourseCoverImageUrl(result['title'] ?? ''),
-                                      courseId: result['courseId'] ?? '',
-                                      price: result['price']?.toString() ?? '',
-                                      instructorName: result['instructorName'] ?? '',
-                                    ),
+                          const SizedBox(height: 10),
+                          const Text("No matching results found"),
+                          const SizedBox(height: 10),
+                          GestureDetector(
+                            onTap: () {
+                              saveSearchToHistory(currentQuery);
+                              _goToSearchResultsPage(currentQuery);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.search, color: Colors.blue),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    "Search for \"$currentQuery\"",
+                                    style: const TextStyle(
+                                        color: Colors.blue,
+                                        fontWeight: FontWeight.bold),
                                   ),
-                                );
-                              }
-
-                          ),
-                          const Divider(),
-                        ],
-                      );
-                    } else if (result['type'] == 'instructor') {
-                      return Column(
-                        children: [
-                          ListTile(
-                            leading: Icon(Icons.person, color: Colors.blue),
-                            title: Text(result['name'] ?? ''),
-                            subtitle: Text(result['specialty'] ?? ''),
-                          ),
-                          const Divider(),
-                        ],
-                      );
-                    } else {
-                      return SizedBox.shrink();
-                    }
-                  } else {
-                    // The "Search for [query]" option
-                    return GestureDetector(
-                      onTap: () => _goToSearchResultsPage(currentQuery),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                        margin: const EdgeInsets.only(top: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.search, color: Colors.blue),
-                            const SizedBox(width: 10),
-                            Text(
-                              "Search for \"$currentQuery\"",
-                              style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                                  Spacer(),
+                                  CircleAvatar(
+                                      backgroundColor: Colors.white,
+                                      radius: 14,
+                                      child:
+                                          Icon(Icons.arrow_forward_ios_sharp))
+                                ],
+                              ),
                             ),
-Spacer(),
-                            CircleAvatar(
-                              backgroundColor: Colors.white,
-                           radius: 14,
-                           child:  Icon(Icons.arrow_forward_ios_sharp)
-                            )
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-                },
-              )
-
-            ),
+                          ),
+                        ],
+                      )
+                    : ListView.builder(
+                        itemCount: searchResults.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index < searchResults.length) {
+                            final result = searchResults[index];
+                            if (result['type'] == 'course') {
+                              return Column(
+                                children: [
+                                  ListTile(
+                                      leading: Icon(Icons.school,
+                                          color: Colors.blue),
+                                      title: Text(result['title'] ?? ''),
+                                      subtitle: Text(result['category'] ?? ''),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                Coursedetailscreen(
+                                              title: result['title'] ?? '',
+                                              category:
+                                                  result['category'] ?? '',
+                                              imagePath: getCourseCoverImageUrl(
+                                                  result['title'] ?? ''),
+                                              courseId:
+                                                  result['courseId'] ?? '',
+                                              price:
+                                                  result['price']?.toString() ??
+                                                      '',
+                                              instructorName:
+                                                  result['instructorName'] ??
+                                                      '',
+                                            ),
+                                          ),
+                                        );
+                                      }),
+                                  const Divider(),
+                                ],
+                              );
+                            } else if (result['type'] == 'instructor') {
+                              return Column(
+                                children: [
+                                  ListTile(
+                                    leading:
+                                        Icon(Icons.person, color: Colors.blue),
+                                    title: Text(result['name'] ?? ''),
+                                    subtitle: Text(result['specialty'] ?? ''),
+                                  ),
+                                  const Divider(),
+                                ],
+                              );
+                            } else {
+                              return SizedBox.shrink();
+                            }
+                          } else {
+                            // The "Search for [query]" option
+                            return GestureDetector(
+                              onTap: () => _goToSearchResultsPage(currentQuery),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 16),
+                                margin: const EdgeInsets.only(top: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.search,
+                                        color: Colors.blue),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      "Search for \"$currentQuery\"",
+                                      style: const TextStyle(
+                                          color: Colors.blue,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    Spacer(),
+                                    CircleAvatar(
+                                        backgroundColor: Colors.white,
+                                        radius: 14,
+                                        child:
+                                            Icon(Icons.arrow_forward_ios_sharp))
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      )),
           ],
         ),
       ),
