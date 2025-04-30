@@ -239,16 +239,25 @@ class AddCoursePageState extends State<AddCoursePage> {
             'section_durations': sectionDurations,
             "videos": videoTitles,
             "video_durations": videoDurations,
+
             "upload_status": "pending"
+
+            
+
           });
 
       // ✅ **Success Message**
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+
             content: Text(
                 "Course Published Successfully! It is now pending admin approval."),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 4)),
+
+           
+            
+
       );
       Navigator.pushReplacement(
         context,
