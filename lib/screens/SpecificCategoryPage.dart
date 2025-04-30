@@ -8,7 +8,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:mashrooa_takharog/screens/HomeScreen.dart';
 
 import '../auth/supaAuth_service.dart';
-import '../widgets/coursecard.dart'; // for HomepageState
+import '../widgets/coursecard.dart';
+import 'StudentNavigatorScreen.dart'; // for HomepageState
 
 class SpecificCategoryPage extends StatefulWidget {
   final String category;
@@ -129,6 +130,7 @@ class _SpecificCategoryPageState extends State<SpecificCategoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(onPressed: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>NavigatorScreen()));}, icon: Icon(Icons.arrow_back_outlined,color: Colors.white,)),
         title: Text(widget.category,style: TextStyle(color: Colors.white),),
         backgroundColor: Colors.teal,
       ),

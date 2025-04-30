@@ -39,7 +39,7 @@ return await supabase.auth.signUp(email: email,password: password);
     try {
       final response = await supabase.storage.from('profiles').list(path: courseName);
 
-      final files = response.map((item) => '$courseName/${item.name}').toList();
+      final files = response.map((item) => '${courseName.replaceAll(' ', '_')}/${item.name}').toList();
 
       if (files.isNotEmpty) {
         await supabase.storage.from('profiles').remove(files);

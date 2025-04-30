@@ -29,8 +29,7 @@ class AddCoursePageState extends State<AddCoursePage> {
   File? _selectedImage;
  static List<Map<String, dynamic>> sections = [];
   List<String> sectionDurations = [];
-  List<int> videoDurations = []; // This will collect durations of all videos in minutes
-
+  List<int> videoDurations = [];
   late Client appwriteClient;
   late Databases databases;
   late Storage storage;
@@ -61,8 +60,8 @@ class AddCoursePageState extends State<AddCoursePage> {
 
   void _initializeAppwrite() async {
     appwriteClient = Client()
-        .setEndpoint("https://cloud.appwrite.io/v1") // Your Appwrite endpoint
-        .setProject("67ac8356002648e5b7e9"); // Your project ID
+        .setEndpoint("https://cloud.appwrite.io/v1")
+        .setProject("67ac8356002648e5b7e9");
 
     databases = Databases(appwriteClient);
     storage = Storage(appwriteClient);
@@ -72,11 +71,9 @@ class AddCoursePageState extends State<AddCoursePage> {
   }
   Future<void> _fetchCurrentUser() async {
     try {
-      // Get logged-in user ID from Appwrite Auth
       appwrite_models.User user = await account.get();
       String userId = user.$id;
 
-      // Fetch instructor details from the "users" collection
       var response = await databases.getDocument(
         databaseId: "67c029ce002c2d1ce046",
         collectionId: "67c0cc3600114e71d658",
@@ -85,7 +82,7 @@ class AddCoursePageState extends State<AddCoursePage> {
 
       setState(() {
         instructorId = userId;
-        instructorName = response.data['name']; // Fetch name from DB
+        instructorName = response.data['name'];
       });
     } catch (e) {
       print("Error fetching user details: $e");
@@ -93,23 +90,22 @@ class AddCoursePageState extends State<AddCoursePage> {
   }
 
   Future<void> _publishCourse() async {
-   /* try {
-      final user = await account.get(); // Fetch current user
-      print("Logged-in user: ${user.$id}");
-    } catch (e) {
-      print("User is not logged in: $e");
-    }*/
 
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _isPublishing = true;
     });
+    List<String> existingCourseTitles = await _fetchExistingCourseTitles();
+
 
     if (_selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please select a course cover image!")),
+        SnackBar(content: Text("Please select a course cover image!"),backgroundColor: Colors.red,),
       );
+      setState(() {
+        _isPublishing = false;
+      });
       return;
     }
 
@@ -117,6 +113,9 @@ class AddCoursePageState extends State<AddCoursePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Please add at least one section with videos!")),
       );
+      setState(() {
+        _isPublishing = false;
+      });
       return;
     }
 
@@ -125,9 +124,18 @@ class AddCoursePageState extends State<AddCoursePage> {
     String category = _categoryController.text.trim();
     String description = _descriptionController.text.trim();
     String courseFolder = courseTitle.replaceAll(" ", "_").toLowerCase(); // Simulated folder
-    String bucketId = "67ac838900066b15fc99"; // Use a single bucket
-  //  String? coverImageUrl;
-    //int videoIndex = 1; // Start numbering from 01
+    String bucketId = "67ac838900066b15fc99";
+
+    if (existingCourseTitles.contains(courseTitle)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Course Name is already used!"),backgroundColor: Colors.red,duration: Duration(seconds: 4),),
+      );
+      setState(() {
+        _isPublishing=false;
+      });
+      return;
+    }
+
     List<String> videoTitles = [];
 
 
@@ -187,8 +195,7 @@ class AddCoursePageState extends State<AddCoursePage> {
 
 
 
-      // 2- **Upload Videos to Storage & Collect Paths**
-      // 3️⃣ **رفع الفيديوهات مع الترتيب العام**
+
       for (int i = 0; i < allVideos.length; i++) {
         var sectionTitle = allVideos[i]['section'];
         var video = allVideos[i]['video'];
@@ -231,9 +238,10 @@ class AddCoursePageState extends State<AddCoursePage> {
           'section_durations': sectionDurations,
           "videos": videoTitles,
           "video_durations":videoDurations,
-          "status": "pending",
           "upload_status": "pending",
-          "created_at": DateTime.now().toIso8601String()
+
+        
+
         }
       );
 
@@ -257,6 +265,23 @@ class AddCoursePageState extends State<AddCoursePage> {
     }
   }
 
+  Future<List<String>> _fetchExistingCourseTitles() async {
+    List<String> titles = [];
+    try {
+      var response = await databases.listDocuments(
+        databaseId: "67c029ce002c2d1ce046",
+        collectionId: "67c1c87c00009d84c6ff",
+      );
+
+      for (var document in response.documents) {
+        titles.add(document.data['title']);
+      }
+    } catch (e) {
+      print("Error fetching course titles: $e");
+    }
+    return titles;
+  }
+
 
  static int calculateSectionDuration(List<dynamic> videos) { // ✅ Change Here
     int sectionDuration = 0;
@@ -264,10 +289,10 @@ class AddCoursePageState extends State<AddCoursePage> {
     List<Map<String, dynamic>> videosList = videos.map((video) => Map<String, dynamic>.from(video)).toList(); // ✅ Change Here
 
     for (var video in videosList) {
-      sectionDuration += int.tryParse(video["duration"]?.split(" ")[0] ?? "0") ?? 0; // ✅ Change Here
+      sectionDuration += int.tryParse(video["duration"]?.split(" ")[0] ?? "0") ?? 0;
     }
 
-    return sectionDuration; // Return total section duration in minutes
+    return sectionDuration;
   }
 
  static int calculateTotalCourseDuration() {
@@ -278,7 +303,7 @@ class AddCoursePageState extends State<AddCoursePage> {
       totalDuration += sectionDuration;
     }
 
-    return totalDuration; // Return total duration in minutes
+    return totalDuration;
   }
 
 

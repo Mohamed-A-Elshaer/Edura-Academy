@@ -31,6 +31,7 @@ class HomepageState extends State<Homepage> {
   PageController(viewportFraction: 0.6);
   static int selectedCardIndex = -1;
   int selectedcategoryindex = -1;
+  List<String> savedCourseTitles = [];
   final List<Map<String, String>> mentors = [
     {"name": "Ahmed Abdullah", "imagePath": "assets/images/mentor.jpg"},
     {"name": "Osama Ahmed", "imagePath": "assets/images/mentor.jpg"},
@@ -92,10 +93,67 @@ class HomepageState extends State<Homepage> {
   void initState() {
     super.initState();
     _fetchUserData();
-    _fetchCoursesData(); // Add this to fetch courses from Appwrite
+    _fetchCoursesData();
+    _fetchSavedCourseTitles();// Add this to fetch courses from Appwrite
   }
   List<Map<String, dynamic>> filteredCourses = [];
+  Future<void> _fetchSavedCourseTitles() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
 
+      final doc = await FirebaseFirestore.instance.collection('students').doc(user.uid).get();
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        setState(() {
+          savedCourseTitles = List<String>.from(data['savedCourses'] ?? []);
+        });
+      }
+    } catch (e) {
+      print('Error fetching saved course titles: $e');
+    }
+  }
+
+
+  Future<void> _toggleBookmark(String courseTitle) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final docRef = FirebaseFirestore.instance.collection('students').doc(user.uid);
+    final doc = await docRef.get();
+
+    List<String> currentSaved = List<String>.from(doc.data()?['savedCourses'] ?? []);
+
+    bool isBookmarked;
+
+    if (currentSaved.contains(courseTitle)) {
+      currentSaved.remove(courseTitle);
+      isBookmarked = false;
+    } else {
+      currentSaved.add(courseTitle);
+      isBookmarked = true;
+    }
+
+    await docRef.update({'savedCourses': currentSaved});
+
+    setState(() {
+      savedCourseTitles = currentSaved;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isBookmarked
+              ? 'Course has been bookmarked successfully!'
+              : 'Course has been removed from bookmarks successfully!',
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
 
   Future<void> _fetchUserData() async {
     try {
@@ -167,10 +225,10 @@ class HomepageState extends State<Homepage> {
               : 'assets/images/mediahandler.png',
           'category': doc.data['category'] ?? 'Unknown',
           'title': courseTitle,
-          'price': 'EGP${doc.data['price']?.toString() ?? '0'}',
+          'price': '${doc.data['price']?.toString() ?? '0'}',
           'rating': doc.data['averageRating']?.toDouble() ?? 0.0, // Add this
           'students': purchaseCount,
-          'instructor_name': doc.data['instructorName'] ?? 'Unknown',
+          'instructor_name': doc.data['instructor_name'] ?? 'Unknown',
         });
       }
 
@@ -567,14 +625,14 @@ class HomepageState extends State<Homepage> {
                       width: MediaQuery.of(context).size.width * 0.8,
                       child: CourseCard(
                         title: course['title'],
+                        courseId: course['id'],
                         price: course['price'],
                         imagePath: course['imagePath'],
                         category: course['category'],
                         rating: course['rating'] ?? 0.0,
-                        instructorName:
-                        course['instructor_name'] ?? 'Unknown',
-                        isBookmarked: false,
-                        onBookmarkToggle: () {},
+                        instructorName: course['instructor_name'] ?? 'Unknown',
+                        isBookmarked: savedCourseTitles.contains(course['title']),
+                        onBookmarkToggle: () => _toggleBookmark(course['title']),
                       ),
                     );
                   },

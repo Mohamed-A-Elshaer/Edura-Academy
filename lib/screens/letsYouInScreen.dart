@@ -44,7 +44,7 @@ return Scaffold(
           ),
         ],
       ),
-      SizedBox(height: 180,),
+      SizedBox(height: 140,),
       Text('Let\'s you in',
         style: TextStyle(fontSize: 24,color: Color(0xff202244),fontFamily: 'Jost'),
          textAlign: TextAlign.center,),
@@ -70,37 +70,15 @@ return Scaffold(
 
         ),
 
-      SizedBox(height: 10,),
-      Transform(
-        transform: Matrix4.translationValues(-5, 0, 0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            GestureDetector(
-              onTap: (){},
-              child: Image.asset('assets/images/appleCircle.png',height: 55,),
-            ),
 
-            GestureDetector(
-              onTap: (){},
-              child: Text(
-                'Continue with Apple',
-                style: TextStyle(fontSize: 16,color: Color(0xff545454),fontFamily: 'Mulish',fontWeight: FontWeight.w800),
-                textAlign: TextAlign.center,),
-            ),
 
-          ],
-
-        ),
-      ),
-
-      SizedBox(height: 50,),
+      SizedBox(height: 30,),
 
 
       Text("( Or ) ",style: TextStyle(fontSize: 15,fontFamily:'Mulish',fontWeight: FontWeight.w800,color: Color(0xff545454)),textAlign: TextAlign.center,),
-SizedBox(height: 30,),
+SizedBox(height: 50,),
       CustomElevatedBtn(btnDesc: 'Sign In with Your Account',onPressed: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>SignInScreen(userType: userType,)));},),
-      SizedBox(height: 25),
+      SizedBox(height: 85),
 
       Row(
         mainAxisAlignment: MainAxisAlignment.center,

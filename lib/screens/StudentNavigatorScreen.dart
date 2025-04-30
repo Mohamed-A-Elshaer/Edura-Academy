@@ -26,7 +26,6 @@ class _MyNavigatorScreenState extends State<NavigatorScreen> {
       MyCoursesScreen(),
       BookmarksScreen(),
       PlogsPage(),
-      null,
       ProfileScreen(
         userType: 'student',
         password: widget.password,
@@ -54,8 +53,6 @@ class _MyNavigatorScreenState extends State<NavigatorScreen> {
           BottomNavigationBarItem(
               icon: Icon(Icons.bookmark_border_outlined), label: 'Bookmarks'),
           BottomNavigationBarItem(icon: Icon(Icons.article), label: 'Blogs'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.payment), label: 'Transaction'),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
