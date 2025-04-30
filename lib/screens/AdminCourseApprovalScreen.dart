@@ -6,12 +6,14 @@ import 'package:mashrooa_takharog/auth/Appwrite_service.dart';
 import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import 'package:mashrooa_takharog/screens/SignInScreen.dart';
 import 'package:mashrooa_takharog/widgets/coursecard.dart';
+import 'package:mashrooa_takharog/screens/AdminCoursePreviewScreen.dart';
 
 class AdminCourseApprovalScreen extends StatefulWidget {
   const AdminCourseApprovalScreen({super.key});
 
   @override
-  State<AdminCourseApprovalScreen> createState() => _AdminCourseApprovalScreenState();
+  State<AdminCourseApprovalScreen> createState() =>
+      _AdminCourseApprovalScreenState();
 }
 
 class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
@@ -28,9 +30,9 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
     try {
       final result = await Appwrite_service.databases.listDocuments(
         databaseId: '67c029ce002c2d1ce046',
-        collectionId: '67c1c87c00009d84c6ff', // courses collection
+        collectionId: '67c1c87c00009d84c6ff',
         queries: [
-          appwrite.Query.equal('status', 'pending'),
+          appwrite.Query.equal('upload_status', 'pending'),
         ],
       );
 
@@ -53,8 +55,7 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
         collectionId: '67c1c87c00009d84c6ff',
         documentId: courseId,
         data: {
-          'status': 'approved',
-          'approvedAt': DateTime.now().toIso8601String(),
+          'upload_status': 'approved',
         },
       );
 
@@ -62,24 +63,20 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
         pendingCourses.removeWhere((course) => course['\$id'] == courseId);
       });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Course approved successfully'),
-            backgroundColor: Color(0xff00C853),
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Course approved successfully'),
+          backgroundColor: Color(0xff00C853),
+        ),
+      );
     } catch (e) {
       print('Error approving course: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to approve course'),
-            backgroundColor: Color(0xffD50000),
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to approve course'),
+          backgroundColor: Color(0xffD50000),
+        ),
+      );
     }
   }
 
@@ -90,8 +87,7 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
         collectionId: '67c1c87c00009d84c6ff',
         documentId: courseId,
         data: {
-          'status': 'rejected',
-          'rejectedAt': DateTime.now().toIso8601String(),
+          'upload_status': 'rejected',
         },
       );
 
@@ -99,24 +95,20 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
         pendingCourses.removeWhere((course) => course['\$id'] == courseId);
       });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Course rejected successfully'),
-            backgroundColor: Color(0xffD50000),
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Course rejected successfully'),
+          backgroundColor: Color(0xffD50000),
+        ),
+      );
     } catch (e) {
       print('Error rejecting course: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to reject course'),
-            backgroundColor: Color(0xffD50000),
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to reject course'),
+          backgroundColor: Color(0xffD50000),
+        ),
+      );
     }
   }
 
@@ -124,7 +116,7 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
     try {
       await FirebaseAuth.instance.signOut();
       await SupaAuthService.signOut();
-      
+
       final account = Appwrite_service.account;
       final sessions = await account.listSessions();
       if (sessions.sessions.isNotEmpty) {
@@ -134,7 +126,7 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) =>  SignInScreen()),
+          MaterialPageRoute(builder: (context) => SignInScreen()),
         );
       }
     } catch (e) {
@@ -180,15 +172,89 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
               itemCount: pendingCourses.length,
               itemBuilder: (context, index) {
                 final course = pendingCourses[index];
-                return CourseCard(
-                  category: course['category'] ?? 'Uncategorized',
-                  title: course['title'] ?? 'Untitled Course',
-                  price: course['price']?.toString() ?? '0',
-                  imagePath: course['thumbnail'] ?? '',
-                  instructorName: course['instructorName'] ?? 'Unknown Instructor',
-                  isBookmarked: false,
-                  onBookmarkToggle: () {},
-                  courseId: course['\$id'],
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    course['title'] ?? 'Untitled Course',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Instructor: ${course['instructor_name'] ?? 'Unknown'}',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  Text(
+                                    'Category: ${course['category'] ?? 'Uncategorized'}',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.video_library,
+                                      color: Colors.blue),
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            AdminCoursePreviewScreen(
+                                          title: course['title'],
+                                          courseId: course['\$id'],
+                                          courseCategory: course['category'],
+                                          courseImagePath: course[
+                                                  'imagePath'] ??
+                                              'assets/images/mediahandler.png',
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.check_circle,
+                                      color: Colors.green),
+                                  onPressed: () =>
+                                      approveCourse(course['\$id']),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.cancel,
+                                      color: Colors.red),
+                                  onPressed: () => rejectCourse(course['\$id']),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          course['description'] ?? 'No description available',
+                          style: TextStyle(
+                            color: Colors.grey[800],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               },
             ),
@@ -223,4 +289,4 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
       ),
     );
   }
-} 
+}

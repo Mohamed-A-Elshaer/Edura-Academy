@@ -14,7 +14,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
 import 'package:appwrite/models.dart' as appwrite_models;
 
-
 class AddCoursePage extends StatefulWidget {
   @override
   AddCoursePageState createState() => AddCoursePageState();
@@ -27,7 +26,7 @@ class AddCoursePageState extends State<AddCoursePage> {
   final TextEditingController _categoryController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   File? _selectedImage;
- static List<Map<String, dynamic>> sections = [];
+  static List<Map<String, dynamic>> sections = [];
   List<String> sectionDurations = [];
   List<int> videoDurations = [];
   late Client appwriteClient;
@@ -51,7 +50,6 @@ class AddCoursePageState extends State<AddCoursePage> {
 
   String? selectedCategory;
 
-
   @override
   void initState() {
     super.initState();
@@ -69,6 +67,7 @@ class AddCoursePageState extends State<AddCoursePage> {
 
     await _fetchCurrentUser();
   }
+
   Future<void> _fetchCurrentUser() async {
     try {
       appwrite_models.User user = await account.get();
@@ -90,7 +89,6 @@ class AddCoursePageState extends State<AddCoursePage> {
   }
 
   Future<void> _publishCourse() async {
-
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -98,10 +96,12 @@ class AddCoursePageState extends State<AddCoursePage> {
     });
     List<String> existingCourseTitles = await _fetchExistingCourseTitles();
 
-
     if (_selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please select a course cover image!"),backgroundColor: Colors.red,),
+        SnackBar(
+          content: Text("Please select a course cover image!"),
+          backgroundColor: Colors.red,
+        ),
       );
       setState(() {
         _isPublishing = false;
@@ -123,21 +123,25 @@ class AddCoursePageState extends State<AddCoursePage> {
     String price = _priceController.text.trim();
     String category = _categoryController.text.trim();
     String description = _descriptionController.text.trim();
-    String courseFolder = courseTitle.replaceAll(" ", "_").toLowerCase(); // Simulated folder
+    String courseFolder =
+        courseTitle.replaceAll(" ", "_").toLowerCase(); // Simulated folder
     String bucketId = "67ac838900066b15fc99";
 
     if (existingCourseTitles.contains(courseTitle)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Course Name is already used!"),backgroundColor: Colors.red,duration: Duration(seconds: 4),),
+        SnackBar(
+          content: Text("Course Name is already used!"),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 4),
+        ),
       );
       setState(() {
-        _isPublishing=false;
+        _isPublishing = false;
       });
       return;
     }
 
     List<String> videoTitles = [];
-
 
     // 1️⃣ **احسب عدد الفيديوهات قبل الرفع لترقيمها بشكل صحيح**
     List<Map<String, dynamic>> allVideos = [];
@@ -151,7 +155,6 @@ class AddCoursePageState extends State<AddCoursePage> {
     }
 
     try {
-
       try {
         final supabase = Supabase.instance.client;
 
@@ -159,29 +162,29 @@ class AddCoursePageState extends State<AddCoursePage> {
         final coverFilePath = "$courseTitleFormatted/course_cover.jpg";
 
         final fileBytes = await _selectedImage!.readAsBytes();
-        final fileExtension = _selectedImage!.path.split('.').last.toLowerCase();
+        final fileExtension =
+            _selectedImage!.path.split('.').last.toLowerCase();
 
         // Upload the image with upsert to allow overwriting
         await supabase.storage
             .from('profiles') // You can change this to 'courses' if needed
             .uploadBinary(
-          coverFilePath,
-          fileBytes,
-          fileOptions: FileOptions(
-            upsert: true,
-            contentType: 'image/$fileExtension',
-          ),
-        );
+              coverFilePath,
+              fileBytes,
+              fileOptions: FileOptions(
+                upsert: true,
+                contentType: 'image/$fileExtension',
+              ),
+            );
 
         // Get public URL and add a timestamp for cache busting
         String publicURL =
-        supabase.storage.from('profiles').getPublicUrl(coverFilePath);
+            supabase.storage.from('profiles').getPublicUrl(coverFilePath);
         publicURL = Uri.parse(publicURL).replace(queryParameters: {
           't': DateTime.now().millisecondsSinceEpoch.toString()
         }).toString();
 
         coverImageUrl = publicURL;
-
       } catch (e) {
         print("❌ Failed to upload image to Supabase: $e");
         ScaffoldMessenger.of(context).showSnackBar(
@@ -192,10 +195,6 @@ class AddCoursePageState extends State<AddCoursePage> {
         );
       }
 
-
-
-
-
       for (int i = 0; i < allVideos.length; i++) {
         var sectionTitle = allVideos[i]['section'];
         var video = allVideos[i]['video'];
@@ -203,13 +202,14 @@ class AddCoursePageState extends State<AddCoursePage> {
         String sectionFolder = sectionTitle.replaceAll(" ", "_").toLowerCase();
         File file = File(video['videoPath']);
         String fileName = video['title'].replaceAll(" ", "_").toLowerCase();
-        String formattedIndex = (i + 1).toString().padLeft(2, '0'); // 01، 02، 03...
-
+        String formattedIndex =
+            (i + 1).toString().padLeft(2, '0'); // 01، 02، 03...
 
         String formattedTitle = "$formattedIndex- ${video['title']}";
         videoTitles.add(formattedTitle);
         // اسم الفيديو في التخزين يحتوي الترقيم العام
-        String filePath = "$courseFolder/$sectionFolder/${formattedIndex}-_$fileName.mp4";
+        String filePath =
+            "$courseFolder/$sectionFolder/${formattedIndex}-_$fileName.mp4";
 
         var response = await storage.createFile(
           bucketId: bucketId,
@@ -217,44 +217,49 @@ class AddCoursePageState extends State<AddCoursePage> {
           file: InputFile.fromPath(path: file.path, filename: filePath),
         );
 
-        video['videoUrl'] = response.$id; // حفظ الـ ID فقط بدون الترقيم في الـ UI
+        video['videoUrl'] =
+            response.$id; // حفظ الـ ID فقط بدون الترقيم في الـ UI
       }
 
       // 3- **Store Course Data in Appwrite Database**
       await databases.createDocument(
-        databaseId: "67c029ce002c2d1ce046",
-        collectionId: "67c1c87c00009d84c6ff",
-        documentId: ID.unique(),
-        data: {
-          "title": courseTitle,
-          "price": double.parse(price),
-          "category": selectedCategory,
-          "description": description,
-          "instructor_id": instructorId,
-          "instructor_name": instructorName,
-          "courseDuration_inMins": calculateTotalCourseDuration(),
-          "video_folder_id": courseFolder,
-          "sections": sections.map((s) => s['title']).toList(),
-          'section_durations': sectionDurations,
-          "videos": videoTitles,
-          "video_durations":videoDurations,
-          "upload_status": "pending",
-        }
-      );
+          databaseId: "67c029ce002c2d1ce046",
+          collectionId: "67c1c87c00009d84c6ff",
+          documentId: ID.unique(),
+          data: {
+            "title": courseTitle,
+            "price": double.parse(price),
+            "category": selectedCategory,
+            "description": description,
+            "instructor_id": instructorId,
+            "instructor_name": instructorName,
+            "courseDuration_inMins": calculateTotalCourseDuration(),
+            "video_folder_id": courseFolder,
+            "sections": sections.map((s) => s['title']).toList(),
+            'section_durations': sectionDurations,
+            "videos": videoTitles,
+            "video_durations": videoDurations,
+            "upload_status": "pending"
+          });
 
       // ✅ **Success Message**
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Course Published Successfully!"),backgroundColor: Colors.green),
+        SnackBar(
+            content: Text(
+                "Course Published Successfully! It is now pending admin approval."),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 4)),
       );
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => InstructorNavigatorScreen()),
       );
-
     } catch (e) {
       print("Error publishing course: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to Publish Course"),backgroundColor: Colors.red),
+        SnackBar(
+            content: Text("Failed to Publish Course"),
+            backgroundColor: Colors.red),
       );
       setState(() {
         _isPublishing = false;
@@ -279,35 +284,33 @@ class AddCoursePageState extends State<AddCoursePage> {
     return titles;
   }
 
-
- static int calculateSectionDuration(List<dynamic> videos) { // ✅ Change Here
+  static int calculateSectionDuration(List<dynamic> videos) {
+    // ✅ Change Here
     int sectionDuration = 0;
 
-    List<Map<String, dynamic>> videosList = videos.map((video) => Map<String, dynamic>.from(video)).toList(); // ✅ Change Here
+    List<Map<String, dynamic>> videosList = videos
+        .map((video) => Map<String, dynamic>.from(video))
+        .toList(); // ✅ Change Here
 
     for (var video in videosList) {
-      sectionDuration += int.tryParse(video["duration"]?.split(" ")[0] ?? "0") ?? 0;
+      sectionDuration +=
+          int.tryParse(video["duration"]?.split(" ")[0] ?? "0") ?? 0;
     }
 
     return sectionDuration;
   }
 
- static int calculateTotalCourseDuration() {
+  static int calculateTotalCourseDuration() {
     int totalDuration = 0;
 
     for (var section in sections) {
-      int sectionDuration = calculateSectionDuration(section["videos"] as List<dynamic>); // ✅ Change Here
+      int sectionDuration = calculateSectionDuration(
+          section["videos"] as List<dynamic>); // ✅ Change Here
       totalDuration += sectionDuration;
     }
 
     return totalDuration;
   }
-
-
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -316,8 +319,10 @@ class AddCoursePageState extends State<AddCoursePage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>InstructorNavigatorScreen()));
-
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => InstructorNavigatorScreen()));
           },
         ),
         title: Text(
@@ -350,7 +355,7 @@ class AddCoursePageState extends State<AddCoursePage> {
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: Image.file(
-                                 _selectedImage! as file_conflict.File,
+                                  _selectedImage! as file_conflict.File,
                                   height: 150,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
@@ -371,7 +376,8 @@ class AddCoursePageState extends State<AddCoursePage> {
                           child: ElevatedButton.icon(
                             onPressed: _pickImage,
                             icon: Icon(Icons.add_a_photo, color: Colors.white),
-                            label: Text('Add a new image', style: TextStyle(color: Colors.white)),
+                            label: Text('Add a new image',
+                                style: TextStyle(color: Colors.white)),
                             style: ElevatedButton.styleFrom(
                               fixedSize: Size(150, 50),
                               padding: EdgeInsets.symmetric(vertical: 12),
@@ -397,7 +403,9 @@ class AddCoursePageState extends State<AddCoursePage> {
                             'Enter course title',
                             Icons.title,
                           ),
-                          validator: (value) => value!.trim().isEmpty ? "Course title is required" : null,
+                          validator: (value) => value!.trim().isEmpty
+                              ? "Course title is required"
+                              : null,
                         ),
                         SizedBox(height: 16),
                         Row(
@@ -412,8 +420,10 @@ class AddCoursePageState extends State<AddCoursePage> {
                                 ),
                                 keyboardType: TextInputType.number,
                                 validator: (value) {
-                                  if (value!.trim().isEmpty) return "Price is required";
-                                  if (double.tryParse(value) == null) return "Enter a valid price";
+                                  if (value!.trim().isEmpty)
+                                    return "Price is required";
+                                  if (double.tryParse(value) == null)
+                                    return "Enter a valid price";
                                   return null;
                                 },
                               ),
@@ -428,7 +438,8 @@ class AddCoursePageState extends State<AddCoursePage> {
                                     decoration: InputDecoration(
                                       labelText: 'Category',
                                       border: OutlineInputBorder(),
-                                      prefixIcon: Icon(Icons.category), // 👈 Add your icon here
+                                      prefixIcon: Icon(Icons
+                                          .category), // 👈 Add your icon here
                                     ),
                                     items: categories.map((category) {
                                       return DropdownMenuItem<String>(
@@ -455,8 +466,6 @@ class AddCoursePageState extends State<AddCoursePage> {
                                 },
                               ),
                             ),
-
-
                           ],
                         ),
                         SizedBox(height: 16),
@@ -468,7 +477,9 @@ class AddCoursePageState extends State<AddCoursePage> {
                             Icons.description,
                           ),
                           maxLines: 3,
-                          validator: (value) => value!.trim().isEmpty ? "Description is required" : null,
+                          validator: (value) => value!.trim().isEmpty
+                              ? "Description is required"
+                              : null,
                         ),
                       ],
                     ),
@@ -479,7 +490,6 @@ class AddCoursePageState extends State<AddCoursePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-
                         if (sections.isEmpty)
                           Padding(
                             padding: EdgeInsets.symmetric(vertical: 8),
@@ -489,13 +499,23 @@ class AddCoursePageState extends State<AddCoursePage> {
                               textAlign: TextAlign.center,
                             ),
                           ),
-                        ...sections.asMap().entries.map((entry) => _buildSectionItem(entry.key, entry.value)).toList(),
+                        ...sections
+                            .asMap()
+                            .entries
+                            .map((entry) =>
+                                _buildSectionItem(entry.key, entry.value))
+                            .toList(),
                         SizedBox(height: 16),
-
                         ElevatedButton.icon(
                           onPressed: _showAddSectionDialog,
-                          icon: Icon(Icons.add_circle_outline,color: Colors.white,),
-                          label: Text('Add New Section',style: TextStyle(color: Colors.white),),
+                          icon: Icon(
+                            Icons.add_circle_outline,
+                            color: Colors.white,
+                          ),
+                          label: Text(
+                            'Add New Section',
+                            style: TextStyle(color: Colors.white),
+                          ),
                           style: ElevatedButton.styleFrom(
                             fixedSize: Size(160, 50),
                             padding: EdgeInsets.symmetric(vertical: 12),
@@ -505,8 +525,6 @@ class AddCoursePageState extends State<AddCoursePage> {
                             ),
                           ),
                         ),
-
-
                       ],
                     ),
                   ),
@@ -522,21 +540,22 @@ class AddCoursePageState extends State<AddCoursePage> {
                     ),
                     child: _isPublishing
                         ? SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        strokeWidth: 2,
-                      ),
-                    )
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                              strokeWidth: 2,
+                            ),
+                          )
                         : Text(
-                      'Publish Course',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                            'Publish Course',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -549,15 +568,14 @@ class AddCoursePageState extends State<AddCoursePage> {
 
 // Method to pick an image from gallery
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _selectedImage =file_conflict.File(pickedFile.path) as File?;
+        _selectedImage = file_conflict.File(pickedFile.path) as File?;
       });
     }
   }
-
-
 
   Widget _buildCard({required String title, required Widget child}) {
     return Card(
@@ -587,8 +605,6 @@ class AddCoursePageState extends State<AddCoursePage> {
     );
   }
 
-
-
   Widget _buildSectionItem(int index, Map<String, dynamic> section) {
     return Column(
       children: [
@@ -606,7 +622,8 @@ class AddCoursePageState extends State<AddCoursePage> {
               ),
               Text(
                 section['title']!,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               Spacer(),
               Text(
@@ -620,9 +637,6 @@ class AddCoursePageState extends State<AddCoursePage> {
       ],
     );
   }
-
-
-
 
   void _showAddSectionDialog() {
     TextEditingController sectionNameController = TextEditingController();
@@ -652,7 +666,7 @@ class AddCoursePageState extends State<AddCoursePage> {
               onPressed: () {
                 String name = sectionNameController.text.trim();
 
-                if (name.isNotEmpty ) {
+                if (name.isNotEmpty) {
                   String formattedName = _truncateText(name, 13);
 
                   _addNewSection(formattedName);
@@ -669,11 +683,11 @@ class AddCoursePageState extends State<AddCoursePage> {
 
   String _truncateText(String text, int maxLength) {
     if (text.length > maxLength) {
-      return text.substring(0, maxLength - 3) + "..."; // Keep part of the text + "..."
+      return text.substring(0, maxLength - 3) +
+          "..."; // Keep part of the text + "..."
     }
     return text;
   }
-
 
   InputDecoration _inputDecoration(String label, String hint, IconData icon) {
     return InputDecoration(
@@ -696,13 +710,11 @@ class AddCoursePageState extends State<AddCoursePage> {
     );
   }
 
-
-
-
   void _addNewSection(String name) {
     setState(() {
       int sectionNumber = sections.length + 1;
-      String formattedNumber = sectionNumber.toString().padLeft(2, '0'); // Ensures 01, 02, 03...
+      String formattedNumber =
+          sectionNumber.toString().padLeft(2, '0'); // Ensures 01, 02, 03...
 
       sections.add({
         'title': "$formattedNumber- $name",
@@ -712,13 +724,11 @@ class AddCoursePageState extends State<AddCoursePage> {
     });
   }
 
-
   void _removeSection(int index) {
     setState(() {
       sections.removeAt(index);
     });
   }
-
 
   void _showAddVideoDialog(int sectionIndex) async {
     TextEditingController videoTitleController = TextEditingController();
@@ -726,11 +736,13 @@ class AddCoursePageState extends State<AddCoursePage> {
     VideoPlayerController? _videoController;
     int videoDurationInMinutes = 0;
 
-    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.video);
+    FilePickerResult? result =
+        await FilePicker.platform.pickFiles(type: FileType.video);
 
     if (result != null && result.files.single.path != null) {
       selectedVideoPath = result.files.single.path!;
-      _videoController = VideoPlayerController.file(file_conflict.File(selectedVideoPath));
+      _videoController =
+          VideoPlayerController.file(file_conflict.File(selectedVideoPath));
 
       await _videoController.initialize();
     }
@@ -739,7 +751,8 @@ class AddCoursePageState extends State<AddCoursePage> {
     int durationInSeconds = _videoController!.value.duration.inSeconds;
     videoDurationInMinutes = (durationInSeconds / 60).ceil();
 
-    if (!mounted) return; // Ensure dialog is shown only if the widget is still active
+    if (!mounted)
+      return; // Ensure dialog is shown only if the widget is still active
 
     showDialog(
       context: context,
@@ -797,8 +810,13 @@ class AddCoursePageState extends State<AddCoursePage> {
                 ),
                 TextButton(
                   onPressed: () {
-                    if (videoTitleController.text.isNotEmpty && selectedVideoPath != null) {
-                      _addVideoToSection(sectionIndex, videoTitleController.text, selectedVideoPath!, videoDurationInMinutes);
+                    if (videoTitleController.text.isNotEmpty &&
+                        selectedVideoPath != null) {
+                      _addVideoToSection(
+                          sectionIndex,
+                          videoTitleController.text,
+                          selectedVideoPath!,
+                          videoDurationInMinutes);
                       _videoController?.dispose();
                       Navigator.pop(context);
                     }
@@ -813,10 +831,8 @@ class AddCoursePageState extends State<AddCoursePage> {
     );
   }
 
-
-
-
-  void _addVideoToSection(int sectionIndex, String title, String videoPath, int videoDuration) {
+  void _addVideoToSection(
+      int sectionIndex, String title, String videoPath, int videoDuration) {
     setState(() {
       sections[sectionIndex]['videos'] ??= [];
       sections[sectionIndex]['videos'].add({
@@ -826,22 +842,19 @@ class AddCoursePageState extends State<AddCoursePage> {
       });
       // Add video duration to the list
       videoDurations.add(videoDuration);
-      int totalDuration = sections[sectionIndex]['videos']
-          .fold(0, (sum, video) => sum + int.parse(video['duration'].split(' ')[0]));
+      int totalDuration = sections[sectionIndex]['videos'].fold(
+          0, (sum, video) => sum + int.parse(video['duration'].split(' ')[0]));
 
       sections[sectionIndex]['duration'] = '$totalDuration min';
       _updateSectionDurations();
     });
   }
 
-
   List<Widget> _buildVideoList(List<dynamic> videos, int sectionIndex) {
     return videos.asMap().entries.map((entry) {
       int videoIndex = entry.key;
       Map video = entry.value;
 
-
-      
       return Card(
         shape: RoundedRectangleBorder(
           side: BorderSide(color: Colors.grey, width: 1), // Grey border
@@ -855,13 +868,16 @@ class AddCoursePageState extends State<AddCoursePage> {
             icon: Icon(Icons.remove_circle_outline, color: Colors.red),
             onPressed: () => _removeVideo(sectionIndex, videoIndex),
           ),
-          title: Text(_truncateText(video['title'], 13), overflow: TextOverflow.ellipsis),
+          title: Text(_truncateText(video['title'], 13),
+              overflow: TextOverflow.ellipsis),
           subtitle: Text(video['duration']),
           trailing: Container(
-            width: 40,
-            height: 80,
-            child: Icon(Icons.video_file,size: 50,)
-          ),
+              width: 40,
+              height: 80,
+              child: Icon(
+                Icons.video_file,
+                size: 50,
+              )),
         ),
       );
     }).toList();
@@ -872,14 +888,16 @@ class AddCoursePageState extends State<AddCoursePage> {
       List videos = sections[sectionIndex]['videos'];
 
       // Remove video and its duration
-      int removedDuration = int.parse(videos[videoIndex]['duration'].split(' ')[0]);
+      int removedDuration =
+          int.parse(videos[videoIndex]['duration'].split(' ')[0]);
       videoDurations.remove(removedDuration);
 
       // Remove the video
       videos.removeAt(videoIndex);
 
       // Recalculate total duration
-      int totalDuration = videos.fold(0, (sum, video) => sum + int.parse(video['duration'].split(' ')[0]));
+      int totalDuration = videos.fold(
+          0, (sum, video) => sum + int.parse(video['duration'].split(' ')[0]));
 
       // Update the section's duration
       sections[sectionIndex]['duration'] = '$totalDuration min';
@@ -888,8 +906,7 @@ class AddCoursePageState extends State<AddCoursePage> {
   }
 
   void _updateSectionDurations() {
-    sectionDurations = sections.map((section) => section['duration'] as String).toList();
+    sectionDurations =
+        sections.map((section) => section['duration'] as String).toList();
   }
-
-
 }
