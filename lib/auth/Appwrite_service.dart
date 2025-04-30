@@ -1,7 +1,9 @@
 
 import 'package:appwrite/appwrite.dart';
-import 'package:appwrite/models.dart';
+import 'package:appwrite/models.dart' as appwrite;
 import 'package:flutter/material.dart';
+import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../screens/instructor_courses_screen.dart';
 
@@ -18,7 +20,7 @@ class Appwrite_service{
   static Storage storage = Storage(client);
 
 
-  static Future<User> getCurrentUser() async {
+  static Future<appwrite.User> getCurrentUser() async {
     try {
       return await _account.get();
     } catch (e) {
@@ -105,7 +107,7 @@ class Appwrite_service{
 
 
 
-  static Future<List<File>> getAllRelatedFiles(String oldName) async {
+  static Future<List<appwrite.File>> getAllRelatedFiles(String oldName) async {
     try {
       String formattedOldTitle = oldName.replaceAll(' ', '_').toLowerCase();
 
@@ -125,14 +127,40 @@ class Appwrite_service{
       String formattedOldTitle = oldName.replaceAll(' ', '_').toLowerCase();
       String formattedNewTitle = newName.replaceAll(' ', '_').toLowerCase();
 
-      List<File> filesToRename = await getAllRelatedFiles(oldName);
+      List<appwrite.File> filesToRename = await getAllRelatedFiles(oldName);
 
-      for (File file in filesToRename) {
+      for (appwrite.File file in filesToRename) {
         String oldFileName = file.name;
         String newFileName = oldFileName.replaceAll(formattedOldTitle, formattedNewTitle);
 
         await renameFileInStorage(file.$id, newFileName);
       }
+      final oldFolderName = oldName.replaceAll(' ', '_');
+      final newFolderName = newName.replaceAll(' ', '_');
+
+      // List all files in the old folder
+      final oldFiles = await SupaAuthService.supabase.storage.from('profiles').list(path: oldFolderName);
+
+      // Move each file to the new folder
+      for (var file in oldFiles) {
+        final oldFilePath = '$oldFolderName/${file.name}';
+        final newFilePath = '$newFolderName/${file.name}';
+
+        // Download the file
+        final fileBytes = await  SupaAuthService.supabase.storage.from('profiles').download(oldFilePath);
+
+        // Upload the file to the new location
+        await SupaAuthService.supabase.storage.from('profiles').uploadBinary(
+          newFilePath,
+          fileBytes,
+          fileOptions: FileOptions(upsert: true),
+        );
+
+        // Delete the old file
+        await SupaAuthService.supabase.storage.from('profiles').remove([oldFilePath]);
+      }
+
+      print("✅ Folder renamed from $oldFolderName to $newFolderName");
 
       print("✅ All course files renamed successfully.");
     } catch (e) {
@@ -162,12 +190,16 @@ class Appwrite_service{
           'description': desc,
           'category': category,
           'price': price,
-          'video_folder_id': formattedNewTitle, // Update video_folder_id
+          'video_folder_id': formattedNewTitle,
+          'upload_status': "pending"
         },
       );
 
+
+
       // Step 2: Rename all related files
       await renameAllCourseFiles(oldName, newName);
+      await _updateCourseNameInUserLists(oldName, newName);
 
       // Show success message
       if (context.mounted) {
@@ -191,6 +223,70 @@ class Appwrite_service{
         );
       }
       print("❌ Error updating course: $e");
+    }
+  }
+
+
+  static Future<void> _updateCourseNameInUserLists(String oldName, String newName) async {
+    try {
+      // Fetch all user documents
+      var response = await databases.listDocuments(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c0cc3600114e71d658',
+      );
+
+      for (var document in response.documents) {
+        bool updated = false;
+
+        // Check and update purchased_courses
+        List<dynamic> purchasedCourses = document.data['purchased_courses'] ?? [];
+        if (purchasedCourses.contains(oldName)) {
+          int index = purchasedCourses.indexOf(oldName);
+          purchasedCourses[index] = newName;
+          updated = true;
+        }
+
+        // Check and update completed_courses
+        List<dynamic> completedCourses = document.data['completed_courses'] ?? [];
+        if (completedCourses.contains(oldName)) {
+          int index = completedCourses.indexOf(oldName);
+          completedCourses[index] = newName;
+          updated = true;
+        }
+
+        // Check and update ongoing_courses
+        List<dynamic> ongoingCourses = document.data['ongoing_courses'] ?? [];
+        if (ongoingCourses.contains(oldName)) {
+          int index = ongoingCourses.indexOf(oldName);
+          ongoingCourses[index] = newName;
+          updated = true;
+        }
+
+        // Check and update ratedCourseIds
+        List<dynamic> ratedCourseIds = document.data['ratedCourseIds'] ?? [];
+        if (ratedCourseIds.contains(oldName)) {
+          int index = ratedCourseIds.indexOf(oldName);
+          ratedCourseIds[index] = newName;
+          updated = true;
+        }
+
+        // Update the user document if any list was changed
+        if (updated) {
+          await databases.updateDocument(
+            databaseId: '67c029ce002c2d1ce046',
+            collectionId: '67c0cc3600114e71d658', // Replace with your actual users collection ID
+            documentId: document.$id,
+            data: {
+              'purchased_courses': purchasedCourses,
+              'completed_courses': completedCourses,
+              'ongoing_courses': ongoingCourses,
+              'ratedCourseIds': ratedCourseIds,
+            },
+          );
+        }
+      }
+    } catch (e) {
+      print("❌ Error updating course names in user lists: $e");
     }
   }
 

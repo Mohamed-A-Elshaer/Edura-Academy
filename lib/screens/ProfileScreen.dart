@@ -222,24 +222,8 @@ class ProfileScreenState extends State<ProfileScreen> {
                   height: 25,
                 ),
                 CustomProfileElement(
-                  text: 'Payment Option',
-                  icon: Icons.payment,
-                  onTap: () {},
-                ),
-                SizedBox(
-                  height: 25,
-                ),
-                CustomProfileElement(
                   text: 'Notification',
                   icon: Icons.notifications,
-                  onTap: () {},
-                ),
-                SizedBox(
-                  height: 25,
-                ),
-                CustomProfileElement(
-                  text: 'Security',
-                  icon: Icons.security,
                   onTap: () {},
                 ),
                 SizedBox(

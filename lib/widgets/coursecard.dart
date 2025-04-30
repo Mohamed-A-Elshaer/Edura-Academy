@@ -204,7 +204,7 @@ class _CourseCardState extends State<CourseCard> {
 
 
           Text(
-            'Price: ${widget.price}EGP',
+            'Price: EGP${widget.price}',
             style: const TextStyle(color: Colors.grey, fontSize: 14),
           ),
           const SizedBox(height: 8),

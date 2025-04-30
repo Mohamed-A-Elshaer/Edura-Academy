@@ -33,18 +33,17 @@ class _FillYourProfileState extends State<FillYourProfile> {
   TextEditingController fullNameController = TextEditingController();
   TextEditingController nickNameController = TextEditingController();
   TextEditingController dobController = TextEditingController();
- // TextEditingController emailController = TextEditingController();
-  //TextEditingController phoneController = TextEditingController();
+  TextEditingController majorController = TextEditingController();
+
 
   // Error messages
   String? fullNameError;
   String? nickNameError;
   String? dobError;
-  //String? emailError;
- // String? phoneError;
+  String? majorError;
+
   String? genderError;
   String selectedGender='Gender';
-  //TextEditingController controller= new TextEditingController();
   @override
   Widget build(BuildContext context) {
      return WillPopScope(
@@ -91,11 +90,22 @@ body: Center(
         SizedBox(height: 20,),
         CustomTextField(hintText: 'Date of Birth', isPrefix: true, prefix: Icon(Icons.calendar_month_outlined), isSuffix: false,onTap: () => _selectDate(context),controller: dobController,readOnly: true,errorMessage: dobError,),
         SizedBox(height: 20,),
-      //  CustomTextField(hintText: 'Email', isPrefix: true, prefix: Icon(Icons.email_outlined),  isSuffix: false, controller: emailController,
-         // errorMessage: emailError,),
-        SizedBox(height: 4,),
-    //    CustomTextField(labelText: '(+20)', isPrefix: true, prefix: Icon(Icons.phone_android),  isSuffix: false,cursorHeight: 15,controller: phoneController,
-        //  errorMessage: phoneError,),
+        if (widget.userType == 'instructor')
+
+          CustomTextField(
+            hintText: 'Major',
+            isPrefix: true,
+            prefix: Icon(Icons.school),
+            hpad: 20,
+            isSuffix: false,
+            controller: majorController,
+            errorMessage: majorError,
+          ),
+
+
+
+        SizedBox(height: 20,),
+    
 
         CustomTextField(hintText: selectedGender, errorMessage: genderError,isPrefix: false,readOnly: true, hpad:20,isSuffix: true, dropdownItems: ['Male', 'Female'],
           onDropdownChanged: (value) {
@@ -149,14 +159,16 @@ CustomElevatedBtn(btnDesc: 'Continue',horizontalPad: 75, onPressed: _validateAnd
       fullNameError = fullNameController.text.isEmpty ? '*Full Name is required!' : null;
       nickNameError = nickNameController.text.isEmpty ? '*Nick Name is required!' : null;
       dobError = dobController.text.isEmpty ? '*Date of Birth is required!' : null;
-     // emailError = emailController.text.isEmpty ? '*Email is required!' : null;
-     // phoneError = phoneController.text.isEmpty ? '*Phone number is required!' : null;
+      if (widget.userType == 'instructor') {
+        majorError = majorController.text.isEmpty ? '*Major is required!' : null;
+      }
       genderError = (selectedGender == 'Gender') ? '*Gender selection is required!' : null;
 
       if (fullNameError == null &&
           nickNameError == null &&
           dobError == null &&
-          genderError == null) {
+      (widget.userType != 'instructor' || majorError == null)&&
+        genderError == null) {
         final user = FirebaseAuth.instance.currentUser;
 
         String collection = widget.userType == 'student' ? 'students' : 'instructors';
@@ -172,7 +184,7 @@ CustomElevatedBtn(btnDesc: 'Continue',horizontalPad: 75, onPressed: _validateAnd
         });
 
         SupaTableCreate.insertSupaUserDatabase(fullNameController.text, widget.email, widget.userType, widget.supaUserId);
-        AppwriteTableCreate.insertAppwriteUserDatabase(fullNameController.text, widget.email, widget.userType, widget.appwriteUserId);
+        AppwriteTableCreate.insertAppwriteUserDatabase(fullNameController.text, widget.email, widget.userType, widget.appwriteUserId, major: widget.userType == 'instructor' ? majorController.text : null,);
 
 
         Navigator.pushReplacement(
@@ -183,11 +195,6 @@ CustomElevatedBtn(btnDesc: 'Continue',horizontalPad: 75, onPressed: _validateAnd
     });
 
 
-        // Navigate to the profile screen
-        /*Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => NavigatorScreen()),
-        );*/
       }
 
 
