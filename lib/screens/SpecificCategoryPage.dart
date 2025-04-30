@@ -14,14 +14,14 @@ import 'StudentNavigatorScreen.dart'; // for HomepageState
 class SpecificCategoryPage extends StatefulWidget {
   final String category;
 
-  const SpecificCategoryPage({Key? key, required this.category}) : super(key: key);
+  const SpecificCategoryPage({Key? key, required this.category})
+      : super(key: key);
 
   @override
   State<SpecificCategoryPage> createState() => _SpecificCategoryPageState();
 }
 
 class _SpecificCategoryPageState extends State<SpecificCategoryPage> {
-
   List<Map<String, dynamic>> _courses = [];
   bool _isLoading = true;
 
@@ -43,7 +43,10 @@ class _SpecificCategoryPageState extends State<SpecificCategoryPage> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
-      final doc = await FirebaseFirestore.instance.collection('students').doc(user.uid).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('students')
+          .doc(user.uid)
+          .get();
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
         setState(() {
@@ -57,7 +60,8 @@ class _SpecificCategoryPageState extends State<SpecificCategoryPage> {
 
   Future<void> _fetchCourses() async {
     try {
-      final models.DocumentList result = await Appwrite_service.databases.listDocuments(
+      final models.DocumentList result =
+          await Appwrite_service.databases.listDocuments(
         databaseId: '67c029ce002c2d1ce046', // Replace with your DB ID
         collectionId: '67c1c87c00009d84c6ff',
         queries: [appwrite.Query.equal('category', widget.category)],
@@ -66,7 +70,8 @@ class _SpecificCategoryPageState extends State<SpecificCategoryPage> {
 
       for (var doc in result.documents) {
         final courseData = doc.data;
-        final imageUrl = await SupaAuthService.getCourseCoverImageUrl(courseData['title']);
+        final imageUrl =
+            await SupaAuthService.getCourseCoverImageUrl(courseData['title']);
         courseData['imagePath'] = imageUrl;
         courseData['courseId'] = doc.$id;
         loadedCourses.add(courseData);
@@ -87,10 +92,12 @@ class _SpecificCategoryPageState extends State<SpecificCategoryPage> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final docRef = FirebaseFirestore.instance.collection('students').doc(user.uid);
+    final docRef =
+        FirebaseFirestore.instance.collection('students').doc(user.uid);
     final doc = await docRef.get();
 
-    List<String> currentSaved = List<String>.from(doc.data()?['savedCourses'] ?? []);
+    List<String> currentSaved =
+        List<String>.from(doc.data()?['savedCourses'] ?? []);
 
     bool isBookmarked;
 
@@ -123,41 +130,49 @@ class _SpecificCategoryPageState extends State<SpecificCategoryPage> {
     );
   }
 
-
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>NavigatorScreen()));}, icon: Icon(Icons.arrow_back_outlined,color: Colors.white,)),
-        title: Text(widget.category,style: TextStyle(color: Colors.white),),
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pushReplacement(context,
+                  MaterialPageRoute(builder: (context) => NavigatorScreen()));
+            },
+            icon: Icon(
+              Icons.arrow_back_outlined,
+              color: Colors.white,
+            )),
+        title: Text(
+          widget.category,
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.teal,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _courses.isEmpty
-          ? const Center(child: Text('No courses found for this category.'))
-          : ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: _courses.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
-        itemBuilder: (context, index) {
-          final course = _courses[index];
-          return CourseCard(
-            category: course['category'] ?? '',
-            title: course['title'] ?? '',
-            price: course['price']?.toString() ?? 'Free',
-            rating: course['rating'],
-            students: course['students'], // dummy
-            imagePath: course['imagePath'],
-            instructorName: course['instructor_name'] ?? 'Unknown',
-            isBookmarked: savedCourseTitles.contains(course['title']),
-            onBookmarkToggle: () => _toggleBookmark(course['title']),
-            courseId: course['courseId'],
-          );
-        },
-      ),
+              ? const Center(child: Text('No courses found for this category.'))
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _courses.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    final course = _courses[index];
+                    return CourseCard(
+                      category: course['category'] ?? '',
+                      title: course['title'] ?? '',
+                      price: course['price']?.toString() ?? 'Free',
+                      rating: course['rating'],
+                      students: course['students'], // dummy
+                      imagePath: course['imagePath'],
+                      instructorName: course['instructor_name'] ?? 'Unknown',
+                      isBookmarked: savedCourseTitles.contains(course['title']),
+                      onBookmarkToggle: () => _toggleBookmark(course['title']),
+                      courseId: course['courseId'],
+                    );
+                  },
+                ),
     );
   }
 }

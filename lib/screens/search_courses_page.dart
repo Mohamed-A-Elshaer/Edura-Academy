@@ -11,7 +11,7 @@ import '../auth/Appwrite_service.dart';
 
 class SearchCoursesPage extends StatefulWidget {
   final String initialQuery;
-  const SearchCoursesPage({super.key,this.initialQuery = ''});
+  const SearchCoursesPage({super.key, this.initialQuery = ''});
 
   @override
   State<SearchCoursesPage> createState() => SearchCoursesPageState();
@@ -21,23 +21,21 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _showMentors = false;
-  static  List<Map<String, dynamic>> savedCourses = [];
+  static List<Map<String, dynamic>> savedCourses = [];
   List<Map<String, dynamic>> mentors = [];
   bool isLoading = true;
   List<String> savedCourseTitles = [];
 
-  static  List<Map<String, dynamic>> courses = [];
+  static List<Map<String, dynamic>> courses = [];
   Map<String, dynamic>? filters;
-  
+
   @override
   void initState() {
     super.initState();
     _searchController.text = widget.initialQuery;
     _searchQuery = widget.initialQuery;
     _loadBookmarksAndCourses();
-
   }
-
 
   Future<void> _loadBookmarksAndCourses() async {
     await _fetchSavedCourseTitles();
@@ -58,13 +56,15 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
 
       if (doc.exists && doc.data() != null) {
         setState(() {
-          savedCourseTitles = List<String>.from(doc.data()!['savedCourses'] ?? []);
+          savedCourseTitles =
+              List<String>.from(doc.data()!['savedCourses'] ?? []);
         });
       }
     } catch (e) {
       print('Error fetching saved course titles: $e');
     }
   }
+
   Future<void> _fetchCourses() async {
     try {
       final response = await Appwrite_service.databases.listDocuments(
@@ -73,20 +73,22 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
       );
 
       setState(() {
-        courses = response.documents.map((doc) {
-          return {
-            'title': doc.data['title'] ?? '',
-            'instructor':doc.data['instructor_name']?? '',
-            'category': doc.data['category'] ?? '',
-            'price': (doc.data['price'] ?? 0).toString(),
-            'courseId': doc.$id,
-            'imagePath': SearchPageState.getCourseCoverImageUrl(doc.data['title'] ?? ''),
-            'instructorName': doc.data['name'] ?? '',
-            'rating': doc.data['averageRating']?? 0.0, // Default rating
-            'students': '1000 Std', // Default students count
-            'duration': doc.data['courseDuration_inMins']?? 0
-          };
-        }).toList();
+        courses = response.documents
+            .where((doc) => doc.data['upload_status'] == 'approved')
+            .map((doc) => {
+                  'title': doc.data['title'] ?? '',
+                  'instructor': doc.data['instructor_name'] ?? '',
+                  'category': doc.data['category'] ?? '',
+                  'price': (doc.data['price'] ?? 0).toString(),
+                  'courseId': doc.$id,
+                  'imagePath': SearchPageState.getCourseCoverImageUrl(
+                      doc.data['title'] ?? ''),
+                  'instructorName': doc.data['name'] ?? '',
+                  'rating': doc.data['averageRating'] ?? 0.0,
+                  'students': '1000 Std',
+                  'duration': doc.data['courseDuration_inMins'] ?? 0
+                })
+            .toList();
         isLoading = false;
       });
     } catch (e) {
@@ -124,8 +126,6 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
     return response.total;
   }
 
-
-
   Future<void> _fetchMentors() async {
     try {
       final response = await Appwrite_service.databases.listDocuments(
@@ -155,8 +155,14 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
     // Apply search filter first
     if (_searchQuery.isNotEmpty) {
       result = result.where((course) {
-        return course['title'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            course['category'].toString().toLowerCase().contains(_searchQuery.toLowerCase());
+        return course['title']
+                .toString()
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()) ||
+            course['category']
+                .toString()
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase());
       }).toList();
     }
 
@@ -189,20 +195,22 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
       filteredResults.addAll(result.where((course) {
         double rating = double.tryParse(course['rating'].toString()) ?? 0;
         return filters!['ratings'].any((ratingFilter) {
-          final parsed = double.tryParse(ratingFilter.split(' ')[0]); // "4.5" from "4.5 & Up Above"
+          final parsed = double.tryParse(
+              ratingFilter.split(' ')[0]); // "4.5" from "4.5 & Up Above"
           return parsed != null && rating >= parsed;
         });
       }));
     }
-
 
     if (filters!['durations']?.isNotEmpty ?? false) {
       filteredResults.addAll(result.where((course) {
         int courseDuration = int.tryParse(course['duration'].toString()) ?? 0;
         return filters!['durations'].any((durationFilter) {
           if (durationFilter == '0-5 Minutes') return courseDuration <= 5;
-          if (durationFilter == '5-10 Minutes') return courseDuration > 5 && courseDuration <= 10;
-          if (durationFilter == '10-30 Minutes') return courseDuration > 10 && courseDuration <= 30;
+          if (durationFilter == '5-10 Minutes')
+            return courseDuration > 5 && courseDuration <= 10;
+          if (durationFilter == '10-30 Minutes')
+            return courseDuration > 10 && courseDuration <= 30;
           if (durationFilter == '30+ Minutes') return courseDuration > 30;
           return false;
         });
@@ -225,25 +233,29 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
     return filteredResults;
   }
 
-
   List<Map<String, dynamic>> get filteredMentors {
     if (_searchQuery.isEmpty) return mentors;
 
     return mentors.where((mentor) {
-      return mentor['name']!.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+      return mentor['name']!
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase()) ||
           mentor['specialty']!
               .toLowerCase()
               .contains(_searchQuery.toLowerCase());
     }).toList();
   }
+
   Future<void> _toggleBookmark(String courseTitle) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final docRef = FirebaseFirestore.instance.collection('students').doc(user.uid);
+    final docRef =
+        FirebaseFirestore.instance.collection('students').doc(user.uid);
     final doc = await docRef.get();
 
-    List<String> currentSaved = List<String>.from(doc.data()?['savedCourses'] ?? []);
+    List<String> currentSaved =
+        List<String>.from(doc.data()?['savedCourses'] ?? []);
     bool isBookmarked;
 
     if (currentSaved.contains(courseTitle)) {
@@ -314,16 +326,18 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
                           // Replace the entire filter icon's onTap with this:
                           onTap: () async {
                             try {
-                              final result = await Navigator.push<Map<String, dynamic>>(
+                              final result =
+                                  await Navigator.push<Map<String, dynamic>>(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => FilterScreen(
-                                    initialFilters: filters ?? {
-                                      'categories': [],
-                                      'prices': [],
-                                      'ratings': [],
-                                      'durations': []
-                                    },
+                                    initialFilters: filters ??
+                                        {
+                                          'categories': [],
+                                          'prices': [],
+                                          'ratings': [],
+                                          'durations': []
+                                        },
                                   ),
                                 ),
                               );
@@ -332,17 +346,22 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
                                 setState(() {
                                   // Create a new filters map with all fields
                                   final newFilters = <String, dynamic>{
-                                    'categories': List<String>.from(result['categories'] ?? []),
-                                    'prices': List<String>.from(result['prices'] ?? []),
-                                    'ratings': List<String>.from(result['ratings'] ?? []),
-                                    'durations': List<String>.from(result['durations'] ?? []),
+                                    'categories': List<String>.from(
+                                        result['categories'] ?? []),
+                                    'prices': List<String>.from(
+                                        result['prices'] ?? []),
+                                    'ratings': List<String>.from(
+                                        result['ratings'] ?? []),
+                                    'durations': List<String>.from(
+                                        result['durations'] ?? []),
                                   };
 
                                   // Only set filters if at least one filter is active
-                                  filters = (newFilters['categories']!.isNotEmpty ||
-                                      newFilters['prices']!.isNotEmpty ||
-                                      newFilters['ratings']!.isNotEmpty ||
-                                      newFilters['durations']!.isNotEmpty)
+                                  filters = (newFilters['categories']!
+                                              .isNotEmpty ||
+                                          newFilters['prices']!.isNotEmpty ||
+                                          newFilters['ratings']!.isNotEmpty ||
+                                          newFilters['durations']!.isNotEmpty)
                                       ? newFilters
                                       : null;
 
@@ -391,9 +410,8 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: !_showMentors
-                          ? Colors.teal
-                          : Colors.grey[200],
+                      backgroundColor:
+                          !_showMentors ? Colors.teal : Colors.grey[200],
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -401,7 +419,8 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
                     ),
                     child: Text('Courses',
                         style: TextStyle(
-                            color: !_showMentors ? Colors.white : Colors.black)),
+                            color:
+                                !_showMentors ? Colors.white : Colors.black)),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -413,9 +432,8 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _showMentors
-                          ? Colors.teal
-                          : Colors.grey[200],
+                      backgroundColor:
+                          _showMentors ? Colors.teal : Colors.grey[200],
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -433,61 +451,60 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
-                :_showMentors
-                ? filteredMentors.isEmpty
-                ? const Center(child: Text('No mentors available!'))
-                : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: filteredMentors.length,
-              itemBuilder: (context, index) {
-                final mentor = filteredMentors[index];
-                return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 8,
-                  ),
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.grey[200],
-                    child: const Icon(Icons.person_outline,
-                        color: Colors.grey),
-                  ),
-                  title: Text(
-                    mentor['name']!,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 16,
-                    ),
-                  ),
-                  subtitle: Text(
-                    mentor['specialty']!,
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
-                  ),
-                );
-              },
-            )
-                : filteredCourses.isEmpty
-                ? const Center(child: Text('No courses available!'))
-                : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: filteredCourses.length,
-              itemBuilder: (context, index) {
-                final course = filteredCourses[index];
-                return SearchCourseCard(course: course,savedCourseTitles: savedCourseTitles,onBookmarkToggle: _toggleBookmark,);
-              },
-            ),
+                : _showMentors
+                    ? filteredMentors.isEmpty
+                        ? const Center(child: Text('No mentors available!'))
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: filteredMentors.length,
+                            itemBuilder: (context, index) {
+                              final mentor = filteredMentors[index];
+                              return ListTile(
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 8,
+                                ),
+                                leading: CircleAvatar(
+                                  backgroundColor: Colors.grey[200],
+                                  child: const Icon(Icons.person_outline,
+                                      color: Colors.grey),
+                                ),
+                                title: Text(
+                                  mentor['name']!,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  mentor['specialty']!,
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              );
+                            },
+                          )
+                    : filteredCourses.isEmpty
+                        ? const Center(child: Text('No courses available!'))
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: filteredCourses.length,
+                            itemBuilder: (context, index) {
+                              final course = filteredCourses[index];
+                              return SearchCourseCard(
+                                course: course,
+                                savedCourseTitles: savedCourseTitles,
+                                onBookmarkToggle: _toggleBookmark,
+                              );
+                            },
+                          ),
           ),
         ],
       ),
     );
   }
-
-
-
-
-
 }
 
 class SearchCourseCard extends StatelessWidget {
@@ -508,7 +525,7 @@ class SearchCourseCard extends StatelessWidget {
     final imagePath = course['imagePath'] ?? '';
     final category = course['category'] ?? '';
     final title = course['title'] ?? '';
-    final instructor=course['instructor']??'';
+    final instructor = course['instructor'] ?? '';
     final price = course['price']?.toString() ?? '0';
     final rating = course['rating']?.toString() ?? '0';
     final students = course['students']?.toString() ?? '0 Std';
@@ -581,35 +598,34 @@ class SearchCourseCard extends StatelessWidget {
                 ],
               ),
             ),
-            
-           Column(
-             
-             children: [
-               IconButton(onPressed: (){
-                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Coursedetailscreen(category: category, imagePath: imagePath, title: title, courseId: courseId, price: price, instructorName: instructor)));
-
-               }, icon: Icon(Icons.arrow_forward_ios_outlined)),
-
-               IconButton(
-                 icon: Icon(
-                   savedCourseTitles.contains(title)
-                       ? Icons.bookmark
-                       : Icons.bookmark_border,
-                   color: savedCourseTitles.contains(title)
-                       ? Colors.teal
-                       : null,
-                 ),
-                 onPressed: () => onBookmarkToggle(title),
-               ),
-               ]
-           ),
+            Column(children: [
+              IconButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => Coursedetailscreen(
+                                category: category,
+                                imagePath: imagePath,
+                                title: title,
+                                courseId: courseId,
+                                price: price,
+                                instructorName: instructor)));
+                  },
+                  icon: Icon(Icons.arrow_forward_ios_outlined)),
+              IconButton(
+                icon: Icon(
+                  savedCourseTitles.contains(title)
+                      ? Icons.bookmark
+                      : Icons.bookmark_border,
+                  color: savedCourseTitles.contains(title) ? Colors.teal : null,
+                ),
+                onPressed: () => onBookmarkToggle(title),
+              ),
+            ]),
           ],
         ),
       ),
     );
   }
-
-
-
-
 }

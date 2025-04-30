@@ -23,12 +23,11 @@ class Homepage extends StatefulWidget {
 }
 
 class HomepageState extends State<Homepage> {
-
   int currentIndex = 0;
   String? nickname = "Loading...";
   final PageController _pageController = PageController(viewportFraction: 0.9);
   final PageController _coursePageController =
-  PageController(viewportFraction: 0.6);
+      PageController(viewportFraction: 0.6);
   static int selectedCardIndex = -1;
   int selectedcategoryindex = -1;
   List<String> savedCourseTitles = [];
@@ -45,7 +44,7 @@ class HomepageState extends State<Homepage> {
       "discount": "25% OFF*",
       "title": "Today's Special",
       "description":
-      "Get a discount for every course order only valid for today!",
+          "Get a discount for every course order only valid for today!",
       "backgroundColor": Colors.blue,
     },
     {
@@ -87,22 +86,24 @@ class HomepageState extends State<Homepage> {
 
   static List<Map<String, dynamic>> coursecardList = [];
 
-
-
   @override
   void initState() {
     super.initState();
     _fetchUserData();
     _fetchCoursesData();
-    _fetchSavedCourseTitles();// Add this to fetch courses from Appwrite
+    _fetchSavedCourseTitles(); // Add this to fetch courses from Appwrite
   }
+
   List<Map<String, dynamic>> filteredCourses = [];
   Future<void> _fetchSavedCourseTitles() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
-      final doc = await FirebaseFirestore.instance.collection('students').doc(user.uid).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('students')
+          .doc(user.uid)
+          .get();
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
         setState(() {
@@ -114,15 +115,16 @@ class HomepageState extends State<Homepage> {
     }
   }
 
-
   Future<void> _toggleBookmark(String courseTitle) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final docRef = FirebaseFirestore.instance.collection('students').doc(user.uid);
+    final docRef =
+        FirebaseFirestore.instance.collection('students').doc(user.uid);
     final doc = await docRef.get();
 
-    List<String> currentSaved = List<String>.from(doc.data()?['savedCourses'] ?? []);
+    List<String> currentSaved =
+        List<String>.from(doc.data()?['savedCourses'] ?? []);
 
     bool isBookmarked;
 
@@ -184,7 +186,6 @@ class HomepageState extends State<Homepage> {
     }
   }
 
-
   // Add this new method to fetch courses from Appwrite
   Future<void> _fetchCoursesData() async {
     try {
@@ -192,6 +193,7 @@ class HomepageState extends State<Homepage> {
         collectionId: '67c1c87c00009d84c6ff',
         databaseId: '67c029ce002c2d1ce046',
         queries: [
+          appwrite.Query.equal('upload_status', 'approved'),
           appwrite.Query.orderDesc('averageRating'),
           appwrite.Query.limit(100)
         ],
@@ -204,25 +206,28 @@ class HomepageState extends State<Homepage> {
 
       final Map<String, int> coursePurchaseCounts = {};
       for (final userDoc in usersResponse.documents) {
-        final purchasedCourses = List<String>.from(userDoc.data['purchased_courses'] ?? []);
+        final purchasedCourses =
+            List<String>.from(userDoc.data['purchased_courses'] ?? []);
         for (final courseTitle in purchasedCourses) {
           final lowerTitle = courseTitle.toLowerCase();
-          coursePurchaseCounts[lowerTitle] = (coursePurchaseCounts[lowerTitle] ?? 0) + 1;
+          coursePurchaseCounts[lowerTitle] =
+              (coursePurchaseCounts[lowerTitle] ?? 0) + 1;
         }
       }
 
       final List<Map<String, dynamic>> fetchedCourses = [];
       for (final doc in coursesResponse.documents) {
         final courseTitle = doc.data['title'] ?? 'Untitled';
-        final purchaseCount = coursePurchaseCounts[courseTitle.toLowerCase()] ?? 0;
+        final purchaseCount =
+            coursePurchaseCounts[courseTitle.toLowerCase()] ?? 0;
 
-        final coverUrl = await SupaAuthService.getCourseCoverImageUrl(courseTitle);
+        final coverUrl =
+            await SupaAuthService.getCourseCoverImageUrl(courseTitle);
 
         fetchedCourses.add({
           'id': doc.$id,
-          'imagePath': coverUrl.isNotEmpty
-              ? coverUrl
-              : 'assets/images/mediahandler.png',
+          'imagePath':
+              coverUrl.isNotEmpty ? coverUrl : 'assets/images/mediahandler.png',
           'category': doc.data['category'] ?? 'Unknown',
           'title': courseTitle,
           'price': '${doc.data['price']?.toString() ?? '0'}',
@@ -261,10 +266,12 @@ class HomepageState extends State<Homepage> {
       // 2. Count purchases (same as in _fetchCoursesData)
       final Map<String, int> coursePurchaseCounts = {};
       for (final userDoc in usersResponse.documents) {
-        final purchasedCourses = List<String>.from(userDoc.data['purchased_courses'] ?? []);
+        final purchasedCourses =
+            List<String>.from(userDoc.data['purchased_courses'] ?? []);
         for (final courseTitle in purchasedCourses) {
           final lowerTitle = courseTitle.toLowerCase();
-          coursePurchaseCounts[lowerTitle] = (coursePurchaseCounts[lowerTitle] ?? 0) + 1;
+          coursePurchaseCounts[lowerTitle] =
+              (coursePurchaseCounts[lowerTitle] ?? 0) + 1;
         }
       }
 
@@ -297,6 +304,7 @@ class HomepageState extends State<Homepage> {
       print('Error filtering courses: $e');
     }
   }
+
   @override
   void dispose() {
     _pageController.dispose();
@@ -358,7 +366,7 @@ class HomepageState extends State<Homepage> {
                     },
                     decoration: InputDecoration(
                       contentPadding:
-                      const EdgeInsets.symmetric(vertical: 20.0),
+                          const EdgeInsets.symmetric(vertical: 20.0),
                       prefixIcon: Icon(
                         Icons.search_outlined,
                       ),
@@ -606,38 +614,41 @@ class HomepageState extends State<Homepage> {
 
           SliverToBoxAdapter(
               child: SizedBox(
-                height: 360,
-                child: filteredCourses.isEmpty
-                    ? Center(
-                  child: Text(
-                    "No courses available!",
-                    style:
-                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            height: 360,
+            child: filteredCourses.isEmpty
+                ? Center(
+                    child: Text(
+                      "No courses available!",
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  )
+                : ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: filteredCourses.length,
+                    itemBuilder: (context, index) {
+                      final course = filteredCourses[index];
+                      return Container(
+                        margin: const EdgeInsets.only(left: 2),
+                        width: MediaQuery.of(context).size.width * 0.8,
+                        child: CourseCard(
+                          title: course['title'],
+                          courseId: course['id'],
+                          price: course['price'],
+                          imagePath: course['imagePath'],
+                          category: course['category'],
+                          rating: course['rating'] ?? 0.0,
+                          instructorName:
+                              course['instructor_name'] ?? 'Unknown',
+                          isBookmarked:
+                              savedCourseTitles.contains(course['title']),
+                          onBookmarkToggle: () =>
+                              _toggleBookmark(course['title']),
+                        ),
+                      );
+                    },
                   ),
-                )
-                    : ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: filteredCourses.length,
-                  itemBuilder: (context, index) {
-                    final course = filteredCourses[index];
-                    return Container(
-                      margin: const EdgeInsets.only(left: 2),
-                      width: MediaQuery.of(context).size.width * 0.8,
-                      child: CourseCard(
-                        title: course['title'],
-                        courseId: course['id'],
-                        price: course['price'],
-                        imagePath: course['imagePath'],
-                        category: course['category'],
-                        rating: course['rating'] ?? 0.0,
-                        instructorName: course['instructor_name'] ?? 'Unknown',
-                        isBookmarked: savedCourseTitles.contains(course['title']),
-                        onBookmarkToggle: () => _toggleBookmark(course['title']),
-                      ),
-                    );
-                  },
-                ),
-              )),
+          )),
           const SliverToBoxAdapter(
             child: SizedBox(height: 20),
           ),
@@ -675,23 +686,23 @@ class HomepageState extends State<Homepage> {
 
           SliverToBoxAdapter(
               child: SizedBox(
-                height: 122,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: mentors.length,
-                  itemBuilder: (context, index) {
-                    final mentor = mentors[index];
-                    return Container(
-                      width: MediaQuery.of(context).size.width * 0.3,
-                      margin: const EdgeInsets.only(right: 8),
-                      child: MentorCard(
-                        name: mentor['name']!,
-                        imagePath: mentor['imagePath']!,
-                      ),
-                    );
-                  },
-                ),
-              )),
+            height: 122,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: mentors.length,
+              itemBuilder: (context, index) {
+                final mentor = mentors[index];
+                return Container(
+                  width: MediaQuery.of(context).size.width * 0.3,
+                  margin: const EdgeInsets.only(right: 8),
+                  child: MentorCard(
+                    name: mentor['name']!,
+                    imagePath: mentor['imagePath']!,
+                  ),
+                );
+              },
+            ),
+          )),
         ],
       ),
       /*   bottomNavigationBar: BottomNavigationBar(
