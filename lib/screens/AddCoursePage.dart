@@ -239,6 +239,9 @@ class AddCoursePageState extends State<AddCoursePage> {
           "videos": videoTitles,
           "video_durations":videoDurations,
           "upload_status": "pending",
+
+        
+
         }
       );
 

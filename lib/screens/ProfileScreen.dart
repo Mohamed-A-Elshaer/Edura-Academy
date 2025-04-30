@@ -221,7 +221,9 @@ class ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(
                   height: 25,
                 ),
+                
                 CustomProfileElement(
+
                   text: 'Notification',
                   icon: Icons.notifications,
                   onTap: () {},
@@ -229,7 +231,9 @@ class ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(
                   height: 25,
                 ),
+               
                 CustomProfileElement(
+
                   text: 'Language',
                   icon: Icons.language,
                   onTap: () {},
