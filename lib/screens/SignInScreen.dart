@@ -516,6 +516,9 @@ class _SignInScreenState extends State<SignInScreen> {
     return false;
   }*/
 
+  
+
+
   void validateInputs(String intendedRole) {
     setState(() {
       emailError = _emailController.text.isEmpty

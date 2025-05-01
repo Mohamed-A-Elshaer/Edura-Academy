@@ -55,6 +55,10 @@ class _InstructorHomeScreenState extends State<InstructorHomeScreen> {
          "Hi, ${nickname ?? "Loading..."}",
          style: TextStyle(color: Color(0xff232546)),
        ),
+
+
+
+       
        backgroundColor: Colors.transparent,
        elevation: 0,
        actions: [
