@@ -14,6 +14,10 @@ return await supabase.auth.signUp(email: email,password: password);
 
   }
 
+
+
+  
+
  static Future<void> signOut() async{
  await supabase.auth.signOut();
 
