@@ -1,25 +1,27 @@
 import 'dart:io';
 import 'package:appwrite/models.dart' as models;
-
-import 'package:appwrite/appwrite.dart';
+import 'package:appwrite/appwrite.dart' as appwrite;
 import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/screens/DisplayCourseLessons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 //import 'package:flutter_credit_card/flutter_credit_card.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../auth/Appwrite_service.dart';
 import '../auth/supaAuth_service.dart';
 import 'SpecificCategoryPage.dart';
+import '../services/paymob_service.dart';
 
 class Coursedetailscreen extends StatefulWidget {
   const Coursedetailscreen(
       {super.key,
-        required this.category,
-        required this.imagePath,
-        required this.title,
-        required this.courseId,
-        required this.price,
-        required this.instructorName});
+      required this.category,
+      required this.imagePath,
+      required this.title,
+      required this.courseId,
+      required this.price,
+      required this.instructorName});
   final String category;
   final String imagePath;
   final String title;
@@ -71,7 +73,6 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     _fetchAllComments();
   }
 
-
   Future<void> _fetchAverageRating() async {
     try {
       final courseDoc = await Appwrite_service.databases.getDocument(
@@ -93,8 +94,8 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
       final ratings = await Appwrite_service.databases.listDocuments(
         collectionId: '6808c1e500186c675d9b',
         queries: [
-          Query.equal('courseId', widget.courseId),
-          Query.orderDesc('timestamp'),
+          appwrite.Query.equal('courseId', widget.courseId),
+          appwrite.Query.orderDesc('timestamp'),
         ],
         databaseId: '67c029ce002c2d1ce046',
       );
@@ -111,17 +112,15 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
         final email = userDoc.data['email'];
         final supabaseUserId = await SupaAuthService.getSupabaseUserId(email);
 
-
-        List<String> comments = List<String>.from(ratingDoc.data['comments'] ?? []);
-
-
-
+        List<String> comments =
+            List<String>.from(ratingDoc.data['comments'] ?? []);
 
         for (var comment in comments) {
           String? avatarUrl;
           if (supabaseUserId != null) {
             final imagePath = '$supabaseUserId/profile';
-            avatarUrl = supabase.storage.from('profiles').getPublicUrl(imagePath);
+            avatarUrl =
+                supabase.storage.from('profiles').getPublicUrl(imagePath);
             // Add timestamp to force refresh
             avatarUrl = Uri.parse(avatarUrl).replace(queryParameters: {
               't': DateTime.now().millisecondsSinceEpoch.toString()
@@ -156,8 +155,10 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
       );
 
       List<String> sectionNames = List<String>.from(course.data['sections']);
-      List<String> sectionDurations = List<String>.from(course.data['section_durations']);
-      List<String> videoTitlesFromDb = List<String>.from(course.data['videos'] ?? []);
+      List<String> sectionDurations =
+          List<String>.from(course.data['section_durations']);
+      List<String> videoTitlesFromDb =
+          List<String>.from(course.data['videos'] ?? []);
 
       List<Map<String, dynamic>> fetchedSections = [];
 
@@ -165,12 +166,12 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
       for (int i = 0; i < sectionNames.length; i++) {
         String rawSection = sectionNames[i];
         String sectionTitle = rawSection.replaceFirst(RegExp(r'^\d+-\s*'), '');
-        String duration = (i < sectionDurations.length) ? sectionDurations[i] : "0 Mins";
+        String duration =
+            (i < sectionDurations.length) ? sectionDurations[i] : "0 Mins";
 
         // 3. Normalize section name for storage lookup
-        String storageSectionName = rawSection
-            .replaceAll(' ', '_')
-            .toLowerCase();
+        String storageSectionName =
+            rawSection.replaceAll(' ', '_').toLowerCase();
 
         // 4. Find all videos for this section
         List<Map<String, dynamic>> lessons = [];
@@ -180,7 +181,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
         final files = await Appwrite_service.storage.listFiles(
           bucketId: '67ac838900066b15fc99',
           queries: [
-            Query.startsWith(
+            appwrite.Query.startsWith(
               'name',
               '${widget.title.replaceAll(' ', '_')}/$storageSectionName/',
             ),
@@ -198,11 +199,8 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
           // Find matching file in storage
           models.File? matchedFile;
           for (var file in files.files) {
-            String storageFileName = file.name
-                .split('/')
-                .last
-                .replaceAll('.mp4', '')
-                .toLowerCase();
+            String storageFileName =
+                file.name.split('/').last.replaceAll('.mp4', '').toLowerCase();
 
             if (storageFileName.contains(normalizedDbTitle)) {
               matchedFile = file;
@@ -211,7 +209,8 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
           }
 
           if (matchedFile != null) {
-            String videoUrl = 'https://cloud.appwrite.io/v1/storage/buckets/67ac838900066b15fc99/files/${matchedFile.$id}/view?project=67ac8356002648e5b7e9';
+            String videoUrl =
+                'https://cloud.appwrite.io/v1/storage/buckets/67ac838900066b15fc99/files/${matchedFile.$id}/view?project=67ac8356002648e5b7e9';
 
             lessons.add({
               'number': lessonNumber.toString().padLeft(2, '0'),
@@ -238,6 +237,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
       print('❌ Error fetching sections and videos: $e');
     }
   }
+
   Future<void> fetchInstructorProfAvatar() async {
     try {
       // Step 1: Get course data from Appwrite
@@ -294,11 +294,11 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     try {
       final courseDocument = await Appwrite_service.databases.getDocument(
         databaseId:
-        '67c029ce002c2d1ce046', // Replace with your actual database ID
+            '67c029ce002c2d1ce046', // Replace with your actual database ID
         collectionId:
-        '67c1c87c00009d84c6ff', // Replace with your actual collection ID
+            '67c1c87c00009d84c6ff', // Replace with your actual collection ID
         documentId:
-        widget.courseId, // Use the courseId to fetch the specific course
+            widget.courseId, // Use the courseId to fetch the specific course
       );
 
       List<dynamic> videos = courseDocument.data['videos'] ?? [];
@@ -314,11 +314,11 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     try {
       final courseDocument = await Appwrite_service.databases.getDocument(
         databaseId:
-        '67c029ce002c2d1ce046', // Replace with your actual database ID
+            '67c029ce002c2d1ce046', // Replace with your actual database ID
         collectionId:
-        '67c1c87c00009d84c6ff', // Replace with your actual collection ID
+            '67c1c87c00009d84c6ff', // Replace with your actual collection ID
         documentId:
-        widget.courseId, // Use the courseId to fetch the specific course
+            widget.courseId, // Use the courseId to fetch the specific course
       );
 
       setState(() {
@@ -333,11 +333,11 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
     try {
       final courseDocument = await Appwrite_service.databases.getDocument(
         databaseId:
-        '67c029ce002c2d1ce046', // Replace with your actual database ID
+            '67c029ce002c2d1ce046', // Replace with your actual database ID
         collectionId:
-        '67c1c87c00009d84c6ff', // Replace with your actual collection ID
+            '67c1c87c00009d84c6ff', // Replace with your actual collection ID
         documentId:
-        widget.courseId, // Use the courseId to fetch the specific course
+            widget.courseId, // Use the courseId to fetch the specific course
       );
 
       setState(() {
@@ -365,7 +365,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
 
     tp.layout(
         maxWidth:
-        MediaQuery.of(context).size.width - 64); // padding 16 * 2 + margin
+            MediaQuery.of(context).size.width - 64); // padding 16 * 2 + margin
 
     if (tp.didExceedMaxLines) {
       _isDescriptionOverflowing = true;
@@ -425,7 +425,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
 
       // Check if course is in purchased_courses array
       List<String> purchasedCourses =
-      List<String>.from(userDoc.data['purchased_courses'] ?? []);
+          List<String>.from(userDoc.data['purchased_courses'] ?? []);
 
       setState(() {
         _isPurchased = purchasedCourses.contains(widget.title);
@@ -437,47 +437,109 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
 
   Future<void> _processPurchase() async {
     try {
-      // Get current user
-      final currentUser = await Appwrite_service.account.get();
+      // Get current Firebase user for phone number
+      final firebaseUser = FirebaseAuth.instance.currentUser;
+      if (firebaseUser == null) {
+        throw Exception('User not logged in');
+      }
 
-      // Get user's document
+      // Get current Appwrite user for course purchase
+      final currentUser = await Appwrite_service.account.get();
       final userDoc = await Appwrite_service.databases.getDocument(
         databaseId: '67c029ce002c2d1ce046',
         collectionId: '67c0cc3600114e71d658',
         documentId: currentUser.$id,
       );
 
-      // Get existing purchased courses or initialize empty list
-      List<String> purchasedCourses =
-      List<String>.from(userDoc.data['purchased_courses'] ?? []);
+      // Get user data from Firestore
+      final firebaseUserDoc = await FirebaseFirestore.instance
+          .collection('students')
+          .doc(firebaseUser.uid)
+          .get();
 
-      // Add new course to the list
-      purchasedCourses.add(widget.title);
+      String? userPhone = firebaseUserDoc.data()?['phone'];
+      String? userEmail = firebaseUserDoc.data()?['email'];
 
-      // Update user document with new purchased courses list
-      await Appwrite_service.databases.updateDocument(
-        databaseId: '67c029ce002c2d1ce046',
-        collectionId: '67c0cc3600114e71d658',
-        documentId: currentUser.$id,
-        data: {
-          'purchased_courses': purchasedCourses,
-          'ongoing_courses': purchasedCourses
-        },
+      if (userPhone == null || userEmail == null) {
+        throw Exception('User phone or email not found');
+      }
+
+      // Process payment
+      final paymentResult = await PaymobService.processPayment(
+        amount: double.parse(widget.price),
+        courseTitle: widget.title,
+        userEmail: userEmail,
+        userPhone: userPhone,
       );
 
-      setState(() {
-        _isPurchased = true;
-      });
+      print('Payment result: $paymentResult');
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Course purchased successfully!')),
-      );
+      if (paymentResult['status'] == PaymobService.PAYMENT_SUCCESS &&
+          paymentResult['is_verified'] == true) {
+        // Get existing purchased courses or initialize empty list
+        List<String> purchasedCourses =
+            List<String>.from(userDoc.data['purchased_courses'] ?? []);
+        List<String> ongoingCourses =
+            List<String>.from(userDoc.data['ongoing_courses'] ?? []);
+
+        // Add new course to the lists if not already present
+        if (!purchasedCourses.contains(widget.title)) {
+          purchasedCourses.add(widget.title);
+        }
+        if (!ongoingCourses.contains(widget.title)) {
+          ongoingCourses.add(widget.title);
+        }
+
+        // Update user document with new purchased courses list in Appwrite
+        await Appwrite_service.databases.updateDocument(
+          databaseId: '67c029ce002c2d1ce046',
+          collectionId: '67c0cc3600114e71d658',
+          documentId: currentUser.$id,
+          data: {
+            'purchased_courses': purchasedCourses,
+            'ongoing_courses': ongoingCourses
+          },
+        );
+
+        setState(() {
+          _isPurchased = true;
+        });
+
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('تم شراء الدورة بنجاح!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          // Navigate to course content
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DisplayCourseLessons(
+                title: widget.title,
+                courseId: widget.courseId,
+                courseCategory: widget.category,
+                courseImagePath: widget.imagePath,
+              ),
+            ),
+          );
+        }
+      } else {
+        throw Exception(paymentResult['error'] ?? 'فشلت عملية الدفع');
+      }
     } catch (e) {
       print('Error processing purchase: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Error processing purchase. Please try again.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('حدث خطأ أثناء عملية الدفع: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -540,7 +602,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
           ? null
           : 'Please enter a valid expiry date (MM/YY)';
       cvvError =
-      _validateCVV(cvvCode) ? null : 'Please enter a valid 3-digit CVV';
+          _validateCVV(cvvCode) ? null : 'Please enter a valid 3-digit CVV';
       cardHolderNameError = _validateCardHolderName(cardHolderName)
           ? null
           : 'Please enter a valid name (letters only)';
@@ -548,268 +610,37 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
   }
 
   void _showPaymentSheet() {
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-            top: 16,
-            left: 16,
-            right: 16,
-          ),
-          child: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Payment Details',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Card Number Field
-                  TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'Card Number',
-                      hintText: 'XXXX XXXX XXXX XXXX',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      prefixIcon: const Icon(Icons.credit_card),
-                      errorText: cardNumberError,
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.red),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.red),
-                      ),
-                    ),
-                    keyboardType: TextInputType.number,
-                    maxLength: 16,
-                    onChanged: (value) {
-                      setState(() {
-                        cardNumber = value.replaceAll(' ', '');
-                        _validateForm();
-                      });
-                    },
-                    validator: (value) {
-                      if (!_validateCardNumber(value ?? '')) {
-                        return 'Please enter a valid 16-digit card number';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Expiry Date and CVV Row
-                  Row(
-                    children: [
-                      // Expiry Date Field
-                      Expanded(
-                        child: TextFormField(
-                          decoration: InputDecoration(
-                            labelText: 'Expiry Date',
-                            hintText: 'MM/YY',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            prefixIcon: const Icon(Icons.calendar_today),
-                            errorText: expiryDateError,
-                            errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: Colors.red),
-                            ),
-                            focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: Colors.red),
-                            ),
-                          ),
-                          keyboardType: TextInputType.number,
-                          maxLength: 5,
-                          onChanged: (value) {
-                            if (value.length == 2 && !value.contains('/')) {
-                              setState(() {
-                                expiryDate = value + '/';
-                                _validateForm();
-                              });
-                            } else {
-                              setState(() {
-                                expiryDate = value;
-                                _validateForm();
-                              });
-                            }
-                          },
-                          validator: (value) {
-                            if (!_validateExpiryDate(value ?? '')) {
-                              return 'Please enter a valid expiry date (MM/YY)';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      // CVV Field
-                      Expanded(
-                        child: TextFormField(
-                          decoration: InputDecoration(
-                            labelText: 'CVV',
-                            hintText: 'XXX',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            prefixIcon: const Icon(Icons.security),
-                            errorText: cvvError,
-                            errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: Colors.red),
-                            ),
-                            focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(color: Colors.red),
-                            ),
-                          ),
-                          keyboardType: TextInputType.number,
-                          maxLength: 3,
-                          obscureText: true,
-                          onChanged: (value) {
-                            setState(() {
-                              cvvCode = value;
-                              _validateForm();
-                            });
-                          },
-                          validator: (value) {
-                            if (!_validateCVV(value ?? '')) {
-                              return 'Please enter a valid 3-digit CVV';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Card Holder Name Field
-                  TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'Card Holder Name',
-                      hintText: 'Name as shown on card',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      prefixIcon: const Icon(Icons.person),
-                      errorText: cardHolderNameError,
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.red),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Colors.red),
-                      ),
-                    ),
-                    textCapitalization: TextCapitalization.words,
-                    onChanged: (value) {
-                      setState(() {
-                        cardHolderName = value;
-                        _validateForm();
-                      });
-                    },
-                    validator: (value) {
-                      if (!_validateCardHolderName(value ?? '')) {
-                        return 'Please enter a valid name (letters only)';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Payment Summary
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Payment Summary',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Course Price:'),
-                            Text('EGP ${widget.price}'),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Pay Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: () {
-                        _validateForm();
-                        if (formKey.currentState?.validate() ?? false) {
-                          Navigator.pop(context);
-                          _processPurchase();
-                        }
-                      },
-                      child: Text(
-                        'Pay EGP ${widget.price}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Purchase'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Course: ${widget.title}'),
+            const SizedBox(height: 8),
+            Text('Price: EGP ${widget.price}'),
+            const SizedBox(height: 16),
+            const Text(
+              'You will be redirected to Paymob secure payment page to complete your purchase.',
+              style: TextStyle(fontSize: 14),
             ),
-          ),
+          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _processPurchase();
+            },
+            child: const Text('Proceed to Payment'),
+          ),
+        ],
       ),
     );
   }
@@ -876,21 +707,23 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                   backgroundColor: const Color(0xFF167F71),
                   child: _isPurchased
                       ? IconButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => DisplayCourseLessons(
-                                    title: widget.title,
-                                    courseId: widget.courseId, courseCategory: widget.category, courseImagePath: widget.imagePath,
-                                )));
-                      },
-                      icon:
-                      const Icon(Icons.play_arrow, color: Colors.white))
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => DisplayCourseLessons(
+                                          title: widget.title,
+                                          courseId: widget.courseId,
+                                          courseCategory: widget.category,
+                                          courseImagePath: widget.imagePath,
+                                        )));
+                          },
+                          icon:
+                              const Icon(Icons.play_arrow, color: Colors.white))
                       : IconButton(
-                    onPressed: null,
-                    icon: const Icon(Icons.lock, color: Colors.white),
-                  ),
+                          onPressed: null,
+                          icon: const Icon(Icons.lock, color: Colors.white),
+                        ),
                 ),
               ),
             ],
@@ -1023,7 +856,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
-                            !_showCuric ? Colors.teal : Colors.grey[200],
+                                !_showCuric ? Colors.teal : Colors.grey[200],
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
@@ -1046,7 +879,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
-                            _showCuric ? Colors.teal : Colors.grey[200],
+                                _showCuric ? Colors.teal : Colors.grey[200],
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
@@ -1107,23 +940,23 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                   backgroundColor: Colors.grey[200],
                   child: avatarUrl != null
                       ? ClipOval(
-                    child: Image.network(
-                      avatarUrl!,
-                      fit: BoxFit.cover,
-                      width: 92,
-                      height: 92,
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                        Icons.person_outline,
-                        color: Colors.grey[400],
-                        size: 30,
-                      ),
-                    ),
-                  )
+                          child: Image.network(
+                            avatarUrl!,
+                            fit: BoxFit.cover,
+                            width: 92,
+                            height: 92,
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                              Icons.person_outline,
+                              color: Colors.grey[400],
+                              size: 30,
+                            ),
+                          ),
+                        )
                       : Icon(
-                    Icons.person_outline,
-                    color: Colors.grey[400],
-                    size: 30,
-                  ),
+                          Icons.person_outline,
+                          color: Colors.grey[400],
+                          size: 30,
+                        ),
                 ),
                 const SizedBox(
                     width: 12), // Gives space between avatar and text
@@ -1131,7 +964,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                   // Ensures text takes only available space
                   child: Column(
                     crossAxisAlignment:
-                    CrossAxisAlignment.start, // Keeps text aligned left
+                        CrossAxisAlignment.start, // Keeps text aligned left
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
@@ -1219,7 +1052,8 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
               SizedBox(
                 height: 215, // Set a fixed height or use constraints
                 child: ListView.builder(
-                  physics: const BouncingScrollPhysics(), // For smooth scrolling
+                  physics:
+                      const BouncingScrollPhysics(), // For smooth scrolling
                   itemCount: _allComments.length,
                   itemBuilder: (context, index) {
                     final comment = _allComments[index];
@@ -1278,9 +1112,11 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                           contentPadding: EdgeInsets.zero,
                           leading: CircleAvatar(
                             radius: 16,
-                            backgroundColor: _isPurchased ? Colors.blue : Colors.grey,
+                            backgroundColor:
+                                _isPurchased ? Colors.blue : Colors.grey,
                             child: Text(
-                              (section['lessons'].indexOf(lesson) + 1).toString(),
+                              (section['lessons'].indexOf(lesson) + 1)
+                                  .toString(),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -1299,7 +1135,8 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
                           ),
                           trailing: _isPurchased
                               ? null
-                              : const Icon(Icons.lock, color: Colors.grey, size: 20),
+                              : const Icon(Icons.lock,
+                                  color: Colors.grey, size: 20),
                         ),
                       );
                     }).toList(),
@@ -1356,8 +1193,8 @@ class _ReviewCardState extends State<ReviewCard> {
     final String displayText = _isExpanded
         ? widget.review
         : (isLongComment
-        ? '${widget.review.substring(0, widget.maxChars)}...'
-        : widget.review);
+            ? '${widget.review.substring(0, widget.maxChars)}...'
+            : widget.review);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -1372,23 +1209,23 @@ class _ReviewCardState extends State<ReviewCard> {
             backgroundColor: Colors.grey[200],
             child: widget.avatarUrl != null
                 ? ClipOval(
-              child: Image.network(
-                widget.avatarUrl!,
-                fit: BoxFit.cover,
-                width: 50,
-                height: 50,
-                errorBuilder: (context, error, stackTrace) => Icon(
-                  Icons.person_outline,
-                  color: Colors.grey[400],
-                  size: 30,
-                ),
-              ),
-            )
+                    child: Image.network(
+                      widget.avatarUrl!,
+                      fit: BoxFit.cover,
+                      width: 50,
+                      height: 50,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.person_outline,
+                        color: Colors.grey[400],
+                        size: 30,
+                      ),
+                    ),
+                  )
                 : Icon(
-              Icons.person_outline,
-              color: Colors.grey[400],
-              size: 30,
-            ),
+                    Icons.person_outline,
+                    color: Colors.grey[400],
+                    size: 30,
+                  ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1424,9 +1261,11 @@ class _ReviewCardState extends State<ReviewCard> {
                 Row(
                   children: [
                     const Icon(Icons.star, color: Colors.yellow, size: 20),
-                    Text(' ${widget.rating}', style: const TextStyle(fontSize: 16)),
+                    Text(' ${widget.rating}',
+                        style: const TextStyle(fontSize: 16)),
                     const Spacer(),
-                    Text(widget.timeAgo, style: const TextStyle(color: Colors.grey)),
+                    Text(widget.timeAgo,
+                        style: const TextStyle(color: Colors.grey)),
                   ],
                 ),
               ],
