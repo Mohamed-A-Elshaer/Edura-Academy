@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/auth/Appwrite_service.dart';
 import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
-import 'package:mashrooa_takharog/screens/popular_courses_page.dart';
+import 'package:mashrooa_takharog/screens/popular_courses_page_new.dart';
 import 'package:mashrooa_takharog/screens/searchPage.dart';
 import 'package:mashrooa_takharog/screens/search_courses_page.dart';
 import 'package:mashrooa_takharog/screens/top_mentors_page.dart';

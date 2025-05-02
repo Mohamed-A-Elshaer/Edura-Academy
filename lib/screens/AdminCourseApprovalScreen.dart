@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/auth/Appwrite_service.dart';
 import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import 'package:mashrooa_takharog/screens/SignInScreen.dart';
+import 'package:mashrooa_takharog/screens/DisplayCourseLessons.dart';
 import 'package:mashrooa_takharog/widgets/coursecard.dart';
 import 'package:mashrooa_takharog/screens/AdminCoursePreviewScreen.dart';
 
@@ -22,6 +23,7 @@ class AdminCourseApprovalScreen extends StatefulWidget {
 class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
   List<Map<String, dynamic>> pendingCourses = [];
   bool isLoading = true;
+  Map<String, bool> expandedDescriptions = {};
 
   @override
   void initState() {
@@ -83,35 +85,34 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
     }
   }
 
-  Future<void> rejectCourse(String courseId) async {
+  Future<void> rejectCourse(String courseId, String courseTitle) async {
     try {
-      await Appwrite_service.databases.updateDocument(
-        databaseId: '67c029ce002c2d1ce046',
-        collectionId: '67c1c87c00009d84c6ff',
-        documentId: courseId,
-        data: {
-          'upload_status': 'rejected',
-        },
-      );
+      // Delete from Appwrite and Supabase
+      await Appwrite_service.deleteCourse(courseId, courseTitle, context);
+      await SupaAuthService.deleteCourseFolderFromSupabase(courseTitle);
 
       setState(() {
         pendingCourses.removeWhere((course) => course['\$id'] == courseId);
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Course rejected successfully'),
-          backgroundColor: Color(0xffD50000),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Course rejected and deleted successfully'),
+            backgroundColor: Color(0xffD50000),
+          ),
+        );
+      }
     } catch (e) {
       print('Error rejecting course: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to reject course'),
-          backgroundColor: Color(0xffD50000),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to reject course'),
+            backgroundColor: Color(0xffD50000),
+          ),
+        );
+      }
     }
   }
 
@@ -156,111 +157,179 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
       ),
       body: Stack(
         children: [
-          if (isLoading)
-            const Center(child: CircularProgressIndicator())
-          else if (pendingCourses.isEmpty)
-            const Center(
-              child: Text(
-                'No pending courses for approval',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Color(0xff545454),
-                  fontFamily: 'Mulish',
+          Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Pending: ${pendingCourses.length}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xff202244),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            )
-          else
-            ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: pendingCourses.length,
-              itemBuilder: (context, index) {
-                final course = pendingCourses[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
+              Expanded(
+                child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : pendingCourses.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No pending courses for approval',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Color(0xff545454),
+                            fontFamily: 'Mulish',
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16.0),
+                        itemCount: pendingCourses.length,
+                        itemBuilder: (context, index) {
+                          final course = pendingCourses[index];
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    course['title'] ?? 'Untitled Course',
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  FutureBuilder<String>(
+                                    future: SupaAuthService.getCourseCoverImageUrl(course['title']),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.connectionState == ConnectionState.waiting) {
+                                        return const Center(child: CircularProgressIndicator());
+                                      }
+                                      return ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          snapshot.data ?? '',
+                                          height: 200,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              height: 200,
+                                              width: double.infinity,
+                                              color: Colors.grey[200],
+                                              child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                                            );
+                                          },
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              course['title'] ?? 'Untitled Course',
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Instructor: ${course['instructor_name'] ?? 'Unknown'}',
+                                              style: TextStyle(
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                            Text(
+                                              'Category: ${course['category'] ?? 'Uncategorized'}',
+                                              style: TextStyle(
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Column(
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.video_library,
+                                                color: Colors.blue),
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      AdminCoursePreviewScreen(
+                                                    title: course['title'],
+                                                    courseId: course['\$id'],
+                                                    courseCategory: course['category'],
+                                                    courseImagePath: course[
+                                                          'imagePath'] ??
+                                                        'assets/images/mediahandler.png',
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.check_circle,
+                                                color: Colors.green),
+                                            onPressed: () =>
+                                                approveCourse(course['\$id']),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.cancel,
+                                                color: Colors.red),
+                                            onPressed: () => rejectCourse(course['\$id'], course['title']),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 8),
-                                  Text(
-                                    'Instructor: ${course['instructor_name'] ?? 'Unknown'}',
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                  Text(
-                                    'Category: ${course['category'] ?? 'Uncategorized'}',
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                    ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        course['description'] ?? 'No description available',
+                                        style: TextStyle(
+                                          color: Colors.grey[800],
+                                        ),
+                                        maxLines: expandedDescriptions[course['\$id']] ?? false ? null : 2,
+                                      ),
+                                      if ((course['description']?.length ?? 0) > 100)
+                                        TextButton(
+                                          onPressed: () {
+                                            setState(() {
+                                              expandedDescriptions[course['\$id']] = !(expandedDescriptions[course['\$id']] ?? false);
+                                            });
+                                          },
+                                          child: Text(
+                                            expandedDescriptions[course['\$id']] ?? false ? 'See Less' : 'See More',
+                                            style: const TextStyle(
+                                              color: Colors.blue,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ],
                               ),
                             ),
-                            Column(
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.video_library,
-                                      color: Colors.blue),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            AdminCoursePreviewScreen(
-                                          title: course['title'],
-                                          courseId: course['\$id'],
-                                          courseCategory: course['category'],
-                                          courseImagePath: course[
-                                                  'imagePath'] ??
-                                              'assets/images/mediahandler.png',
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.check_circle,
-                                      color: Colors.green),
-                                  onPressed: () =>
-                                      approveCourse(course['\$id']),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.cancel,
-                                      color: Colors.red),
-                                  onPressed: () => rejectCourse(course['\$id']),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          course['description'] ?? 'No description available',
-                          style: TextStyle(
-                            color: Colors.grey[800],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
           Positioned(
             bottom: 20,
             left: 0,

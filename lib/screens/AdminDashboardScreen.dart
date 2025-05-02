@@ -1,13 +1,64 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/screens/AdminCourseApprovalScreen.dart';
+import 'package:appwrite/appwrite.dart' as appwrite;
+import 'package:mashrooa_takharog/auth/appwrite_service.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+
+
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 
+  @override
+  _AdminDashboardScreenState createState() => _AdminDashboardScreenState();
+}
 
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  int totalCourses = 0;
+  int totalInstructors = 0;
+  bool isLoading = true;
 
+  @override
+  void initState() {
+    super.initState();
+    fetchTotalCourses();
+    fetchTotalInstructors();
+  }
 
+  Future<void> fetchTotalCourses() async {
+    try {
+      final result = await Appwrite_service.databases.listDocuments(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c1c87c00009d84c6ff',
+      );
+      setState(() {
+        totalCourses = result.total;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching total courses: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> fetchTotalInstructors() async {
+    try {
+      final result = await Appwrite_service.databases.listDocuments(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c0cc3600114e71d658',
+        queries: [
+          appwrite.Query.equal('user_type', 'instructor'),
+        ],
+      );
+      setState(() {
+        totalInstructors = result.total;
+      });
+    } catch (e) {
+      print('Error fetching total instructors: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +92,14 @@ class AdminDashboardScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Total Courses: $totalCourses'),
+               // Text('Pending: ${pendingCourses.length}'),
+              ],
+            ),
+            const SizedBox(height: 20),
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance.collection('students').snapshots(),
               builder: (context, snapshot) {
@@ -57,37 +116,23 @@ class AdminDashboardScreen extends StatelessWidget {
               },
             ),
             const SizedBox(height: 16),
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('instructors').snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final instructorCount = snapshot.data!.docs.length;
-                return _buildStatCard(
+            isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _buildStatCard(
                   'Total Instructors',
-                  instructorCount.toString(),
+                  totalInstructors.toString(),
                   Icons.person,
                   const Color(0xff00C853),
-                );
-              },
-            ),
+                ),
             const SizedBox(height: 16),
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('courses').snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final courseCount = snapshot.data!.docs.length;
-                return _buildStatCard(
+            isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _buildStatCard(
                   'Total Courses',
-                  courseCount.toString(),
+                  totalCourses.toString(),
                   Icons.book,
                   const Color(0xffFF6D00),
-                );
-              },
-            ),
+                ),
             const SizedBox(height: 30),
             const Text(
               'Quick Actions',
@@ -99,7 +144,7 @@ class AdminDashboardScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            _buildQuickActionCard(
+          /*  _buildQuickActionCard(
               context,
               'Approve Courses',
               'Review and approve new courses',
@@ -120,9 +165,9 @@ class AdminDashboardScreen extends StatelessWidget {
               () {
                 // Navigate to user management screen
               },
-            ),
+            ),*/
             const SizedBox(height: 16),
-            _buildQuickActionCard(
+         /*   _buildQuickActionCard(
               context,
               'View Reports',
               'View platform statistics and reports',
@@ -130,7 +175,7 @@ class AdminDashboardScreen extends StatelessWidget {
               () {
                 // Navigate to reports screen
               },
-            ),
+            )*/
           ],
         ),
       ),

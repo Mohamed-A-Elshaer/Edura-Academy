@@ -41,15 +41,17 @@ return await supabase.auth.signUp(email: email,password: password);
 
   static Future<void> deleteCourseFolderFromSupabase(String courseName) async {
     try {
-      final response = await supabase.storage.from('profiles').list(path: courseName);
+      String formattedFolderName = courseName.replaceAll(' ', '_');
+      
+      final response = await supabase.storage.from('profiles').list(path: formattedFolderName);
 
-      final files = response.map((item) => '${courseName.replaceAll(' ', '_')}/${item.name}').toList();
+      final files = response.map((item) => '$formattedFolderName/${item.name}').toList();
 
       if (files.isNotEmpty) {
         await supabase.storage.from('profiles').remove(files);
         print('Deleted files from Supabase: $files');
       } else {
-        print('No files found in Supabase folder: $courseName');
+        print('No files found in Supabase folder: $formattedFolderName');
       }
     } catch (e) {
       print('Error deleting Supabase folder for $courseName: $e');

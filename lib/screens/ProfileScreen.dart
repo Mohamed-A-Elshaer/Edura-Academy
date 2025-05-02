@@ -256,7 +256,84 @@ class ProfileScreenState extends State<ProfileScreen> {
                 CustomProfileElement(
                   text: 'Help Center',
                   icon: Icons.help_center,
-                  onTap: () {},
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Row(
+                          children: [
+                            Icon(Icons.help_outline, color: Color(0xff0961F5)),
+                            SizedBox(width: 8),
+                            Text(
+                              'Help Center',
+                              style: TextStyle(
+                                fontFamily: 'Jost',
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xff202244),
+                              ),
+                            ),
+                          ],
+                        ),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'For any inquiries or support, please contact us at:',
+                              style: TextStyle(
+                                fontFamily: 'Mulish',
+                                color: Color(0xff545454),
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            Container(
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Color(0xffF5F9FF),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.email, color: Color(0xff0961F5)),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'support@edura.com',
+                                    style: TextStyle(
+                                      fontFamily: 'Mulish',
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xff202244),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Our support team will get back to you within 24 hours.',
+                              style: TextStyle(
+                                fontFamily: 'Mulish',
+                                fontSize: 12,
+                                color: Color(0xff545454),
+                              ),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              'Close',
+                              style: TextStyle(
+                                color: Color(0xff0961F5),
+                                fontFamily: 'Mulish',
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
                 SizedBox(
                   height: 25,

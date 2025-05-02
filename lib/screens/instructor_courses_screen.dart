@@ -212,8 +212,47 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(course.category,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange[800])),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(course.category,
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange[800])),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: course.uploadStatus == 'pending' 
+                          ? Colors.yellow[100] 
+                          : Colors.green[100],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            course.uploadStatus == 'pending' 
+                              ? Icons.access_time 
+                              : Icons.check_circle,
+                            size: 16, 
+                            color: course.uploadStatus == 'pending' 
+                              ? Colors.orange[800] 
+                              : Colors.green[800]
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            course.uploadStatus == 'pending' ? 'Pending' : 'Approved',
+                            style: TextStyle(
+                              color: course.uploadStatus == 'pending' 
+                                ? Colors.orange[800] 
+                                : Colors.green[800],
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -335,6 +374,7 @@ class Course {
    int videosCount;
    String coverImage;
   final double price;
+  final String uploadStatus;
 
   Course({
     required this.id,
@@ -344,7 +384,8 @@ class Course {
     required this.duration,
     required this.videosCount,
     required this.coverImage,
-    required this.price
+    required this.price,
+    required this.uploadStatus
   });
   /// Convert Appwrite document data into a `Course` object
   static Future<Course> fromMap(Map<String, dynamic> data) async {
@@ -358,6 +399,7 @@ class Course {
       videosCount: 0, // We fetch this separately from Storage
       coverImage: coverUrl, // Now it's assigned correctly
       price: (data['price'] is int) ? (data['price'] as int).toDouble() : (data['price'] ?? 0.0),
+      uploadStatus: data['upload_status'] ?? 'approved'
     );
   }
 
