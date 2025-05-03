@@ -14,6 +14,7 @@ import 'categoriesPage.dart';
 import '../widgets/coursecard.dart';
 import '../widgets/mentor.dart';
 import 'ProfileScreen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -31,13 +32,7 @@ class HomepageState extends State<Homepage> {
   static int selectedCardIndex = -1;
   int selectedcategoryindex = -1;
   List<String> savedCourseTitles = [];
-  final List<Map<String, String>> mentors = [
-    {"name": "Ahmed Abdullah", "imagePath": "assets/images/mentor.jpg"},
-    {"name": "Osama Ahmed", "imagePath": "assets/images/mentor.jpg"},
-    {"name": "Amany Elsayed", "imagePath": "assets/images/mentor.jpg"},
-    {"name": "Mohamed Ahmed", "imagePath": "assets/images/mentor.jpg"},
-    {"name": "Ahmed Khaled", "imagePath": "assets/images/mentor.jpg"},
-  ];
+  List<Map<String, dynamic>> mentors = [];
 
   final List<Map<String, dynamic>> _specialCardData = [
     {
@@ -91,7 +86,8 @@ class HomepageState extends State<Homepage> {
     super.initState();
     _fetchUserData();
     _fetchCoursesData();
-    _fetchSavedCourseTitles(); // Add this to fetch courses from Appwrite
+    _fetchSavedCourseTitles();
+    _fetchAndSortMentors();
   }
 
   List<Map<String, dynamic>> filteredCourses = [];
@@ -186,7 +182,6 @@ class HomepageState extends State<Homepage> {
     }
   }
 
-  // Add this new method to fetch courses from Appwrite
   Future<void> _fetchCoursesData() async {
     try {
       final coursesResponse = await Appwrite_service.databases.listDocuments(
@@ -249,7 +244,6 @@ class HomepageState extends State<Homepage> {
     }
   }
 
-  // Modify the _filterCourses method to implement the top courses logic
   void _filterCourses(int index) async {
     setState(() {
       selectedCardIndex = index;
@@ -303,6 +297,100 @@ class HomepageState extends State<Homepage> {
     } catch (e) {
       print('Error filtering courses: $e');
     }
+  }
+
+  Future<void> _fetchAndSortMentors() async {
+    try {
+      // Fetch all instructors
+      final instructorsResponse =
+          await Appwrite_service.databases.listDocuments(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c0cc3600114e71d658',
+        queries: [
+          appwrite.Query.equal('user_type', 'instructor'),
+        ],
+      );
+
+      // Fetch all courses
+      final coursesResponse = await Appwrite_service.databases.listDocuments(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c1c87c00009d84c6ff',
+        queries: [
+          appwrite.Query.equal('upload_status', 'approved'),
+        ],
+      );
+
+      // Create a map to store student counts for each instructor
+      Map<String, int> instructorStudentCounts = {};
+
+      // Count students for each instructor's courses
+      for (final course in coursesResponse.documents) {
+        final instructorId = course.data['instructor_id'];
+        final studentCount = await getTotalStudents(course.data['title']);
+
+        instructorStudentCounts[instructorId] =
+            (instructorStudentCounts[instructorId] ?? 0) + studentCount;
+      }
+
+      // Create mentor list with student counts
+      List<Map<String, dynamic>> mentorList = [];
+      for (final instructor in instructorsResponse.documents) {
+        // Get instructor's email from Appwrite
+        final instructorEmail = instructor.data['email'];
+
+        // Get Supabase user ID using email
+        final supabaseUserId =
+            await SupaAuthService.getSupabaseUserId(instructorEmail);
+
+        // Get profile image URL from Supabase storage
+        String profileImageUrl = 'assets/images/mentor.jpg';
+        if (supabaseUserId != null) {
+          try {
+            final files = await Supabase.instance.client.storage
+                .from('profiles')
+                .list(path: supabaseUserId);
+
+            final hasProfileImage = files.any((file) => file.name == 'profile');
+            if (hasProfileImage) {
+              profileImageUrl = Supabase.instance.client.storage
+                  .from('profiles')
+                  .getPublicUrl('$supabaseUserId/profile');
+            }
+          } catch (e) {
+            print(
+                'Error fetching profile image for instructor ${instructor.data['name']}: $e');
+          }
+        }
+
+        mentorList.add({
+          'name': instructor.data['name'] ?? 'Unknown',
+          'imagePath': profileImageUrl,
+          'studentCount': instructorStudentCounts[instructor.$id] ?? 0,
+        });
+      }
+
+      // Sort mentors by student count in descending order
+      mentorList.sort((a, b) =>
+          (b['studentCount'] as int).compareTo(a['studentCount'] as int));
+
+      setState(() {
+        mentors = mentorList;
+      });
+    } catch (e) {
+      print('Error fetching and sorting mentors: $e');
+    }
+  }
+
+  Future<int> getTotalStudents(String courseTitle) async {
+    final response = await Appwrite_service.databases.listDocuments(
+      databaseId: '67c029ce002c2d1ce046',
+      collectionId: '67c0cc3600114e71d658',
+      queries: [
+        appwrite.Query.contains('purchased_courses', courseTitle),
+      ],
+    );
+
+    return response.total;
   }
 
   @override

@@ -14,12 +14,27 @@ class MentorCard extends StatelessWidget {
     return Column(
       children: [
         ClipOval(
-          child: Image.asset(
-            imagePath,
-            height: 60,
-            width: 60,
-            fit: BoxFit.cover,
-          ),
+          child: imagePath.startsWith('http')
+              ? Image.network(
+                  imagePath,
+                  height: 60,
+                  width: 60,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset(
+                      'assets/images/mentor.jpg',
+                      height: 60,
+                      width: 60,
+                      fit: BoxFit.cover,
+                    );
+                  },
+                )
+              : Image.asset(
+                  imagePath,
+                  height: 60,
+                  width: 60,
+                  fit: BoxFit.cover,
+                ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -28,6 +43,8 @@ class MentorCard extends StatelessWidget {
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
