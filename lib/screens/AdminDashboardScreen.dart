@@ -144,7 +144,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
             ),
             const SizedBox(height: 16),
-          /*  _buildQuickActionCard(
+            _buildQuickActionCard(
               context,
               'Approve Courses',
               'Review and approve new courses',
@@ -155,7 +155,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   MaterialPageRoute(builder: (context) => const AdminCourseApprovalScreen()),
                 );
               },
-            ),
+            ),/*
             const SizedBox(height: 16),
             _buildQuickActionCard(
               context,
