@@ -116,27 +116,7 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
     }
   }
 
-  Future<void> _signOut() async {
-    try {
-      await FirebaseAuth.instance.signOut();
-      await SupaAuthService.signOut();
-
-      final account = Appwrite_service.account;
-      final sessions = await account.listSessions();
-      if (sessions.sessions.isNotEmpty) {
-        await account.deleteSession(sessionId: 'current');
-      }
-
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => SignInScreen()),
-        );
-      }
-    } catch (e) {
-      print('Error signing out: $e');
-    }
-  }
+ 
 
   @override
   Widget build(BuildContext context) {
@@ -329,7 +309,7 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
                       ),
               ),
             ],
-          ),
+          ),/*
           Positioned(
             bottom: 20,
             left: 0,
@@ -356,9 +336,10 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
                 ),
               ),
             ),
-          ),
+          ),*/
         ],
       ),
     );
   }
 }
+ 

@@ -292,6 +292,27 @@ class _SignInScreenState extends State<SignInScreen> {
             }
             return;
           }
+          await authService.signInWithEmailPassword(
+          _emailController.text, _passwordController.text);
+      await supaAuth.signInWithEmailPasswordSupabase(
+          _emailController.text, _passwordController.text);
+      try {
+        // Check if a session already exists
+        await account.get();
+        print("Appwrite: Session already active");
+      } catch (e) {
+        // No session exists, safe to create one
+        try {
+          await account.createEmailPasswordSession(
+            email: _emailController.text,
+            password: _passwordController.text,
+          );
+          print("Appwrite: Session created");
+        } catch (sessionError) {
+          print("Appwrite session creation error: $sessionError");
+          throw sessionError;
+        }
+      }
           // If email found in admin collection, navigate to admin screen
           Navigator.pushReplacement(
             context,
@@ -516,7 +537,7 @@ class _SignInScreenState extends State<SignInScreen> {
     return false;
   }*/
 
-  
+
 
 
   void validateInputs(String intendedRole) {
@@ -620,15 +641,15 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     SizedBox(height: 10),
                     if (widget.userType != 'admin')
-                      Text(
-                        'Login to Your Account to Continue watching Courses',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontFamily: 'Mulish',
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xff545454),
-                        ),
+                    Text(
+                      'Login to Your Account to Continue watching Courses',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'Mulish',
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xff545454),
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -682,15 +703,15 @@ class _SignInScreenState extends State<SignInScreen> {
                     },
                     child: rememberMe
                         ? Icon(
-                            Icons.check_box,
-                            size: 25.0,
-                            color: Colors.green,
-                          )
+                      Icons.check_box,
+                      size: 25.0,
+                      color: Colors.green,
+                    )
                         : Icon(
-                            Icons.square_outlined,
-                            size: 25.0,
-                            color: Colors.green,
-                          ),
+                      Icons.square_outlined,
+                      size: 25.0,
+                      color: Colors.green,
+                    ),
                   ),
                   SizedBox(
                     width: 6,
@@ -750,10 +771,10 @@ class _SignInScreenState extends State<SignInScreen> {
               SizedBox(
                 height: 25,
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  GestureDetector(
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                GestureDetector(
                       onTap: () => AuthService()
                           .signInWithGoogle(context, widget.userType!),
                       child: Image.asset(
@@ -765,9 +786,9 @@ class _SignInScreenState extends State<SignInScreen> {
               SizedBox(
                 height: 27,
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
                   Text(
                     'Don\'t have an Account?',
                     style: TextStyle(
@@ -779,7 +800,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   SizedBox(
                     width: 6,
                   ),
-                  GestureDetector(
+                GestureDetector(
                     onTap: () {
                       Navigator.pushReplacement(
                           context,
@@ -791,8 +812,8 @@ class _SignInScreenState extends State<SignInScreen> {
                     child: Text(
                       'SIGN UP',
                       style: TextStyle(
-                          shadows: [
-                            Shadow(
+                      shadows: [
+                        Shadow(
                                 color: Color(0xff0961F5), offset: Offset(0, -1))
                           ],
                           fontFamily: 'Mulish',
@@ -803,9 +824,9 @@ class _SignInScreenState extends State<SignInScreen> {
                           decorationColor: Color(0xff0961F5),
                           decorationThickness: 3),
                     ),
-                  ),
-                ],
-              )
+                ),
+              ],
+            )
             ],
           ],
         ),
