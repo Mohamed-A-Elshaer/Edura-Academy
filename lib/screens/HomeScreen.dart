@@ -15,6 +15,7 @@ import '../widgets/coursecard.dart';
 import '../widgets/mentor.dart';
 import 'ProfileScreen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:math';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -34,25 +35,29 @@ class HomepageState extends State<Homepage> {
   List<String> savedCourseTitles = [];
   List<Map<String, dynamic>> mentors = [];
 
+  final List<String> motivationalQuotes = [
+    "Keep going, you're doing great!",
+    "Learning is a treasure that will follow its owner everywhere.",
+    "Success is the sum of small efforts repeated day in and day out.",
+    "The future belongs to those who learn more skills and combine them in creative ways.",
+    "Don't watch the clock; do what it does. Keep going.",
+  ];
+
+  String getRandomQuote() {
+    final random = Random();
+    int index = random.nextInt(motivationalQuotes.length);
+    return motivationalQuotes[index];
+  }
+
   final List<Map<String, dynamic>> _specialCardData = [
     {
-      "discount": "25% OFF*",
-      "title": "Today's Special",
-      "description":
-          "Get a discount for every course order only valid for today!",
-      "backgroundColor": Colors.blue,
+      "backgroundColor": Color(0xff0961F5),
     },
     {
-      "discount": "15% OFF*",
-      "title": "Limited Offer",
-      "description": "Special discount for our premium members!",
-      "backgroundColor": Colors.green,
+      "backgroundColor": Color(0xff00C853),
     },
     {
-      "discount": "10% OFF*",
-      "title": "Weekend Sale",
-      "description": "Grab courses with discounted prices this weekend only!",
-      "backgroundColor": Colors.purple,
+      "backgroundColor": Color(0xffFF6D00),
     },
   ];
 
@@ -504,24 +509,17 @@ class HomepageState extends State<Homepage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(data['discount'] ?? '',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                )),
-                            Text(data['title'] ?? '',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                )),
-                            Text(data['description'] ?? '',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                )),
-                          ],
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            getRandomQuote(),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
                       ),
                     ),
