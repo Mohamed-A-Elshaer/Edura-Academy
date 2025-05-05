@@ -58,19 +58,18 @@ class AuthService{
       );
 
       UserCredential result = await firebaseAuth.signInWithCredential(credential);
+
       User? userDetails = result.user;
 
       //await GoogleSignInSupa.supaGoogleSignIn( googleSignInAuthentication?.idToken, googleSignInAuthentication?.accessToken);
 
-      String supabaseUserId = await  GoogleSignInSupa.addGoogleUserToSupabase(userDetails!.email!,'Default_Password_123');
+      String supabaseUserId = await  GoogleSignInSupa.addGoogleUserToSupabase(userDetails!.email!);
+String? appwriteUserId= await GoogleSignInAppwrite.appWriteGoogleSignIn(
+    userDetails!.email!,
+);
 
 
 
-      await GoogleSignInAppwrite.appWriteGoogleSignIn(
-          userDetails!.email!,
-          userDetails.displayName!,
-          userDetails.uid
-      );
       if (userDetails != null) {
         final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
@@ -118,7 +117,7 @@ Appwrite_service.appwriteForceLogout();
                   userType: userType,
                   email: userDetails.email,
                   supaUserId: supabaseUserId,
-                  appwriteUserId:userDetails.uid,
+                  appwriteUserId:appwriteUserId,
                 ),
               ),
             );
@@ -141,7 +140,7 @@ Appwrite_service.appwriteForceLogout();
                 userType: userType,
                 email: userDetails.email,
                 supaUserId: supabaseUserId,
-                appwriteUserId:userDetails.uid,
+                appwriteUserId:appwriteUserId,
               ),
             ),
           );

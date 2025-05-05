@@ -1,4 +1,7 @@
 import 'package:flutter/cupertino.dart';
+import 'package:mashrooa_takharog/Databases/AppwriteTableCreate.dart';
+import 'package:mashrooa_takharog/auth/Appwrite_service.dart';
+import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:appwrite/appwrite.dart';
 
@@ -8,10 +11,9 @@ class SupabaseAppwriteEmailUpdate {
 
 
  static Future<void> updateSupabaseEmail(String newEmail) async {
-    final supabase = Supabase.instance.client;
 
     try {
-      final response = await supabase.auth.updateUser(UserAttributes(email: newEmail));
+      final response = await SupaAuthService.supabase.auth.updateUser(UserAttributes(email: newEmail));
 
       if (response.user != null) {
         print("✅ Supabase Email updated successfully: ${response.user!.email}");
@@ -28,16 +30,12 @@ class SupabaseAppwriteEmailUpdate {
 
 
  static Future<void> updateAppwriteEmail(String newEmail,String? password) async {
-   final client = Client()
-     .setEndpoint('https://cloud.appwrite.io/v1')
-     .setProject('67ac8356002648e5b7e9')
-   .setSelfSigned(status: true);
-   final account = Account(client);
+
 
    try {
 
 
-     await account.updateEmail(
+     await Appwrite_service.account.updateEmail(
        email: newEmail,
        password: password!,
      );

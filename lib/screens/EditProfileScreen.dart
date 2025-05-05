@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mashrooa_takharog/Databases/AppwriteTableCreate.dart';
 import 'package:mashrooa_takharog/Databases/SupaTableCreate.dart';
+import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import 'package:mashrooa_takharog/screens/SupabaseAppwriteEmailUpdate.dart';
+import '../auth/Appwrite_service.dart';
 import '../widgets/customElevatedBtn.dart';
 import '../widgets/customTextField.dart';
 import 'InstructorNavigatorScreen.dart';
@@ -26,12 +28,105 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   TextEditingController dobController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
+  TextEditingController newPasswordController = TextEditingController();
+  String? passwordError;
   String selectedGender='Gender';
   DateTime dateTime = DateTime.now();
   String? emailError, phoneError;
   String? verificationId;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  bool isGoogleUser = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    setState(() {
+      isGoogleUser = user?.providerData.any((info) => info.providerId == 'google.com') ?? false;
+    });
+  }
+
+  bool _validatePassword(String password) {
+    if (password.length < 8) {
+      setState(() {
+        passwordError = '*Password must be at least 8 characters';
+      });
+      return false;
+    }
+    if (!password.contains(RegExp(r'[A-Z]'))) {
+      setState(() {
+        passwordError = '*Password must contain at least one capital letter';
+      });
+      return false;
+    }
+    if (!password.contains(RegExp(r'[0-9]'))) {
+      setState(() {
+        passwordError = '*Password must contain at least one digit';
+      });
+      return false;
+    }
+    setState(() {
+      passwordError = null;
+    });
+    return true;
+  }
+
+
+  Future<void> _updatePassword() async {
+    final newPassword = newPasswordController.text.trim();
+    if (!_validatePassword(newPassword)) return;
+
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    try {
+      // Update Firebase password
+      await user.updatePassword(newPassword);
+      print("✅ Firebase password updated successfully!");
+
+      // Update Appwrite password
+      try {
+        await Appwrite_service.account.updatePassword(
+          password: newPassword,
+          oldPassword: widget.password ?? 'Default_Password_123',
+        );
+        print("✅ Appwrite password updated successfully!");
+      } catch (e) {
+        print("❌ Appwrite password update failed: $e");
+      }
+
+      // Update Supabase password
+      try {
+        SupaAuthService.changePasswordInSupabase(newPassword);
+        print("✅ Supabase password updated successfully!");
+      } catch (e) {
+        print("❌ Supabase password update failed: $e");
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Password updated successfully!'),
+          ));
+
+          setState(() {
+        newPasswordController.clear();
+      });
+    } on FirebaseAuthException catch (e) {
+    if (e.code == 'requires-recent-login') {
+    ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Please re-authenticate to change password')),
+    );
+    } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Error updating password: ${e.message}')),
+    );
+    }
+    } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Error updating password: $e')),
+    );
+    }
+  }
 
 
   void _navigateBasedOnUserType(BuildContext context) async {
@@ -173,7 +268,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
         SupaTableCreate.updateUserInSupabaseDB(supabaseUserId!, newEmail, fullNameController.text);
 
-
+        if (newPasswordController.text.isNotEmpty) {
+          await _updatePassword();
+        }
         // Update email in Firebase Authentication
         if (newEmail.isNotEmpty && newEmail != user.email) {
           try {
@@ -246,10 +343,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     bool isDataEntered = fullNameController.text.isNotEmpty ||
         nickNameController.text.isNotEmpty ||
         dobController.text.isNotEmpty ||
+        newPasswordController.text.isNotEmpty ||
         newEmail.isNotEmpty ||
         newPhone.isNotEmpty ||
         selectedGender != 'Gender';
 
+    if (newPasswordController.text.isNotEmpty &&
+        !_validatePassword(newPasswordController.text)) {
+      return;
+    }
 
     if (!isDataEntered) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -381,6 +483,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (!isGoogleUser)
                     CustomTextField(
                       hintText: 'Email',
                       isPrefix: true,
@@ -420,6 +523,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           phoneError!,
                           style: const TextStyle(color: Colors.red, fontSize: 14),
                         ),
+                      ),
+                  ],
+                ),
+                SizedBox(height: 20,),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (!isGoogleUser) // Same condition as email field
+                      Column(
+                        children: [
+                          CustomTextField(
+                            hintText: 'Change Password',
+                            isPrefix: true,
+                            prefix: Icon(Icons.lock_outline),
+                            isSuffix: false,
+                            controller: newPasswordController,
+                          ),
+                          if (passwordError != null)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 20.0, top: 5),
+                              child: Text(
+                                passwordError!,
+                                style: const TextStyle(color: Colors.red, fontSize: 14),
+                              ),
+                            ),
+                        ],
                       ),
                   ],
                 ),

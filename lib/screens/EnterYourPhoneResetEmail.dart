@@ -19,38 +19,6 @@ class _EnterYourPhoneResetEmailState extends State<EnterYourPhoneResetEmail> {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
- /* Future<bool> _doesPhoneNumberExist(String rawPhoneNumber) async {
-    try {
-      // Remove +20 prefix before querying
-      String normalizedPhone = rawPhoneNumber.replaceFirst('+20', '');
-
-      // Check in `instructors` collection
-      QuerySnapshot instructorSnapshot = await _firestore
-          .collection('instructors')
-          .where('phone', isEqualTo: normalizedPhone)
-          .get();
-
-      if (instructorSnapshot.docs.isNotEmpty) {
-        return true;
-      }
-
-      // Check in `students` collection
-      QuerySnapshot studentSnapshot = await _firestore
-          .collection('students')
-          .where('phone', isEqualTo: normalizedPhone)
-          .get();
-
-      return studentSnapshot.docs.isNotEmpty;
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error checking phone number: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return false;
-    }
-  }*/
 
   Future<String?> _getUidByPhoneNumber(String phoneNumber) async {
     try {

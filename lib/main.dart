@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:mashrooa_takharog/firebase_options.dart';
 import 'package:mashrooa_takharog/providers/ThemeProvider.dart';
+import 'package:mashrooa_takharog/screens/mentorProfile.dart';
 import 'package:mashrooa_takharog/screens/splashScreen.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

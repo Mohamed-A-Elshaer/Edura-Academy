@@ -75,4 +75,35 @@ return await supabase.auth.signUp(email: email,password: password);
   }
 
 
+
+
+   Future<void> sendSupabasePasswordRecoveryEmail(String email) async {
+    try {
+      await supabase.auth.resetPasswordForEmail(email);
+
+      print('Password recovery email sent via Supabase');
+    } catch (e) {
+      print('Error sending Supabase password recovery email: $e');
+    }
+  }
+
+  static Future<void> changePasswordInSupabase(String newPassword) async {
+    try {
+      final supabase = SupaAuthService.supabase;
+
+      final response = await supabase.auth.updateUser(
+        UserAttributes(password: newPassword),
+      );
+
+      if (response.user == null) {
+        print('Error: user not updated.');
+      } else {
+        print('Password updated successfully in Supabase');
+      }
+    } catch (e) {
+      print('Error updating password in Supabase: $e');
+    }
+  }
+
+
 }

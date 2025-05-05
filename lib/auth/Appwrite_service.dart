@@ -356,33 +356,6 @@ class Appwrite_service{
   }
 
 
-  /*static Future<String> getCoverImageUrl(String courseName) async {
-   try {
-     final storage = Storage(Appwrite_service.client);
-     String formattedTitle = courseName.replaceAll(' ', '_');
-     // Fetch the cover image file details
-     final coverFiles = await storage.listFiles(
-       bucketId: "67ac838900066b15fc99",
-       queries: [Query.equal("name", "$formattedTitle/course_cover.jpg")],
-     );
-
-     // Check if the cover image exists
-     if (coverFiles.files.isNotEmpty) {
-       final fileId = coverFiles.files.first.$id;
-
-       // Construct the preview URL manually
-       return "https://cloud.appwrite.io/v1/storage/buckets/67ac838900066b15fc99/files/$fileId/preview?project=67ac8356002648e5b7e9";
-     } else {
-       return "https://via.placeholder.com/300"; // Default placeholder if no cover found
-     }
-   } catch (e) {
-     print("Error retrieving cover image: $e");
-     return "https://via.placeholder.com/300"; // Return placeholder on error
-   }
- }*/
-
-
-
 
 
   static Future<void> appwriteForceLogout() async{
@@ -415,6 +388,20 @@ class Appwrite_service{
     }
   }
 
+
+  Future<void> sendAppwritePasswordRecoveryEmail(String email) async {
+    try {
+
+      await account.createRecovery(
+        email: email,
+        url: 'https://yourapp.com/recovery', // URL to redirect after recovery
+      );
+
+      print('Password recovery email sent via Appwrite');
+    } catch (e) {
+      print('Error sending Appwrite password recovery email: $e');
+    }
+  }
 
 
 
