@@ -41,8 +41,30 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
         ],
       );
 
+      // Get all pending courses
+      final pendingCourses = result.documents.map((doc) => doc.data).toList();
+
+      // For each pending course, check if it was previously approved
+      for (var course in pendingCourses) {
+        try {
+          // Get the course history to check if it was previously approved
+          final courseDoc = await Appwrite_service.databases.getDocument(
+            databaseId: '67c029ce002c2d1ce046',
+            collectionId: '67c1c87c00009d84c6ff',
+            documentId: course['\$id'],
+          );
+          
+          // Check if the course was previously approved
+          course['approved'] = courseDoc.data['upload_status'] == 'approved' || 
+                             courseDoc.data['upload_status'] == 'pending';
+        } catch (e) {
+          print('Error checking course approval status: $e');
+          course['approved'] = false;
+        }
+      }
+
       setState(() {
-        pendingCourses = result.documents.map((doc) => doc.data).toList();
+        this.pendingCourses = pendingCourses;
         isLoading = false;
       });
     } catch (e) {
@@ -87,9 +109,7 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
 
   Future<void> rejectCourse(String courseId, String courseTitle) async {
     try {
-      // Delete from Appwrite and Supabase
-      await Appwrite_service.deleteCourse(courseId, courseTitle, context);
-      await SupaAuthService.deleteCourseFolderFromSupabase(courseTitle);
+      await Appwrite_service.performCourseDeletion(courseId, courseTitle, context);
 
       setState(() {
         pendingCourses.removeWhere((course) => course['\$id'] == courseId);
@@ -109,6 +129,74 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to reject course'),
+            backgroundColor: Color(0xffD50000),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> approveDeletionRequest(String courseId, String courseTitle) async {
+    try {
+      // Just perform the deletion
+      await Appwrite_service.performCourseDeletion(courseId, courseTitle, context);
+
+      setState(() {
+        pendingCourses.removeWhere((course) => course['\$id'] == courseId);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Course deletion request approved - course has been deleted'),
+            backgroundColor: Color(0xff00C853),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error approving deletion request: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to approve deletion request'),
+            backgroundColor: Color(0xffD50000),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> declineDeletionRequest(String courseId) async {
+    try {
+      // Set status back to approved to keep the course
+      await Appwrite_service.databases.updateDocument(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c1c87c00009d84c6ff',
+        documentId: courseId,
+        data: {
+          'upload_status': 'approved',
+          'request_type': 'uploading_request'  // Reset request type
+        },
+      );
+
+      setState(() {
+        pendingCourses.removeWhere((course) => course['\$id'] == courseId);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Course deletion request declined - course remains available'),
+            backgroundColor: Color(0xffD50000),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error declining deletion request: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to decline deletion request'),
             backgroundColor: Color(0xffD50000),
           ),
         );
@@ -213,12 +301,38 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            Text(
-                                              course['title'] ?? 'Untitled Course',
-                                              style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                              ),
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  course['title'] ?? 'Untitled Course',
+                                                  style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                  decoration: BoxDecoration(
+                                                    color: course['approved'] == true 
+                                                      ? Colors.red[100] 
+                                                      : Colors.blue[100],
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  child: Text(
+                                                    course['request_type'] == 'deletion_request'
+                                                      ? 'Deletion Request'
+                                                      : 'Approval Request',
+                                                    style: TextStyle(
+                                                      color: course['request_type'] == 'deletion_request'
+                                                        ? Colors.red[800]
+                                                        : Colors.blue[800],
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                             const SizedBox(height: 8),
                                             Text(
@@ -258,17 +372,29 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
                                               );
                                             },
                                           ),
-                                          IconButton(
-                                            icon: const Icon(Icons.check_circle,
-                                                color: Colors.green),
-                                            onPressed: () =>
-                                                approveCourse(course['\$id']),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.cancel,
-                                                color: Colors.red),
-                                            onPressed: () => rejectCourse(course['\$id'], course['title']),
-                                          ),
+                                          if (course['request_type'] == 'deletion_request') ...[
+                                            IconButton(
+                                              icon: const Icon(Icons.check_circle,
+                                                  color: Colors.green),
+                                              onPressed: () => approveDeletionRequest(course['\$id'], course['title']),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.cancel,
+                                                  color: Colors.red),
+                                              onPressed: () => declineDeletionRequest(course['\$id']),
+                                            ),
+                                          ] else ...[
+                                            IconButton(
+                                              icon: const Icon(Icons.check_circle,
+                                                  color: Colors.green),
+                                              onPressed: () => approveCourse(course['\$id']),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.cancel,
+                                                  color: Colors.red),
+                                              onPressed: () => rejectCourse(course['\$id'], course['title']),
+                                            ),
+                                          ],
                                         ],
                                       ),
                                     ],

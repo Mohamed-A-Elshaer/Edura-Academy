@@ -60,26 +60,7 @@ class _InstructorHomeScreenState extends State<InstructorHomeScreen> {
 
        
        backgroundColor: Colors.transparent,
-       elevation: 0,
-       actions: [
-         Container(
-           decoration: BoxDecoration(
-             shape: BoxShape.circle,
-             border: Border.all(
-               color:Color(0xff0961F5),
-               width: 2.0,
-             ),
-           ),
-           child: CircleAvatar(
-             backgroundColor: Colors.white,
-             child: Icon(
-               Icons.notifications,
-               color: Color(0xff0961F5),
-             ),
-           ),
-         ),
-         const SizedBox(width: 16),
-       ],
+       elevation: 0
      ),
      body: Column(
        children: [

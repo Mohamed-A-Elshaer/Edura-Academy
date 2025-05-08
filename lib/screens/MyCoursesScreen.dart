@@ -107,7 +107,7 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
               'courseId': course.$id,
               'price': course.data['price'] ?? '0',
               'instructorName':
-              course.data['instructorName'] ?? 'Unknown Instructor',
+              course.data['instructor_name'] ?? 'Unknown Instructor',
               'videoCount': courseVideoIds.length,
               'completedVideos': completedCount,
               'duration': course.data['courseDuration_inMins'] ?? 0,

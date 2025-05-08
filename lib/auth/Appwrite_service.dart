@@ -1,4 +1,3 @@
-
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart' as appwrite;
 import 'package:flutter/material.dart';
@@ -153,7 +152,7 @@ class Appwrite_service{
         await SupaAuthService.supabase.storage.from('profiles').uploadBinary(
           newFilePath,
           fileBytes,
-          fileOptions: FileOptions(upsert: true),
+          fileOptions:  const FileOptions(upsert: true),
         );
 
         // Delete the old file
@@ -204,7 +203,7 @@ class Appwrite_service{
       // Show success message
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text("Course updated successfully!", style: TextStyle(color: Colors.white)),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 2),
@@ -215,7 +214,7 @@ class Appwrite_service{
       // Show error message
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text("Failed to update course!", style: TextStyle(color: Colors.white)),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 2),
@@ -292,32 +291,130 @@ class Appwrite_service{
 
   /// Delete course from DB & Storage
   static Future<void> deleteCourse(String courseId, String courseName, BuildContext context) async {
+    try {
+      // First get the current course status
+      final course = await databases.getDocument(
+        databaseId: "67c029ce002c2d1ce046",
+        collectionId: "67c1c87c00009d84c6ff",
+        documentId: courseId,
+      );
 
+      // If the course was previously approved, set status to pending for admin review
+      if (course.data['upload_status'] == 'approved') {
+        await databases.updateDocument(
+          databaseId: "67c029ce002c2d1ce046",
+          collectionId: "67c1c87c00009d84c6ff",
+          documentId: courseId,
+          data: {
+            'upload_status': 'pending',
+            'request_type': 'deletion_request'  // Set request type for deletion
+          },
+        );
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+           const     SnackBar(
+              content: Text("Course deletion request submitted. Waiting for admin approval.",
+                  style: TextStyle(color: Colors.white)),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        // If course wasn't approved, just delete it directly
+        await performCourseDeletion(courseId, courseName, context);
+      }
+    } catch(e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+      const  SnackBar(
+          content: Text("Failed to submit deletion request!",
+              style: TextStyle(color: Colors.white)),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      print("Error submitting deletion request: $e");
+    }
+  }
+
+  /// Actually delete the course after admin approval
+  static Future<void> performCourseDeletion(String courseId, String courseName, BuildContext context) async {
     try {
       String formattedTitle = courseName.replaceAll(' ', '_').toLowerCase();
-      // Delete course from DB
+      
+      // 1. Delete course from Appwrite DB
       await databases.deleteDocument(
         databaseId: "67c029ce002c2d1ce046",
         collectionId: "67c1c87c00009d84c6ff",
         documentId: courseId,
       );
 
-      // Delete all course files from Storage
+      // 2. Delete all course files from Appwrite Storage
       final response = await storage.listFiles(
           bucketId: "67ac838900066b15fc99");
 
       for (var file in response.files) {
-        // ✅ Ensure correct path match
         if (file.name.startsWith("$formattedTitle/")) {
           await storage.deleteFile(
               bucketId: "67ac838900066b15fc99", fileId: file.$id);
-          print("Deleted file: ${file.name}");
+          print("Deleted Appwrite file: ${file.name}");
         }
       }
+
+      // 3. Delete course folder from Supabase Storage
+      await SupaAuthService.deleteCourseFolderFromSupabase(courseName);
+
+      // 4. Remove course from users' purchased_courses, completed_courses, and ongoing_courses
+      final usersResponse = await databases.listDocuments(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c0cc3600114e71d658',
+      );
+
+      for (var userDoc in usersResponse.documents) {
+        List<dynamic> purchasedCourses = List.from(userDoc.data['purchased_courses'] ?? []);
+        List<dynamic> completedCourses = List.from(userDoc.data['completed_courses'] ?? []);
+        List<dynamic> ongoingCourses = List.from(userDoc.data['ongoing_courses'] ?? []);
+        List<dynamic> ratedCourseIds = List.from(userDoc.data['ratedCourseIds'] ?? []);
+
+        bool updated = false;
+
+        if (purchasedCourses.contains(courseName)) {
+          purchasedCourses.remove(courseName);
+          updated = true;
+        }
+        if (completedCourses.contains(courseName)) {
+          completedCourses.remove(courseName);
+          updated = true;
+        }
+        if (ongoingCourses.contains(courseName)) {
+          ongoingCourses.remove(courseName);
+          updated = true;
+        }
+        if (ratedCourseIds.contains(courseName)) {
+          ratedCourseIds.remove(courseName);
+          updated = true;
+        }
+
+        if (updated) {
+          await databases.updateDocument(
+            databaseId: '67c029ce002c2d1ce046',
+            collectionId: '67c0cc3600114e71d658',
+            documentId: userDoc.$id,
+            data: {
+              'purchased_courses': purchasedCourses,
+              'completed_courses': completedCourses,
+              'ongoing_courses': ongoingCourses,
+              'ratedCourseIds': ratedCourseIds,
+            },
+          );
+        }
+      }
+
       print("Course and associated files deleted successfully.");
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+         const SnackBar(
             content: Text("Course deleted successfully!",
                 style: TextStyle(color: Colors.white)),
             backgroundColor: Colors.green,
@@ -325,18 +422,19 @@ class Appwrite_service{
           ),
         );
       }
-
-    }catch(e){
+    } catch(e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("failed to delete course!",
+       const SnackBar(
+          content: Text("Failed to delete course!",
               style: TextStyle(color: Colors.white)),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 2),
         ),
       );
-      print("Error deleting course: $e");}
+      print("Error deleting course: $e");
     }
+  }
+
   /// Fetches the number of videos for a course by counting files in `courseName/` folder.
   static Future<int> getVideosCount(String courseId) async {
     try {

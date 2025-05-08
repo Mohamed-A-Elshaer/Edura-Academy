@@ -150,9 +150,9 @@ class ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xffF5F9FF),
+      backgroundColor: const Color(0xffF5F9FF),
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Profile',
           style: TextStyle(
               color: Color(0xff202244),
@@ -160,7 +160,7 @@ class ProfileScreenState extends State<ProfileScreen> {
               fontSize: 21,
               fontWeight: FontWeight.w600),
         ),
-        backgroundColor: Color(0xffF5F9FF),
+        backgroundColor: const Color(0xffF5F9FF),
       ),
       body: Center(
         child: Container(
@@ -173,7 +173,7 @@ class ProfileScreenState extends State<ProfileScreen> {
               BoxShadow(
                 color: Colors.black.withOpacity(0.3),
                 blurRadius: 4,
-                offset: Offset(1, 1),
+                offset: const Offset(1, 1),
               ),
             ],
           ),
@@ -193,7 +193,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                     }),
                 Text(
                   nickname ?? "Loading...",
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontFamily: 'Jost',
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
@@ -201,13 +201,13 @@ class ProfileScreenState extends State<ProfileScreen> {
                 ),
                 Text(
                   email ?? "Loading...",
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontFamily: 'Mulish',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: Color(0xff545454)),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 25,
                 ),
                 CustomProfileElement(
@@ -222,25 +222,10 @@ class ProfileScreenState extends State<ProfileScreen> {
                                 )));
                   },
                 ),
-                SizedBox(
+               const    SizedBox(
                   height: 25,
                 ),
-                CustomProfileElement(
-                  text: 'Notification',
-                  icon: Icons.notifications,
-                  onTap: () {},
-                ),
-                SizedBox(
-                  height: 25,
-                ),
-                CustomProfileElement(
-                  text: 'Language',
-                  icon: Icons.language,
-                  onTap: () {},
-                ),
-                SizedBox(
-                  height: 25,
-                ),
+               
                 CustomProfileElement(
                     text: 'Dark mode',
                     icon: Icons.dark_mode,
@@ -250,7 +235,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                           MaterialPageRoute(
                               builder: (context) => ThemeModePage()));
                     }),
-                SizedBox(
+              const  SizedBox(
                   height: 25,
                 ),
                 CustomProfileElement(
@@ -260,7 +245,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: Row(
+                        title: const Row(
                           children: [
                             Icon(Icons.help_outline, color: Color(0xff0961F5)),
                             SizedBox(width: 8),
@@ -278,21 +263,21 @@ class ProfileScreenState extends State<ProfileScreen> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'For any inquiries or support, please contact us at:',
                               style: TextStyle(
                                 fontFamily: 'Mulish',
                                 color: Color(0xff545454),
                               ),
                             ),
-                            SizedBox(height: 16),
+                            const SizedBox(height: 16),
                             Container(
-                              padding: EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Color(0xffF5F9FF),
+                                color: const Color(0xffF5F9FF),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Row(
+                              child: const Row(
                                 children: [
                                   Icon(Icons.email, color: Color(0xff0961F5)),
                                   SizedBox(width: 8),
@@ -307,8 +292,8 @@ class ProfileScreenState extends State<ProfileScreen> {
                                 ],
                               ),
                             ),
-                            SizedBox(height: 8),
-                            Text(
+                            const SizedBox(height: 8),
+                            const Text(
                               'Our support team will get back to you within 24 hours.',
                               style: TextStyle(
                                 fontFamily: 'Mulish',
@@ -321,7 +306,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: Text(
+                            child: const Text(
                               'Close',
                               style: TextStyle(
                                 color: Color(0xff0961F5),
@@ -335,7 +320,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                     );
                   },
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 25,
                 ),
                 CustomProfileElement(

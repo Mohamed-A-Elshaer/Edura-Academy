@@ -1,10 +1,10 @@
 import 'package:mashrooa_takharog/screens/StudentNavigatorScreen.dart';
-
 import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/auth/Appwrite_service.dart';
 import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import 'package:mashrooa_takharog/widgets/mentor.dart';
 import 'package:appwrite/appwrite.dart' as appwrite;
+import 'package:mashrooa_takharog/screens/mentorProfile.dart';
 
 class TopMentorsPage extends StatefulWidget {
   const TopMentorsPage({super.key});
@@ -15,7 +15,6 @@ class TopMentorsPage extends StatefulWidget {
 
 class _TopMentorsPageState extends State<TopMentorsPage> {
   List<Map<String, dynamic>> mentors = [];
-  int? expandedIndex;
 
   @override
   void initState() {
@@ -26,8 +25,7 @@ class _TopMentorsPageState extends State<TopMentorsPage> {
   Future<void> _fetchAndSortMentors() async {
     try {
       // Fetch all instructors
-      final instructorsResponse =
-          await Appwrite_service.databases.listDocuments(
+      final instructorsResponse = await Appwrite_service.databases.listDocuments(
         databaseId: '67c029ce002c2d1ce046',
         collectionId: '67c0cc3600114e71d658',
         queries: [
@@ -44,40 +42,49 @@ class _TopMentorsPageState extends State<TopMentorsPage> {
         ],
       );
 
-      // Create a map to store student counts for each instructor
+      // Create maps to store counts for each instructor
       Map<String, int> instructorStudentCounts = {};
-      Map<String, List<Map<String, dynamic>>> instructorCourses = {};
+      Map<String, int> instructorCourseCounts = {};
 
-      // Count students for each instructor's courses
+      // Count courses for each instructor
       for (final course in coursesResponse.documents) {
-        final instructorId = course.data['instructor_id'];
-        final studentCount = await getTotalStudents(course.data['title']);
-
-        instructorStudentCounts[instructorId] =
-            (instructorStudentCounts[instructorId] ?? 0) + studentCount;
-
-        // Add course to instructor's courses list
-        if (!instructorCourses.containsKey(instructorId)) {
-          instructorCourses[instructorId] = [];
+        final instructorName = course.data['instructor_name'];
+        if (instructorName != null) {
+          instructorCourseCounts[instructorName] = (instructorCourseCounts[instructorName] ?? 0) + 1;
         }
-        instructorCourses[instructorId]!.add({
-          'title': course.data['title'],
-          'description': course.data['description'],
-          'price': course.data['price'],
-          'rating': course.data['averageRating'],
-          'students': studentCount,
-        });
       }
 
-      // Create mentor list with student counts
+      // Count students for each instructor's courses
+      final usersResponse = await Appwrite_service.databases.listDocuments(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c0cc3600114e71d658',
+      );
+
+      for (final user in usersResponse.documents) {
+        final purchasedCourses = List<String>.from(user.data['purchased_courses'] ?? []);
+        for (final courseTitle in purchasedCourses) {
+          // Find the course to get instructor name
+          final course = coursesResponse.documents.firstWhere(
+            (c) => c.data['title'] == courseTitle,
+            orElse: () => coursesResponse.documents.first,
+          );
+          if (course != null) {
+            final instructorName = course.data['instructor_name'];
+            if (instructorName != null) {
+              instructorStudentCounts[instructorName] = (instructorStudentCounts[instructorName] ?? 0) + 1;
+            }
+          }
+        }
+      }
+
+      // Create mentor list with all required data
       List<Map<String, dynamic>> mentorList = [];
       for (final instructor in instructorsResponse.documents) {
         // Get instructor's email from Appwrite
         final instructorEmail = instructor.data['email'];
 
         // Get Supabase user ID using email
-        final supabaseUserId =
-            await SupaAuthService.getSupabaseUserId(instructorEmail);
+        final supabaseUserId = await SupaAuthService.getSupabaseUserId(instructorEmail);
 
         // Get profile image URL from Supabase storage
         String profileImageUrl = 'assets/images/mentor.jpg';
@@ -94,24 +101,23 @@ class _TopMentorsPageState extends State<TopMentorsPage> {
                   .getPublicUrl('$supabaseUserId/profile');
             }
           } catch (e) {
-            print(
-                'Error fetching profile image for instructor ${instructor.data['name']}: $e');
+            print('Error fetching profile image for instructor ${instructor.data['name']}: $e');
           }
         }
 
         mentorList.add({
           'id': instructor.$id,
           'name': instructor.data['name'] ?? 'Unknown',
-          'email': instructorEmail,
           'imagePath': profileImageUrl,
-          'studentCount': instructorStudentCounts[instructor.$id] ?? 0,
-          'courses': instructorCourses[instructor.$id] ?? [],
+          'studentCount': instructorStudentCounts[instructor.data['name']] ?? 0,
+          'courseCount': instructorCourseCounts[instructor.data['name']] ?? 0,
+          'major': instructor.data['major'] ?? 'No major specified',
+          'title': instructor.data['title'] ?? 'Instructor',
         });
       }
 
       // Sort mentors by student count in descending order
-      mentorList.sort((a, b) =>
-          (b['studentCount'] as int).compareTo(a['studentCount'] as int));
+      mentorList.sort((a, b) => (b['studentCount'] as int).compareTo(a['studentCount'] as int));
 
       setState(() {
         mentors = mentorList;
@@ -119,18 +125,6 @@ class _TopMentorsPageState extends State<TopMentorsPage> {
     } catch (e) {
       print('Error fetching and sorting mentors: $e');
     }
-  }
-
-  Future<int> getTotalStudents(String courseTitle) async {
-    final response = await Appwrite_service.databases.listDocuments(
-      databaseId: '67c029ce002c2d1ce046',
-      collectionId: '67c0cc3600114e71d658',
-      queries: [
-        appwrite.Query.contains('purchased_courses', courseTitle),
-      ],
-    );
-
-    return response.total;
   }
 
   @override
@@ -157,162 +151,63 @@ class _TopMentorsPageState extends State<TopMentorsPage> {
               itemCount: mentors.length,
               itemBuilder: (context, index) {
                 final mentor = mentors[index];
-                final isExpanded = expandedIndex == index;
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 16),
-                  child: Column(
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          setState(() {
-                            expandedIndex = isExpanded ? null : index;
-                          });
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 30,
-                                backgroundImage:
-                                    mentor['imagePath'].startsWith('http')
-                                        ? NetworkImage(mentor['imagePath'])
-                                        : AssetImage(mentor['imagePath'])
-                                            as ImageProvider,
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      mentor['name'],
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${mentor['studentCount']} Students • ${mentor['courses'].length} Courses',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                isExpanded
-                                    ? Icons.expand_less
-                                    : Icons.expand_more,
-                              ),
-                            ],
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Mentorprofile(
+                            mentorId: mentor['id'],
+                            name: mentor['name'],
+                            imagePath: mentor['imagePath'],
+                            courseCount: mentor['courseCount'],
+                            studentCount: mentor['studentCount'],
+                            major: mentor['major'],
+                            title: mentor['title'],
                           ),
                         ),
-                      ),
-                      if (isExpanded) ...[
-                        const Divider(),
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Email: ${mentor['email']}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'Courses',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              ...mentor['courses'].map<Widget>((course) {
-                                return Card(
-                                  margin: const EdgeInsets.only(bottom: 8),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          course['title'],
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          course['description'],
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              '\$${course['price']}',
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.blue,
-                                              ),
-                                            ),
-                                            Row(
-                                              children: [
-                                                const Icon(
-                                                  Icons.star,
-                                                  color: Colors.amber,
-                                                  size: 18,
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  course['rating']
-                                                          ?.toStringAsFixed(
-                                                              1) ??
-                                                      'N/A',
-                                                  style: const TextStyle(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Text(
-                                                  '${course['students']} students',
-                                                  style: const TextStyle(
-                                                    fontSize: 14,
-                                                    color: Colors.grey,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 30,
+                            backgroundImage: mentor['imagePath'].startsWith('http')
+                                ? NetworkImage(mentor['imagePath'])
+                                : AssetImage(mentor['imagePath']) as ImageProvider,
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  mentor['name'],
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                );
-                              }).toList(),
-                            ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${mentor['studentCount']} Students • ${mentor['courseCount']} Courses',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ],
+                          const Icon(Icons.arrow_forward_ios, size: 16),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               },

@@ -139,7 +139,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
   /// Delete course function
   void _deleteCourse(String courseId, String courseName,BuildContext context) async {
     await Appwrite_service.deleteCourse(courseId, courseName,context);
-    await SupaAuthService.deleteCourseFolderFromSupabase(courseName);
+  //  await SupaAuthService.deleteCourseFolderFromSupabase(courseName);
     _fetchCourses();
   }
 
@@ -148,12 +148,12 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text('My Courses', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+        title: const Text('My Courses', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.add_circle_outline, color: Colors.blue),
+            icon: const Icon(Icons.add_circle_outline, color: Colors.blue),
             onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AddCoursePage())),
           ),
         ],

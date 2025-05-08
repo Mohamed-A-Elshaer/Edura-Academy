@@ -307,8 +307,7 @@ class HomepageState extends State<Homepage> {
   Future<void> _fetchAndSortMentors() async {
     try {
       // Fetch all instructors
-      final instructorsResponse =
-          await Appwrite_service.databases.listDocuments(
+      final instructorsResponse = await Appwrite_service.databases.listDocuments(
         databaseId: '67c029ce002c2d1ce046',
         collectionId: '67c0cc3600114e71d658',
         queries: [
@@ -325,27 +324,49 @@ class HomepageState extends State<Homepage> {
         ],
       );
 
-      // Create a map to store student counts for each instructor
+      // Create maps to store counts for each instructor
       Map<String, int> instructorStudentCounts = {};
+      Map<String, int> instructorCourseCounts = {};
 
-      // Count students for each instructor's courses
+      // Count courses for each instructor
       for (final course in coursesResponse.documents) {
-        final instructorId = course.data['instructor_id'];
-        final studentCount = await getTotalStudents(course.data['title']);
-
-        instructorStudentCounts[instructorId] =
-            (instructorStudentCounts[instructorId] ?? 0) + studentCount;
+        final instructorName = course.data['instructor_name'];
+        if (instructorName != null) {
+          instructorCourseCounts[instructorName] = (instructorCourseCounts[instructorName] ?? 0) + 1;
+        }
       }
 
-      // Create mentor list with student counts
+      // Count students for each instructor's courses
+      final usersResponse = await Appwrite_service.databases.listDocuments(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c0cc3600114e71d658',
+      );
+
+      for (final user in usersResponse.documents) {
+        final purchasedCourses = List<String>.from(user.data['purchased_courses'] ?? []);
+        for (final courseTitle in purchasedCourses) {
+          // Find the course to get instructor name
+          final course = coursesResponse.documents.firstWhere(
+            (c) => c.data['title'] == courseTitle,
+            orElse: () => coursesResponse.documents.first,
+          );
+          if (course != null) {
+            final instructorName = course.data['instructor_name'];
+            if (instructorName != null) {
+              instructorStudentCounts[instructorName] = (instructorStudentCounts[instructorName] ?? 0) + 1;
+            }
+          }
+        }
+      }
+
+      // Create mentor list with all required data
       List<Map<String, dynamic>> mentorList = [];
       for (final instructor in instructorsResponse.documents) {
         // Get instructor's email from Appwrite
         final instructorEmail = instructor.data['email'];
 
         // Get Supabase user ID using email
-        final supabaseUserId =
-            await SupaAuthService.getSupabaseUserId(instructorEmail);
+        final supabaseUserId = await SupaAuthService.getSupabaseUserId(instructorEmail);
 
         // Get profile image URL from Supabase storage
         String profileImageUrl = 'assets/images/mentor.jpg';
@@ -362,21 +383,23 @@ class HomepageState extends State<Homepage> {
                   .getPublicUrl('$supabaseUserId/profile');
             }
           } catch (e) {
-            print(
-                'Error fetching profile image for instructor ${instructor.data['name']}: $e');
+            print('Error fetching profile image for instructor ${instructor.data['name']}: $e');
           }
         }
 
         mentorList.add({
+          'id': instructor.$id,
           'name': instructor.data['name'] ?? 'Unknown',
           'imagePath': profileImageUrl,
-          'studentCount': instructorStudentCounts[instructor.$id] ?? 0,
+          'studentCount': instructorStudentCounts[instructor.data['name']] ?? 0,
+          'courseCount': instructorCourseCounts[instructor.data['name']] ?? 0,
+          'major': instructor.data['major'] ?? 'No major specified',
+          'title': instructor.data['title'] ?? 'Instructor',
         });
       }
 
       // Sort mentors by student count in descending order
-      mentorList.sort((a, b) =>
-          (b['studentCount'] as int).compareTo(a['studentCount'] as int));
+      mentorList.sort((a, b) => (b['studentCount'] as int).compareTo(a['studentCount'] as int));
 
       setState(() {
         mentors = mentorList;
@@ -415,26 +438,7 @@ class HomepageState extends State<Homepage> {
           style: TextStyle(color: Color(0xff232546)),
         ),
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Color(0xff0961F5),
-                width: 2.0,
-              ),
-            ),
-            child: CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Icon(
-                Icons.notifications,
-                color: Color(0xff0961F5),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-        ],
+        elevation: 0
       ),
       body: CustomScrollView(
         slivers: [
@@ -692,7 +696,7 @@ class HomepageState extends State<Homepage> {
               ),
             ),
           ),
-          SliverToBoxAdapter(
+        const  SliverToBoxAdapter(
             child: SizedBox(
               height: 11,
             ),
@@ -702,7 +706,7 @@ class HomepageState extends State<Homepage> {
               child: SizedBox(
             height: 360,
             child: filteredCourses.isEmpty
-                ? Center(
+                ? const Center(
                     child: Text(
                       "No courses available!",
                       style:
@@ -778,13 +782,14 @@ class HomepageState extends State<Homepage> {
               itemCount: mentors.length,
               itemBuilder: (context, index) {
                 final mentor = mentors[index];
-                return Container(
-                  width: MediaQuery.of(context).size.width * 0.3,
-                  margin: const EdgeInsets.only(right: 8),
-                  child: MentorCard(
-                    name: mentor['name']!,
-                    imagePath: mentor['imagePath']!,
-                  ),
+                return MentorCard(
+                  name: mentor['name'],
+                  imagePath: mentor['imagePath'],
+                  mentorId: mentor['id'],
+                  courseCount: mentor['courseCount'],
+                  studentCount: mentor['studentCount'],
+                  major: mentor['major'],
+                  title: mentor['title'],
                 );
               },
             ),
