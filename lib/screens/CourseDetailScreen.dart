@@ -506,16 +506,8 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
           _isPurchased = true;
         });
 
-        // Show success message
+        // Navigate to course content
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('تم شراء الدورة بنجاح!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-
-          // Navigate to course content
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -528,29 +520,9 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
             ),
           );
         }
-      } else {
-        // في حالة فشل عملية الدفع
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                  'Payment failed. Please check your card details or try again.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        throw Exception(paymentResult['error'] ?? 'Payment failed.');
       }
     } catch (e) {
       print('Error processing purchase: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('حدث خطأ أثناء عملية الدفع: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     }
   }
 
