@@ -32,12 +32,8 @@ class AppwriteTableCreate{
  static Future<String?> getCurrentUserId() async {
    try {
 
-     final client = Client()
-         .setEndpoint('https://cloud.appwrite.io/v1')
-         .setProject('67ac8356002648e5b7e9')
-         .setSelfSigned(status: true);
-     final account=Account(client);
-     User user = await account.get();
+
+     User user = await Appwrite_service.account.get();
      return user.$id;
    } catch (e) {
      print("Error getting Appwrite user ID: $e");
@@ -48,12 +44,7 @@ class AppwriteTableCreate{
 
  static Future<void> updateUserInAppwriteDB(String userId,  String newEmail,  String name) async {
    try {
-     final client = Client()
-         .setEndpoint('https://cloud.appwrite.io/v1')
-         .setProject('67ac8356002648e5b7e9')
-         .setSelfSigned(status: true);
 
-     final databases = Databases(client);
      final appwriteResponse = await Appwrite_service.databases.getDocument(
        databaseId: '67c029ce002c2d1ce046',
        collectionId: '67c0cc3600114e71d658',

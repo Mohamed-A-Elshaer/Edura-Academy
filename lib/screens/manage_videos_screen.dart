@@ -341,6 +341,7 @@ class _ManageVideosScreenState extends State<ManageVideosScreen> {
         data: {
           'videos': existingVideos,
           'video_durations': videoDurations,
+          'upload_status':"pending"
         },
       );
 

@@ -240,7 +240,8 @@ class AddCoursePageState extends State<AddCoursePage> {
             "videos": videoTitles,
             "video_durations": videoDurations,
 
-            "upload_status": "pending"
+            "upload_status": "pending",
+            "request_type":"uploading_request"
 
             
 
@@ -541,14 +542,14 @@ class AddCoursePageState extends State<AddCoursePage> {
                   ElevatedButton(
                     onPressed: _isPublishing ? null : _publishCourse,
                     style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: Colors.green[700],
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                     child: _isPublishing
-                        ? SizedBox(
+                        ? const SizedBox(
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
@@ -557,7 +558,7 @@ class AddCoursePageState extends State<AddCoursePage> {
                               strokeWidth: 2,
                             ),
                           )
-                        : Text(
+                        : const Text(
                             'Publish Course',
                             style: TextStyle(
                               color: Colors.white,
@@ -880,10 +881,10 @@ class AddCoursePageState extends State<AddCoursePage> {
           title: Text(_truncateText(video['title'], 13),
               overflow: TextOverflow.ellipsis),
           subtitle: Text(video['duration']),
-          trailing: Container(
+          trailing:  Container(
               width: 40,
               height: 80,
-              child: Icon(
+              child: const  Icon(
                 Icons.video_file,
                 size: 50,
               )),

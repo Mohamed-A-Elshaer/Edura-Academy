@@ -8,6 +8,7 @@ import 'package:mashrooa_takharog/auth/auth_service.dart';
 import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import 'package:mashrooa_takharog/screens/AdminNavigatorScreen.dart';
 import 'package:mashrooa_takharog/screens/ForgotPasswordScreen.dart';
+import 'package:mashrooa_takharog/screens/ForgotPasswordScreen2.dart';
 import 'package:mashrooa_takharog/screens/HomeScreen.dart';
 import 'package:mashrooa_takharog/screens/InstructorNavigatorScreen.dart';
 import 'package:mashrooa_takharog/screens/StudentNavigatorScreen.dart';
@@ -733,7 +734,7 @@ class _SignInScreenState extends State<SignInScreen> {
                               context,
                               MaterialPageRoute(
                                   builder: (context) =>
-                                      ForgotPasswordScreen()));
+                                      ForgotPasswordScreen2()));
                         },
                         child: Text(
                           'Forgot Password?',

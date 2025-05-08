@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import 'package:mashrooa_takharog/screens/StudentOrInstructor.dart';
+
+import '../auth/Appwrite_service.dart';
 
 class NewPass extends StatefulWidget {
   final String phoneNumber;
@@ -16,6 +19,92 @@ class _NewPassState extends State<NewPass> {
   TextEditingController passwordController = TextEditingController();
   TextEditingController confirmPasswordController = TextEditingController();
   bool _isPasswordHidden = true;
+
+  String? getCurrentUserEmail() {
+    User? user = FirebaseAuth.instance.currentUser;
+    print(user?.email);
+    return user?.email;
+  }
+
+
+  Future<String?> getOldPasswordFromSupabase(String email) async {
+    try {
+      final response = await SupaAuthService.supabase
+          .from('users')
+          .select('word')
+          .eq('email', email)
+          .maybeSingle();
+
+      if (response == null) {
+        print('No user found with this email.');
+        return null;
+      }
+
+      final word = response['word'] as String?;
+      return word;
+    } catch (e) {
+      print('Error retrieving old password: $e');
+      return null;
+    }
+  }
+
+  Future<bool> loginToSupabase(String email, String oldPassword) async {
+    try {
+      final supabase = SupaAuthService.supabase;
+
+      final response = await supabase.auth.signInWithPassword(
+        email: email,
+        password: oldPassword,
+      );
+
+      if (response.session == null || response.user == null) {
+        print('Error: No session or user returned.');
+        return false;
+      }
+
+      print('Successfully signed in to Supabase.');
+      return true;
+    } catch (e) {
+      print('Error signing in to Supabase: $e');
+      return false;
+    }
+  }
+
+
+  Future<bool> loginToAppwrite(String email, String oldPassword) async {
+    print(email);
+    print(oldPassword);
+    try {
+      await Appwrite_service.account.createEmailPasswordSession(
+        email: email,
+        password: oldPassword,
+      );
+      return true;
+    } catch (e) {
+      print('Error signing in to Appwrite: $e');
+      return false;
+    }
+  }
+
+
+
+
+
+  Future<void> changePasswordInAppwrite(String email ,String oldPassword ,String newPassword) async {
+    try {
+      await Appwrite_service.account.createEmailPasswordSession(
+        email: email,
+        password: oldPassword,
+      );
+      await Appwrite_service.account.updatePassword(
+        password: newPassword,
+      );
+
+      print('Password updated successfully in Appwrite');
+    } catch (e) {
+      print('Error updating password in Appwrite: $e');
+    }
+  }
 
   Future<void> changePassword() async {
     String password = passwordController.text;
@@ -46,31 +135,77 @@ class _NewPassState extends State<NewPass> {
 
     try {
       User? user = FirebaseAuth.instance.currentUser;
+      String? email = getCurrentUserEmail();
 
+      if (email == null) {
+        print('No Firebase user email found.');
+        return;
+      }
+
+      String? oldPassword = await getOldPasswordFromSupabase(email);
+
+      if (oldPassword == null) {
+        print('Failed to retrieve old password from Supabase.');
+        return;
+      }
+
+      /// Step 1: Log in to Supabase
+      bool supabaseLoggedIn = await loginToSupabase(email, oldPassword);
+      if (!supabaseLoggedIn) {
+        print('Failed to login to Supabase.');
+        return;
+      }
+      /// Step 4: Change password in Firebase
       if (user != null && user.uid == widget.uid) {
         await user.updatePassword(password);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password changed successfully!')),
-        );
-
-        await FirebaseAuth.instance.signOut();
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => StudentOrInstructor()),
-        );
+        print('Password updated successfully in Firebase.');
       } else {
+        print('Firebase user mismatch or null.');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('User not found or UID mismatch.')),
         );
+        return;
       }
+changePasswordInAppwrite(email, oldPassword, password);
+      SupaAuthService.changePasswordInSupabase(password);
+
+      /// Step 5: Update password in Supabase DB (custom users table)
+      await SupaAuthService.supabase
+          .from('users')
+          .update({'word': password})
+          .eq('email', email);
+      print('Password updated successfully in Supabase DB.');
+
+      /// Step 6: Sign out from all services
+      await FirebaseAuth.instance.signOut();
+      await SupaAuthService.signOut();
+
+      try {
+        final sessions = await Appwrite_service.account.listSessions();
+        if (sessions.sessions.isNotEmpty) {
+          await Appwrite_service.account.deleteSession(sessionId: 'current');
+          print('Appwrite session deleted successfully.');
+        }
+      } catch (e) {
+        print('Error deleting Appwrite session: $e');
+      }
+
+      /// Step 7: Show success and navigate
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password changed successfully!')),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => StudentOrInstructor()),
+      );
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.message}')),
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

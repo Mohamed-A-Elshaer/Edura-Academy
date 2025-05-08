@@ -177,6 +177,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.8"
+  dart_appwrite:
+    dependency: "direct main"
+    description:
+      name: dart_appwrite
+      sha256: bec010ffb42c16e23953693bd2c6bf418ac08784691200f4547ea06fa1b0d0eb
+      url: "https://pub.dev"
+    source: hosted
+    version: "15.0.0"
   device_info_plus:
     dependency: transitive
     description:

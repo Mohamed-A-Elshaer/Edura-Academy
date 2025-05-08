@@ -1,166 +1,224 @@
 import 'package:flutter/material.dart';
 import 'package:mashrooa_takharog/screens/CourseDetailScreen.dart';
-//import 'package:mashrooa_takharog/screens/search_courses_page.dart';
-
-
+import 'package:mashrooa_takharog/auth/Appwrite_service.dart';
+import 'package:appwrite/appwrite.dart' as appwrite;
+import '../widgets/coursecard.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../auth/supaAuth_service.dart';
 
 class Mentorprofile extends StatefulWidget {
-  const Mentorprofile({super.key});
+  final String mentorId;
+  final String name;
+  final String imagePath;
+  final int courseCount;
+  final int studentCount;
+  final String major;
+  final String title;
+
+  const Mentorprofile({
+    Key? key,
+    required this.mentorId,
+    required this.name,
+    required this.imagePath,
+    required this.courseCount,
+    required this.studentCount,
+    required this.major,
+    required this.title,
+  }) : super(key: key);
 
   @override
   State<Mentorprofile> createState() => _Mentorprofile();
 }
 
 class _Mentorprofile extends State<Mentorprofile> {
-  bool _showrating = false;
+  List<Map<String, dynamic>> mentorCourses = [];
+  bool isLoading = true;
+  List<String> savedCourseTitles = [];
+
   @override
-  Widget build(BuildContext context) {
-    return 
-       Scaffold(
-        appBar: AppBar(
-          title: const Text('Profile'),
-          leading: const Icon(Icons.arrow_back),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-             
-              _buildProfileSection(),
-              const SizedBox(height: 20),
-              
-             
-              _buildQuoteSection(),
-              const SizedBox(height: 20),
-
-             
-           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _showrating = false;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: !_showrating
-                          ? Colors.teal
-                          : Colors.grey[200],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: Text('Courses',
-                        style: TextStyle(
-                            color: !_showrating ? Colors.white : Colors.black)),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _showrating = true;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _showrating
-                          ? Colors.teal
-                          : Colors.grey[200],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: Text('Ratings',
-                        style: TextStyle(
-                            color: _showrating ? Colors.white : Colors.black)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-           if(_showrating)...[
-                  ReviewCard(
-              name: 'Will',
-              review:
-                  'This course has been very useful. Mentor was well spoken totally tuned.',
-              timeAgo: '2 Weeks Ago',
-              rating: 4.3,
-            )
-             ]  
-          ,
-
-             if(!_showrating)...[
-
-               Expanded(
-                child: _buildContentList(),
-              ),
-             ],
-              const SizedBox(height: 16),
-
-             
-              
-            ],
-          ),
-        ),
-      )
-    ;
+  void initState() {
+    super.initState();
+    _fetchMentorCourses();
+    _fetchSavedCourseTitles();
   }
 
-  
+  Future<void> _fetchSavedCourseTitles() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      final doc = await FirebaseFirestore.instance
+          .collection('students')
+          .doc(user.uid)
+          .get();
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        setState(() {
+          savedCourseTitles = List<String>.from(data['savedCourses'] ?? []);
+        });
+      }
+    } catch (e) {
+      print('Error fetching saved course titles: $e');
+    }
+  }
+
+  Future<void> _toggleBookmark(String courseTitle) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final docRef = FirebaseFirestore.instance.collection('students').doc(user.uid);
+    final doc = await docRef.get();
+
+    List<String> currentSaved = List<String>.from(doc.data()?['savedCourses'] ?? []);
+
+    bool isBookmarked;
+
+    if (currentSaved.contains(courseTitle)) {
+      currentSaved.remove(courseTitle);
+      isBookmarked = false;
+    } else {
+      currentSaved.add(courseTitle);
+      isBookmarked = true;
+    }
+
+    await docRef.update({'savedCourses': currentSaved});
+
+    setState(() {
+      savedCourseTitles = currentSaved;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isBookmarked
+              ? 'Course has been bookmarked successfully!'
+              : 'Course has been removed from bookmarks successfully!',
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  Future<void> _fetchMentorCourses() async {
+    try {
+      final response = await Appwrite_service.databases.listDocuments(
+        databaseId: '67c029ce002c2d1ce046',
+        collectionId: '67c1c87c00009d84c6ff',
+        queries: [
+          appwrite.Query.equal('instructor_name', widget.name),
+          appwrite.Query.equal('upload_status', 'approved'),
+        ],
+      );
+
+      List<Map<String, dynamic>> coursesWithImages = [];
+      for (final course in response.documents) {
+        final courseData = course.data;
+        final coverUrl = await SupaAuthService.getCourseCoverImageUrl(courseData['title']);
+        
+        coursesWithImages.add({
+          ...courseData,
+          'imagePath': coverUrl.isNotEmpty ? coverUrl : 'assets/images/mediahandler.png',
+        });
+      }
+
+      setState(() {
+        mentorCourses = coursesWithImages;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching mentor courses: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildProfileSection(),
+            const SizedBox(height: 20),
+            _buildMajorSection(),
+            const SizedBox(height: 20),
+            const Text(
+              'Courses',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildCoursesList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildProfileSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
+        Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Column(
               children: [
                 CircleAvatar(
                   radius: 40,
-                  backgroundImage: AssetImage('assets/images/mentor.jpg'), 
+                  backgroundImage: NetworkImage(widget.imagePath),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(
-                  'Ramy Gamal',
-                  style: TextStyle(
+                  widget.name,
+                  style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                 Text(
-          'Graphic Designer At Google',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey,
-          ),
-        ),
+                Text(
+                  widget.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                ),
               ],
             ),
           ],
         ),
-        
         const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildStatColumn('26', 'Courses'),
-            _buildStatColumn('15800', 'Students'),
-            _buildStatColumn('8750', 'Ratings'),
+            _buildStatColumn(widget.courseCount.toString(), 'Courses'),
+            _buildStatColumn(widget.studentCount.toString(), 'Students'),
           ],
         ),
       ],
     );
   }
 
-  
   Widget _buildStatColumn(String stat, String label) {
     return Column(
       children: [
@@ -183,13 +241,12 @@ class _Mentorprofile extends State<Mentorprofile> {
     );
   }
 
-  
-  Widget _buildQuoteSection() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.0),
+  Widget _buildMajorSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Text(
-        '“But how much, or rather, can it now do as much as it did then? Nor am I unaware that there is utility in history, not only pleasure.”',
-        style: TextStyle(
+        widget.major,
+        style: const TextStyle(
           fontSize: 16,
           fontStyle: FontStyle.italic,
         ),
@@ -198,125 +255,32 @@ class _Mentorprofile extends State<Mentorprofile> {
     );
   }
 
- 
-  Widget _buildTabBar() {
-    return const DefaultTabController(
-      length: 2,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TabBar(
-            indicatorColor: Colors.blue,
-            tabs: [
-              Tab(text: 'Courses'),
-              Tab(text: 'Ratings'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildCoursesList() {
+    if (mentorCourses.isEmpty) {
+      return const Center(
+        child: Text(
+          'No courses available',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
 
-  
-  Widget _buildContentList() {
-    return ListView(
-      children: [
-        _buildCourseItem(
-          'Graphic Design Adv..',
-          'Graphic Design',
-          '799₹ /-',
-          4.2,
-          '7830 Std',
-        ),
-        _buildCourseItem(
-          'Graphic Design Adv..',
-          'Graphic Design',
-          '799₹ /-',
-          4.2,
-          '989 Std',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCourseItem(
-      String title, String category, String price, double rating, String students) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                image: const DecorationImage(
-                  image: AssetImage('assets/images/advertisment.jpg'), 
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    category,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Text(
-                        price,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Text(
-                        '$rating ★',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    students,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+    return ListView.builder(
+      itemCount: mentorCourses.length,
+      itemBuilder: (context, index) {
+        final course = mentorCourses[index];
+        return CourseCard(
+          title: course['title'] ?? 'Untitled Course',
+          courseId: course['\$id'],
+          price: course['price']?.toString() ?? '0',
+          imagePath: course['imagePath'],
+          category: course['category'] ?? 'Uncategorized',
+          rating: course['averageRating']?.toDouble() ?? 0.0,
+          instructorName: course['instructor_name'] ?? 'Unknown',
+          isBookmarked: savedCourseTitles.contains(course['title']),
+          onBookmarkToggle: () => _toggleBookmark(course['title']),
+        );
+      },
     );
   }
 }
