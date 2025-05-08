@@ -182,26 +182,19 @@ class PaymobService {
           final isPending = transaction['pending'] ?? false;
           final isVoided = transaction['is_voided'] ?? false;
           final isRefunded = transaction['is_refunded'] ?? false;
-          final is3DSecure = transaction['is_3d_secure'] ?? false;
           final isCaptured = transaction['is_captured'] ?? false;
           final isAuth = transaction['is_auth'] ?? false;
-          final amount = transaction['amount_cents'] ?? 0;
 
           print('Transaction details:');
           print('- Success: $success');
           print('- Pending: $isPending');
           print('- Voided: $isVoided');
           print('- Refunded: $isRefunded');
-          print('- 3D Secure: $is3DSecure');
           print('- Captured: $isCaptured');
           print('- Auth: $isAuth');
-          print('- Amount: $amount');
 
-          // تحسين شروط نجاح الدفع
-          if (success ||
-              isCaptured ||
-              isAuth ||
-              (amount > 0 && !isVoided && !isRefunded && !isPending)) {
+          // الشروط الصحيحة لنجاح الدفع
+          if (success && !isPending && !isVoided && !isRefunded) {
             return PAYMENT_SUCCESS;
           } else if (isPending) {
             return PAYMENT_PENDING;

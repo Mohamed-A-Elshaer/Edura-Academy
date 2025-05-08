@@ -9,9 +9,6 @@ import 'package:mashrooa_takharog/screens/DisplayCourseLessons.dart';
 import 'package:mashrooa_takharog/widgets/coursecard.dart';
 import 'package:mashrooa_takharog/screens/AdminCoursePreviewScreen.dart';
 
-
-
-
 class AdminCourseApprovalScreen extends StatefulWidget {
   const AdminCourseApprovalScreen({super.key});
 
@@ -116,8 +113,6 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
     }
   }
 
- 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -157,159 +152,193 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
               ),
               Expanded(
                 child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : pendingCourses.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No pending courses for approval',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Color(0xff545454),
-                            fontFamily: 'Mulish',
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16.0),
-                        itemCount: pendingCourses.length,
-                        itemBuilder: (context, index) {
-                          final course = pendingCourses[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  FutureBuilder<String>(
-                                    future: SupaAuthService.getCourseCoverImageUrl(course['title']),
-                                    builder: (context, snapshot) {
-                                      if (snapshot.connectionState == ConnectionState.waiting) {
-                                        return const Center(child: CircularProgressIndicator());
-                                      }
-                                      return ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image.network(
-                                          snapshot.data ?? '',
-                                          height: 200,
-                                          width: double.infinity,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return Container(
+                    ? const Center(child: CircularProgressIndicator())
+                    : pendingCourses.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No pending courses for approval',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Color(0xff545454),
+                                fontFamily: 'Mulish',
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(16.0),
+                            itemCount: pendingCourses.length,
+                            itemBuilder: (context, index) {
+                              final course = pendingCourses[index];
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 16),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      FutureBuilder<String>(
+                                        future: SupaAuthService
+                                            .getCourseCoverImageUrl(
+                                                course['title']),
+                                        builder: (context, snapshot) {
+                                          if (snapshot.connectionState ==
+                                              ConnectionState.waiting) {
+                                            return const Center(
+                                                child:
+                                                    CircularProgressIndicator());
+                                          }
+                                          return ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            child: Image.network(
+                                              snapshot.data ?? '',
                                               height: 200,
                                               width: double.infinity,
-                                              color: Colors.grey[200],
-                                              child: const Icon(Icons.image, size: 50, color: Colors.grey),
-                                            );
-                                          },
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              course['title'] ?? 'Untitled Course',
-                                              style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                              ),
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                return Container(
+                                                  height: 200,
+                                                  width: double.infinity,
+                                                  color: Colors.grey[200],
+                                                  child: const Icon(Icons.image,
+                                                      size: 50,
+                                                      color: Colors.grey),
+                                                );
+                                              },
                                             ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              'Instructor: ${course['instructor_name'] ?? 'Unknown'}',
-                                              style: TextStyle(
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                            Text(
-                                              'Category: ${course['category'] ?? 'Uncategorized'}',
-                                              style: TextStyle(
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                          );
+                                        },
                                       ),
-                                      Column(
+                                      const SizedBox(height: 16),
+                                      Row(
                                         children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.video_library,
-                                                color: Colors.blue),
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      AdminCoursePreviewScreen(
-                                                    title: course['title'],
-                                                    courseId: course['\$id'],
-                                                    courseCategory: course['category'],
-                                                    courseImagePath: course[
-                                                          'imagePath'] ??
-                                                        'assets/images/mediahandler.png',
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  course['title'] ??
+                                                      'Untitled Course',
+                                                  style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
-                                              );
-                                            },
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  'Instructor: ${course['instructor_name'] ?? 'Unknown'}',
+                                                  style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                ),
+                                                Text(
+                                                  'Category: ${course['category'] ?? 'Uncategorized'}',
+                                                  style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                          IconButton(
-                                            icon: const Icon(Icons.check_circle,
-                                                color: Colors.green),
-                                            onPressed: () =>
-                                                approveCourse(course['\$id']),
+                                          Column(
+                                            children: [
+                                              IconButton(
+                                                icon: const Icon(
+                                                    Icons.video_library,
+                                                    color: Colors.blue),
+                                                onPressed: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          AdminCoursePreviewScreen(
+                                                        title: course['title'],
+                                                        courseId:
+                                                            course['\$id'],
+                                                        courseCategory:
+                                                            course['category'],
+                                                        courseImagePath: course[
+                                                                'imagePath'] ??
+                                                            'assets/images/mediahandler.png',
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(
+                                                    Icons.check_circle,
+                                                    color: Colors.green),
+                                                onPressed: () => approveCourse(
+                                                    course['\$id']),
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(Icons.cancel,
+                                                    color: Colors.red),
+                                                onPressed: () => rejectCourse(
+                                                    course['\$id'],
+                                                    course['title']),
+                                              ),
+                                            ],
                                           ),
-                                          IconButton(
-                                            icon: const Icon(Icons.cancel,
-                                                color: Colors.red),
-                                            onPressed: () => rejectCourse(course['\$id'], course['title']),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            course['description'] ??
+                                                'No description available',
+                                            style: TextStyle(
+                                              color: Colors.grey[800],
+                                            ),
+                                            maxLines: expandedDescriptions[
+                                                        course['\$id']] ??
+                                                    false
+                                                ? null
+                                                : 2,
                                           ),
+                                          if ((course['description']?.length ??
+                                                  0) >
+                                              100)
+                                            TextButton(
+                                              onPressed: () {
+                                                setState(() {
+                                                  expandedDescriptions[
+                                                          course['\$id']] =
+                                                      !(expandedDescriptions[
+                                                              course['\$id']] ??
+                                                          false);
+                                                });
+                                              },
+                                              child: Text(
+                                                expandedDescriptions[
+                                                            course['\$id']] ??
+                                                        false
+                                                    ? 'See Less'
+                                                    : 'See More',
+                                                style: const TextStyle(
+                                                  color: Colors.blue,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ),
                                         ],
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 8),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        course['description'] ?? 'No description available',
-                                        style: TextStyle(
-                                          color: Colors.grey[800],
-                                        ),
-                                        maxLines: expandedDescriptions[course['\$id']] ?? false ? null : 2,
-                                      ),
-                                      if ((course['description']?.length ?? 0) > 100)
-                                        TextButton(
-                                          onPressed: () {
-                                            setState(() {
-                                              expandedDescriptions[course['\$id']] = !(expandedDescriptions[course['\$id']] ?? false);
-                                            });
-                                          },
-                                          child: Text(
-                                            expandedDescriptions[course['\$id']] ?? false ? 'See Less' : 'See More',
-                                            style: const TextStyle(
-                                              color: Colors.blue,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                                ),
+                              );
+                            },
+                          ),
               ),
             ],
-          ),/*
+          ), /*
           Positioned(
             bottom: 20,
             left: 0,
@@ -342,4 +371,3 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
     );
   }
 }
- 

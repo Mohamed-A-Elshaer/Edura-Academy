@@ -474,6 +474,7 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
 
       print('Payment result: $paymentResult');
 
+      // تحقق من نجاح عملية الدفع
       if (paymentResult['status'] == PaymobService.PAYMENT_SUCCESS &&
           paymentResult['is_verified'] == true) {
         // Get existing purchased courses or initialize empty list
@@ -528,7 +529,17 @@ class _CoursedetailscreenState extends State<Coursedetailscreen> {
           );
         }
       } else {
-        throw Exception(paymentResult['error'] ?? 'فشلت عملية الدفع');
+        // في حالة فشل عملية الدفع
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  'Payment failed. Please check your card details or try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        throw Exception(paymentResult['error'] ?? 'Payment failed.');
       }
     } catch (e) {
       print('Error processing purchase: $e');
