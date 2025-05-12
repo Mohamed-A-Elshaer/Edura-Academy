@@ -239,9 +239,8 @@ class AddCoursePageState extends State<AddCoursePage> {
             'section_durations': sectionDurations,
             "videos": videoTitles,
             "video_durations": videoDurations,
-
+            "request_type":"uploading_request",
             "upload_status": "pending",
-            "request_type":"uploading_request"
 
             
 
@@ -386,11 +385,17 @@ class AddCoursePageState extends State<AddCoursePage> {
                           child: ElevatedButton.icon(
                             onPressed: _pickImage,
                             icon: Icon(Icons.add_a_photo, color: Colors.white),
-                            label: Text('Add a new image',
-                                style: TextStyle(color: Colors.white)),
+                            label: Text(
+                              'Add a new image',
+                              style: TextStyle(color: Colors.white),
+                            ),
                             style: ElevatedButton.styleFrom(
-                              fixedSize: Size(150, 50),
-                              padding: EdgeInsets.symmetric(vertical: 12),
+                              // Use MediaQuery to make the size relative to screen width
+                              minimumSize: Size(
+                                MediaQuery.of(context).size.width * 0.4, // 40% of screen width
+                                50, // Fixed height, or adjust as needed
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                               backgroundColor: Colors.blue[700],
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
@@ -542,14 +547,14 @@ class AddCoursePageState extends State<AddCoursePage> {
                   ElevatedButton(
                     onPressed: _isPublishing ? null : _publishCourse,
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: Colors.green[700],
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                     child: _isPublishing
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
@@ -558,7 +563,7 @@ class AddCoursePageState extends State<AddCoursePage> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text(
+                        : Text(
                             'Publish Course',
                             style: TextStyle(
                               color: Colors.white,
@@ -881,10 +886,10 @@ class AddCoursePageState extends State<AddCoursePage> {
           title: Text(_truncateText(video['title'], 13),
               overflow: TextOverflow.ellipsis),
           subtitle: Text(video['duration']),
-          trailing:  Container(
+          trailing: Container(
               width: 40,
               height: 80,
-              child: const  Icon(
+              child: Icon(
                 Icons.video_file,
                 size: 50,
               )),
