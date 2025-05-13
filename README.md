@@ -1,86 +1,156 @@
-#Project overview :
-  The project, titled Edura, is a mobile educational platform that allows instructors to upload and manage courses, while enabling students to browse, watch, and follow courses directly from their smartphones. The application aims to simplify access to educational content, offering a user-friendly interface, organized course structures, and smooth video playback to support remote and self-paced learning.
-#Detailed Setup Instructions :
-  Windows:
-   Windows 10 or later (64-bit).
-   At least 8GB of RAM (16GB recommended).
-   5GB of available disk space.
-   Internet connection.
-#Prerequisites:
-  Before setting up Edura Academy, you need to install the following software:
-    1-Flutter SDK (version compatible with SDK ^3.5.3) pubspec.yaml:21-22.
-    3-Dart SDK - This comes with Flutter installation.   
-    2-Git for version control.
-    3-Development Environment:
-      Android Studio/IntelliJ IDEA, or
- Visual Studio Code with Flutter extension. 
-    4-Android SDK (for Android development)
-    Minimum SDK version as per project requirements.
-    Android emulator or physical device for testing.
- #Setup Instructions for Windows:
-1. Install Flutter SDK
-    1-Download Flutter SDK from flutter.dev.
-    2-Extract the zip file to a desired location (avoid paths with spaces or special characters).
-    3-Add Flutter to your PATH:
-       Search for "Environment Variables" in Windows search
-Add the flutter\bin directory to your PATH variable.
-    4-Verify installation by running:
-        flutter doctor
-2.Install Git
-  1-Download and install Git from git-scm.com.
-  2-Use default settings during installation.
-3.Install Android Studio
-  1-Download and install Android Studio from developer.android.com.
-  2-During installation, ensure "Android SDK", "Android SDK Platform", and "Android Virtual Device" are selected.
-  3-Launch Android Studio and complete the setup wizard.
-  4-Install Flutter and Dart plugins:
-     Open Android Studio.
-     Go to File > Settings > Plugins.
-     Search for "Flutter" and install it (this will also install the Dart plugin).
-4.Install Visual Studio (for Windows development - optional)
-  Download Visual Studio from visualstudio.microsoft.com
-  During installation, select "Desktop development with C++".
-5. Clone the Repository
-    1-Open Command Prompt.
-    2-Navigate to your desired directory for the project.
-    3-Clone the repository:
-       git clone https://github.com/Mohamed-A-Elshaer/Edura-Academy.git  
-       cd Edura-Academy
-   6. Install Project Dependencies
-       1-Run the following command to get all dependencies:
-         flutter pub get  
-         pubspec.yaml:30-56 
-   7.Run the Application
-      Connect a device or start an emulator
-      Run the application:
-      flutter run
-      #Required Permissions:
-The application requires the following permissions:
-  AndroidManifest.xml:3-6.
-  Camera access.
-  Storage access for media files.
-  Internet access.
-#Troubleshooting:
-Common Issues and Solutions:
- 1-Flutter doctor shows errors:
-    Follow the recommendations provided by the flutter doctor command
-    Make sure all paths are correctly set in your environment variables
-2-Dependency conflicts:
-    Run flutter clean and then flutter pub get to refresh dependencies
-    Check for version compatibility in the pubspec.yaml file
-3-Firebase configuration issues:
-    Ensure the configuration files (google-services.json or GoogleService-Info.plist) are placed in the correct directories
-    Verify that the package name/bundle ID matches between your app and Firebase project
-4-Supabase connection errors:
-  Verify your Supabase URL and API key in the main.dart file
-  Check your network connection and Supabase service status
-5-Build fails due to Android SDK issues:
-  Open Android Studio > SDK Manager and install any missing components
-  Ensure the Android SDK version in your project settings matches the available SDK
-6-iOS build fails:
-  Update Xcode to the latest version
-  Run pod install in the ios directory
-  Make sure your Apple Developer account is properly set up for signing
-7-App crashes on startup:
-  Check the logs for specific error messages
-  Verify that all required services (Firebase, Supabase) are configured correctly
+# 📱 Edura Academy
+
+**Edura** is a mobile educational platform that allows instructors to upload and manage courses, while enabling students to browse, watch, and follow courses directly from their smartphones. It aims to simplify access to educational content with a user-friendly interface, organized course structures, and smooth video playback for remote and self-paced learning.
+
+---
+
+## 🧩 Project Overview
+
+Edura enables:
+
+- Instructors to manage and upload educational content.
+- Students to learn remotely through mobile devices.
+- Smooth video playback with intuitive UI.
+
+---
+
+## 🖥️ Detailed Setup Instructions
+
+### 🪟 Windows Requirements
+
+- Windows 10 or later (64-bit).
+- At least 8GB of RAM (16GB recommended).
+- 5GB of available disk space.
+- Internet connection.
+
+---
+
+## ⚙️ Prerequisites
+
+Before setting up **Edura Academy**, make sure the following are installed:
+
+1. **Flutter SDK** (Compatible with `^3.5.3`) – See `pubspec.yaml` lines 21–22  
+2. **Dart SDK** – Comes with Flutter installation  
+3. **Git** – For version control ([Download Git](https://git-scm.com))  
+4. **Development Environment** (choose one):  
+   - Android Studio / IntelliJ IDEA  
+   - Visual Studio Code with Flutter extension  
+5. **Android SDK** – Required for Android builds:
+   - Android Emulator or physical device
+   - Minimum SDK version as per project
+
+---
+
+## 🧰 Setup Instructions (Windows)
+
+### 1️⃣ Install Flutter SDK
+
+1. Download from [flutter.dev](https://flutter.dev)  
+2. Extract the ZIP to a location (avoid spaces/special characters)  
+3. Add `flutter\bin` to your system `PATH`:  
+   - Open "Environment Variables"
+   - Edit the `PATH` variable and add the Flutter `bin` path  
+4. Run the following command to verify installation:
+
+```bash
+flutter doctor
+2️⃣ Install Git
+ 1-Download and install from git-scm.com.
+ 2-Use default installation settings.
+3️⃣ Install Android Studio
+Download from developer.android.com
+
+During installation, make sure the following are selected:
+
+Android SDK
+
+Android SDK Platform
+
+Android Virtual Device
+
+After installation:
+
+Open Android Studio → File → Settings → Plugins
+
+Search for Flutter → Install (this also installs Dart)
+
+4️⃣ (Optional) Install Visual Studio
+Download from visualstudio.microsoft.com
+
+During installation, choose "Desktop development with C++"
+
+5️⃣ Clone the Repository
+bash
+Copy
+Edit
+git clone https://github.com/Mohamed-A-Elshaer/Edura-Academy.git
+cd Edura-Academy
+6️⃣ Install Project Dependencies
+bash
+Copy
+Edit
+flutter pub get
+Check pubspec.yaml lines 30–56
+
+7️⃣ Run the Application
+Connect an Android device or start an emulator
+
+Run:
+
+bash
+Copy
+Edit
+flutter run
+🔐 Required Permissions
+The app requires the following permissions (check AndroidManifest.xml lines 3–6):
+
+📷 Camera access
+
+💾 Storage access for media files
+
+🌐 Internet access
+
+🛠️ Troubleshooting
+1. flutter doctor shows errors
+Follow suggestions shown by the command
+
+Make sure environment variables (e.g. PATH) are correctly configured
+
+2. Dependency conflicts
+bash
+Copy
+Edit
+flutter clean
+flutter pub get
+Check version compatibility in pubspec.yaml
+
+3. Firebase configuration issues
+Ensure google-services.json or GoogleService-Info.plist is placed in the correct directory
+
+Make sure package name / bundle ID matches your Firebase project
+
+4. Supabase connection errors
+Verify Supabase URL and API key in main.dart
+
+Check internet connection and Supabase service status
+
+5. Build fails due to Android SDK issues
+Open Android Studio → SDK Manager
+
+Install any missing components
+
+Ensure Android SDK version matches the one used in the project
+
+6. iOS build fails
+Update Xcode to the latest version
+
+Run pod install inside the ios/ directory
+
+Make sure your Apple Developer account is set up correctly
+
+7. App crashes on startup
+Check logs for specific error messages
+
+Verify Firebase and Supabase configurations are correct
+
+
