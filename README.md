@@ -1,11 +1,9 @@
-# 📱 Edura Academy
+# Edura Academy
+
+
+## Project Overview
 
 **Edura** is a mobile educational platform that allows instructors to upload and manage courses, while enabling students to browse, watch, and follow courses directly from their smartphones. It aims to simplify access to educational content with a user-friendly interface, organized course structures, and smooth video playback for remote and self-paced learning.
-
----
-
-## 🧩 Project Overview
-
 Edura enables:
 
 - Instructors to manage and upload educational content.
@@ -14,9 +12,9 @@ Edura enables:
 
 ---
 
-## 🖥️ Detailed Setup Instructions
+##  Detailed Setup Instructions
 
-### 🪟 Windows Requirements
+### Windows Requirements
 
 - Windows 10 or later (64-bit).
 - At least 8GB of RAM (16GB recommended).
@@ -25,7 +23,7 @@ Edura enables:
 
 ---
 
-## ⚙️ Prerequisites
+##  Prerequisites
 
 Before setting up **Edura Academy**, make sure the following are installed:
 
@@ -41,19 +39,22 @@ Before setting up **Edura Academy**, make sure the following are installed:
 
 ---
 
-## 🧰 Setup Instructions (Windows)
+## Setup Instructions (Windows)
 
-### 1️⃣ Install Flutter SDK
+### Install Flutter SDK
 
 1. Download from [flutter.dev](https://flutter.dev)  
 2. Extract the ZIP to a location (avoid spaces/special characters)  
 3. Add `flutter\bin` to your system `PATH`:  
    - Open "Environment Variables"
-   - Edit the `PATH` variable and add the Flutter `bin` path  
+   - Edit the `PATH` variable and add the Flutter `bin` path
+  
+     
 4. Run the following command to verify installation:
 
-```bash
 flutter doctor
+
+
 2️⃣ Install Git
  1-Download and install from git-scm.com.
  2-Use default installation settings.
@@ -80,15 +81,13 @@ Download from visualstudio.microsoft.com
 During installation, choose "Desktop development with C++"
 
 5️⃣ Clone the Repository
-bash
-Copy
-Edit
+run :
 git clone https://github.com/Mohamed-A-Elshaer/Edura-Academy.git
 cd Edura-Academy
+
+
 6️⃣ Install Project Dependencies
-bash
-Copy
-Edit
+run:
 flutter pub get
 Check pubspec.yaml lines 30–56
 
@@ -96,21 +95,19 @@ Check pubspec.yaml lines 30–56
 Connect an Android device or start an emulator
 
 Run:
-
-bash
-Copy
-Edit
 flutter run
-🔐 Required Permissions
-The app requires the following permissions (check AndroidManifest.xml lines 3–6):
 
-📷 Camera access
+
+ Required Permissions
+ The app requires the following permissions (check AndroidManifest.xml lines 3–6):
+
+ Camera access
 
 💾 Storage access for media files
 
 🌐 Internet access
 
-🛠️ Troubleshooting
+ Troubleshooting
 1. flutter doctor shows errors
 Follow suggestions shown by the command
 
@@ -141,10 +138,6 @@ Install any missing components
 
 Ensure Android SDK version matches the one used in the project
 
-6. iOS build fails
-Update Xcode to the latest version
-
-Run pod install inside the ios/ directory
 
 Make sure your Apple Developer account is set up correctly
 
