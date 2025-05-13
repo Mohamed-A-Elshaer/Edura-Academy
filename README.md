@@ -84,5 +84,3 @@ Common Issues and Solutions:
 7-App crashes on startup:
   Check the logs for specific error messages
   Verify that all required services (Firebase, Supabase) are configured correctly
-
-
