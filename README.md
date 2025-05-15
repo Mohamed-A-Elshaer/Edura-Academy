@@ -55,11 +55,16 @@ Before setting up **Edura Academy**, make sure the following are installed:
 flutter doctor
 
 
-2️⃣ Install Git
+2- Install Git
  1-Download and install from git-scm.com.
  2-Use default installation settings.
-3️⃣ Install Android Studio
-Download from developer.android.com
+3- Install Android Studio
+
+Notice that to run the project properly without facing problems, please install the following version of android studio: Android Studio Chipmunk | 2021.2.1 Patch 1 May 25, 2022 
+from the following link: https://developer.android.com/studio/archive .
+
+
+
 
 During installation, make sure the following are selected:
 
@@ -75,23 +80,23 @@ Open Android Studio → File → Settings → Plugins
 
 Search for Flutter → Install (this also installs Dart)
 
-4️⃣ (Optional) Install Visual Studio
+4- (Optional) Install Visual Studio
 Download from visualstudio.microsoft.com
 
 During installation, choose "Desktop development with C++"
 
-5️⃣ Clone the Repository
+5- Clone the Repository
 run :
 git clone https://github.com/Mohamed-A-Elshaer/Edura-Academy.git
 cd Edura-Academy
 
 
-6️⃣ Install Project Dependencies
+6- Install Project Dependencies
 run:
 flutter pub get
 Check pubspec.yaml lines 30–56
 
-7️⃣ Run the Application
+7- Run the Application
 Connect an Android device or start an emulator
 
 Run:
@@ -99,13 +104,13 @@ flutter run
 
 
  Required Permissions
- The app requires the following permissions (check AndroidManifest.xml lines 3–6):
+ The app requires the following permissions:
 
- Camera access
+ 1-Camera access
 
-💾 Storage access for media files
+ 2-Storage access for media files
 
-🌐 Internet access
+ 3- Internet access
 
  Troubleshooting
 1. flutter doctor shows errors
@@ -138,12 +143,5 @@ Install any missing components
 
 Ensure Android SDK version matches the one used in the project
 
-
-Make sure your Apple Developer account is set up correctly
-
 7. App crashes on startup
 Check logs for specific error messages
-
-Verify Firebase and Supabase configurations are correct
-
-
