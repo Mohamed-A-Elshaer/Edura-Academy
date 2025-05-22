@@ -66,7 +66,7 @@ class _InstructorHomeScreenState extends State<InstructorHomeScreen> {
        children: [
          SizedBox(height: 300,),
          Center(
-           child: CustomElevatedBtn(btnDesc: 'Add Course',onPressed: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>AddCoursePage()));},horizontalPad: 62,),
+           child: CustomElevatedBtn(btnDesc: 'Add Course',onPressed: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>AddCoursePage()));}),
            
          ),
        ],

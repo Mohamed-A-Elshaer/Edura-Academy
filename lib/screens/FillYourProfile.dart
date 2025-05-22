@@ -119,7 +119,7 @@ body: Center(
         SizedBox(height: 20,),
 
 
-CustomElevatedBtn(btnDesc: 'Continue',horizontalPad: 75, onPressed: _validateAndContinue,)
+CustomElevatedBtn(btnDesc: 'Continue', onPressed: _validateAndContinue,)
 
 
       ],

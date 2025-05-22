@@ -186,7 +186,7 @@ return Scaffold(
     ),
       Align(
         alignment: Alignment.bottomCenter,
-        child: CustomElevatedBtn(btnDesc: 'Apply',horizontalPad: 89,onPressed: (){ Navigator.pop(context, {
+        child: CustomElevatedBtn(btnDesc: 'Apply',onPressed: (){ Navigator.pop(context, {
     'categories': selectedCategories,
     'prices': selectedPrices,
     'ratings': selectedRatings,

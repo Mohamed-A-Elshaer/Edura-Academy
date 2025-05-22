@@ -248,7 +248,6 @@ class _DisplayCourseLessonsState extends State<DisplayCourseLessons> {
     child: Center(
     child: CustomElevatedBtn(
     btnDesc: 'Rate/Write a Review',
-    btnWidth: 290,
     onPressed: () async {
       String userId = await getAppwriteUserID();
     Navigator.pushReplacement(

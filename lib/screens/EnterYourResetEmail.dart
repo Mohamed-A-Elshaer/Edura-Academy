@@ -46,7 +46,7 @@ Form(
 ),
            SizedBox(height: 30,),
 
-           CustomElevatedBtn(btnDesc: 'Submit',horizontalPad: 83,onPressed:  () => controller.sendPasswordResetEmail() ),
+           CustomElevatedBtn(btnDesc: 'Submit',onPressed:  () => controller.sendPasswordResetEmail() ),
 
 
          ],

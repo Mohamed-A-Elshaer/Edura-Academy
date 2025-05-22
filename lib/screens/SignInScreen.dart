@@ -754,7 +754,6 @@ class _SignInScreenState extends State<SignInScreen> {
                 ? CircularProgressIndicator()
                 : CustomElevatedBtn(
                     btnDesc: 'Sign In',
-                    horizontalPad: 83,
                     onPressed: () => validateInputs(widget.userType!),
                   ),
             if (widget.userType != 'admin') ...[

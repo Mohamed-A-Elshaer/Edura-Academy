@@ -1,8 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class CourseComment extends StatefulWidget{
+class CourseComment extends StatefulWidget {
   final String userName;
   final double rating;
   final String comment;
@@ -22,29 +21,32 @@ class CourseComment extends StatefulWidget{
     required this.onDelete,
     required this.currentUserId,
   });
+
   @override
   State<CourseComment> createState() => _CourseCommentState();
 }
 
 class _CourseCommentState extends State<CourseComment> {
-  bool iconOn=false;
   bool isExpanded = false;
   String? _imageUrl;
+
   bool get isCurrentUser {
     return widget.currentUserId != null &&
         widget.userId != null &&
         widget.currentUserId == widget.userId;
-  }  @override
+  }
+
+  @override
   void initState() {
     super.initState();
     _fetchProfileAvatar();
   }
+
   Future<void> _fetchProfileAvatar() async {
-    SupabaseClient supabase=Supabase.instance.client;
+    final supabase = Supabase.instance.client;
     try {
       final imagePath = '${widget.supabaseUserId}/profile';
 
-      // Check if the file exists in Supabase Storage
       final files = await supabase.storage
           .from('profiles')
           .list(path: widget.supabaseUserId!);
@@ -58,11 +60,8 @@ class _CourseCommentState extends State<CourseComment> {
         return;
       }
 
-      // If file exists, generate the URL
-      String imageUrl = supabase.storage
-          .from('profiles')
-          .getPublicUrl(imagePath);
-
+      String imageUrl =
+      supabase.storage.from('profiles').getPublicUrl(imagePath);
       imageUrl = Uri.parse(imageUrl).replace(queryParameters: {
         't': DateTime.now().millisecondsSinceEpoch.toString()
       }).toString();
@@ -96,164 +95,156 @@ class _CourseCommentState extends State<CourseComment> {
 
   @override
   Widget build(BuildContext context) {
-
-    bool shouldShowSeeAll = widget.comment.length > 131;
-    String displayedText = isExpanded
+    final screenWidth = MediaQuery.of(context).size.width;
+    final shouldShowSeeAll = widget.comment.length > 131;
+    final displayedText = isExpanded
         ? widget.comment
         : (shouldShowSeeAll ? widget.comment.substring(0, 120) + '...' : widget.comment);
 
-    int lineCount = (displayedText.length / 40).ceil();
-    double textHeight = lineCount * 18.0;
-    double baseHeight = 120;
-    double totalHeight = baseHeight + textHeight;
-
     return Container(
-      height: totalHeight,
-width: 360,
-decoration: BoxDecoration(
-  color: Colors.white,
-  borderRadius: BorderRadius.circular(16),
-  boxShadow: [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.2),
-      spreadRadius: 1,
-      blurRadius: 6,
-      offset: Offset(4, 4),
-    ),
-  ],
-),
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: const Offset(4, 4),
+          ),
+        ],
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(18.0),
-            child:  CircleAvatar(
-              backgroundColor: Colors.grey.withOpacity(0.2),
-              radius: 23,
-              child: _imageUrl != null
-                  ? ClipOval(
-                child: Image.network(
-                  _imageUrl!,
-                  height: 46,
-                  width: 46,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      Icon(Icons.person, color: Colors.grey),
-                ),
-              )
-                  : Icon(Icons.person, color: Colors.grey),
-            ),
-          ),
-          Column(
-            children: [
-              SizedBox(height: 19,),
-              Transform(
-                transform: Matrix4.translationValues(-12, 0, 0),
-                child: Row(
-                  children: [
-                    Text(widget.userName,style: TextStyle(fontFamily: 'Jost',fontSize: 17,fontWeight: FontWeight.w600),),
-                   SizedBox(width: 57,),
-                    Container(
-                      height: 26,
-                      width: 55,
-                      decoration: BoxDecoration(
-                        color: Color(0xffE8F1FF),
-                        borderRadius: BorderRadius.circular(20),
-                       border: Border.all(
-                           color: Color(0xff4D81E5),
-                       width: 2
-                       )
-                      ),
-                      child: Row(
-                       children: [
-                         SizedBox(width: 4,),
-                         Icon(Icons.star,color: Colors.amber,size: 17,),
-                Text(widget.rating.toStringAsFixed(1),style: TextStyle(fontFamily: 'Jost',fontSize: 13,fontWeight: FontWeight.w600,color: Color(0xff202244)),),
-
-                ],
-
-                      ),
-                    )
-
-                  ],
-                ),
+          // Avatar
+          CircleAvatar(
+            backgroundColor: Colors.grey.withOpacity(0.2),
+            radius: 23,
+            child: _imageUrl != null
+                ? ClipOval(
+              child: Image.network(
+                _imageUrl!,
+                height: 46,
+                width: 46,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                const Icon(Icons.person, color: Colors.grey),
               ),
-              SizedBox(height: 8,),
-              Container(
-                width: 275,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            )
+                : const Icon(Icons.person, color: Colors.grey),
+          ),
+          const SizedBox(width: 12),
+          // Right content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Username + rating
+                Row(
                   children: [
-                    Text(
-                      displayedText,
-                      style: TextStyle(
-                        fontFamily: 'Mulish',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xff545454),
+                    Expanded(
+                      child: Text(
+                        widget.userName,
+                        style: const TextStyle(
+                          fontFamily: 'Jost',
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (shouldShowSeeAll) // Show "See All" / "See Less" only if needed
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            isExpanded = !isExpanded;
-                          });
-                        },
-                        child: Text(
-                          isExpanded ? 'See Less' : 'See All',
-                          style: TextStyle(
-                            fontFamily: 'Mulish',
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
+                    Container(
+                      height: 26,
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xffE8F1FF),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xff4D81E5), width: 2),
                       ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.star, color: Colors.amber, size: 17),
+                          const SizedBox(width: 2),
+                          Text(
+                            widget.rating.toStringAsFixed(1),
+                            style: const TextStyle(
+                              fontFamily: 'Jost',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xff202244),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-
-
-              ),
-
-              SizedBox(height: 15,),
-              Transform.translate(
-                offset: Offset(60, 0),
-                child: Row(
+                const SizedBox(height: 8),
+                // Comment + see all
+                Text(
+                  displayedText,
+                  style: const TextStyle(
+                    fontFamily: 'Mulish',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xff545454),
+                  ),
+                ),
+                if (shouldShowSeeAll)
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        isExpanded = !isExpanded;
+                      });
+                    },
+                    child: Text(
+                      isExpanded ? 'See Less' : 'See All',
+                      style: const TextStyle(
+                        fontFamily: 'Mulish',
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                // Delete + timestamp
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    if (isCurrentUser) // Only show delete for current user
+                    if (isCurrentUser)
                       TextButton(
                         onPressed: widget.onDelete,
-                        child: Text(
+                        child: const Text(
                           'Delete',
                           style: TextStyle(
-                            color:Color(0xff202244),
+                            color: Color(0xff202244),
                             fontWeight: FontWeight.w800,
                             fontFamily: 'Mulish',
                             fontSize: 14,
                           ),
                         ),
                       ),
-                    if (isCurrentUser) SizedBox(width: 8),
                     Text(
                       _formatTimeAgo(widget.timestamp),
-                      style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontFamily: 'Mulish',
-                          fontSize: 14,
-                          color: Color(0xff202244)),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Mulish',
+                        fontSize: 14,
+                        color: Color(0xff202244),
+                      ),
                     ),
                   ],
                 ),
-              ),
-              
-
-            ],
-          )
+              ],
+            ),
+          ),
         ],
       ),
-
     );
   }
 }

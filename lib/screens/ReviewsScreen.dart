@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:mashrooa_takharog/auth/Appwrite_service.dart';
 import 'package:mashrooa_takharog/screens/MyCoursesScreen.dart';
+import 'package:mashrooa_takharog/screens/StudentNavigatorScreen.dart';
 import 'package:mashrooa_takharog/screens/WriteReviewScreen.dart';
 import 'package:mashrooa_takharog/screens/search_courses_page.dart';
 import 'package:mashrooa_takharog/widgets/CourseComment.dart';
@@ -393,7 +394,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
     appBar: AppBar(
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
-        onPressed: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>MyCoursesScreen()));}
+        onPressed: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>NavigatorScreen()));}
       ),
       title: const Text('Reviews'),
     ),
@@ -513,7 +514,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
 
         Align(
           alignment: Alignment.bottomCenter,
-          child: CustomElevatedBtn(btnWidth: double.infinity ,btnDesc: 'Write a Review',horizontalPad: 71,onPressed: (){
+          child: CustomElevatedBtn( btnDesc: 'Write a Review',onPressed: (){
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>WriteReviewScreen(courseId: widget.courseId,courseTitle: widget.courseTitle,courseCategory: widget.courseCategory,courseImagePath:widget.courseImagePath , )));
 
           },),

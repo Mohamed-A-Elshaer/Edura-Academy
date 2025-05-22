@@ -293,10 +293,7 @@ class SearchCoursesPageState extends State<SearchCoursesPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => NavigatorScreen()),
-          ),
+          onPressed: (){Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>NavigatorScreen()));}
         ),
         title: const Text('Online Courses'),
       ),

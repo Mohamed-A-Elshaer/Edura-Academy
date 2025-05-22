@@ -185,7 +185,7 @@ class _EnterYourPhoneResetEmailState extends State<EnterYourPhoneResetEmail> {
             const SizedBox(height: 30),
              CustomElevatedBtn(
               btnDesc: 'Submit',
-              horizontalPad: 83,
+
               onPressed: _sendCodeToPhoneNumber,
             ),
           ],

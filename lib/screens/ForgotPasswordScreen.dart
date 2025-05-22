@@ -138,7 +138,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             const SizedBox(height: 50),
             CustomElevatedBtn(
               btnDesc: 'Continue',
-              horizontalPad: 75,
               onPressed: () {
                 if (_selectedOption == null) {
                   ScaffoldMessenger.of(context).showSnackBar(

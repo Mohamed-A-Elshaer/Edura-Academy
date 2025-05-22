@@ -519,7 +519,6 @@ showDialog(
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 29.0),
               child: CustomElevatedBtn(
-                horizontalPad: 72,
                 onPressed: validateInputs, btnDesc: 'Sign Up',
               ),
             ),

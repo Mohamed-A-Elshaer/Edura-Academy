@@ -178,7 +178,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                ),
          ),
              SizedBox(height: 50,),
-             CustomElevatedBtn(btnDesc: 'Submit Review',horizontalPad: 40,onPressed: _submitReview,)
+             CustomElevatedBtn(btnDesc: 'Submit Review',onPressed: _submitReview,)
            ],
          ),
        ),
