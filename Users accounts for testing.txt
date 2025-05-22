@@ -1,0 +1,4 @@
+Use the following accounts for testing the application!
+1-Email:ayhagabadr@gmail.com, Password:Hello123 --> A STUDENT ACCOUNT
+2-Email:ayhagabadradmin@gmail.com, Password:Hello123 --> AN ADMIN ACCOUNT
+1-Email:instructorgamed@gmail.com, Password:Hello123 --> AN INSTRUCTOR ACCOUNT

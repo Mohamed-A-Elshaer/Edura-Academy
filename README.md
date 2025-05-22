@@ -1,68 +1,147 @@
-# mashrooa_takharog
-
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-
-## Project Workflow (2nd term)
-
-(Mohamed-Day 1)
-
-1- Help dialogue has been added to the sign up screen, now users can be informed with the 
-accepted password formula before signing up!
-
-2- Bookmarks section in the bottom navigation bar has been handled! (logic + UI)
-
-3- Dark mode feature is semi-added (some components need to adjust their colors while the app
-on dark mode).
-
-(Mohamed-Day 2)
-
-1-Refined & edited some components in the Student's HomePage (UI+popular courses tabs logic
-has been handled+popular courses bookmarking logic also has been handled).
-
-2-The search page (which should have the searching history + suggestions that occur when the 
-student enters any search query) has been handled. (Some logic that depends on real data is 
-needed to be handled futurely).
-
-3-searching functionality in popular courses page+top mentors page has been handled.
-
-(Mohamed-Day 3)
-
--Edit profile screen in the profile section in the bottom navigation bar has been handled (UI+
-logic).Expected new features related to this screen may be added as a future work like changing
-profile picture.
+# Edura Academy
 
 
-(Mohamed-Day 4)
+## Project Overview
 
--Refined & edited the categories component in the homepage(to be discussed).
+**Edura** is a mobile educational platform that allows instructors to upload and manage courses, while enabling students to browse, watch, and follow courses directly from their smartphones. It aims to simplify access to educational content with a user-friendly interface, organized course structures, and smooth video playback for remote and self-paced learning.
+Edura enables:
+
+- Instructors to manage and upload educational content.
+- Students to learn remotely through mobile devices.
+- Smooth video playback with intuitive UI.
+
+---
+
+##  Detailed Setup Instructions
+
+### Windows Requirements
+
+- Windows 10 or later (64-bit).
+- At least 8GB of RAM (16GB recommended).
+- 5GB of available disk space.
+- Internet connection.
+
+---
+
+##  Prerequisites
+
+Before setting up **Edura Academy**, make sure the following are installed:
+
+1. **Flutter SDK** (Compatible with `^3.5.3`) – See `pubspec.yaml` lines 21–22  
+2. **Dart SDK** – Comes with Flutter installation  
+3. **Git** – For version control ([Download Git](https://git-scm.com))  
+4. **Development Environment** (choose one):  
+   - Android Studio / IntelliJ IDEA  
+   - Visual Studio Code with Flutter extension  
+5. **Android SDK** – Required for Android builds:
+   - Android Emulator or physical device
+   - Minimum SDK version as per project
+
+---
+
+## Setup Instructions (Windows)
+
+### Install Flutter SDK
+
+1. Download from [flutter.dev](https://flutter.dev)  
+2. Extract the ZIP to a location (avoid spaces/special characters)  
+3. Add `flutter\bin` to your system `PATH`:  
+   - Open "Environment Variables"
+   - Edit the `PATH` variable and add the Flutter `bin` path
+  
+     
+4. Run the following command to verify installation:
+
+flutter doctor
 
 
-(Mohamed-Day 5)
+2- Install Git
+ 1-Download and install from git-scm.com.
+ 2-Use default installation settings.
+3- Install Android Studio
 
-1-First Design for the "MyCourses" student's screen.
-
-2-Changing Profile picture feature has been added to the application (it can be changed only from the profile tab in the bottom navigation bar-to be added to the fill your profile page soon).
-
-
-(Mohamed-Day 6)
-
--Fixed some bugs&logic problems for the profile picture feature-still to be mantained.
+Notice that to run the project properly without facing problems, please install the following version of android studio: Android Studio Chipmunk | 2021.2.1 Patch 1 May 25, 2022 
+from the following link: https://developer.android.com/studio/archive .
 
 
-(Mohamed-Day 7&8)
 
--(Reviews Screen + Write a Review + Payment Method + Payment's Congratulations + Course is completed + Curriculum)screens has been designed (UI mainly + some logic has been handled. Some components still to be worked on for a better experience).
 
+During installation, make sure the following are selected:
+
+Android SDK
+
+Android SDK Platform
+
+Android Virtual Device
+
+After installation:
+
+Open Android Studio → File → Settings → Plugins
+
+Search for Flutter → Install (this also installs Dart)
+
+4- (Optional) Install Visual Studio
+Download from visualstudio.microsoft.com
+
+During installation, choose "Desktop development with C++"
+
+5- Clone the Repository
+run :
+git clone https://github.com/Mohamed-A-Elshaer/Edura-Academy.git
+cd Edura-Academy
+
+
+6- Install Project Dependencies
+run:
+flutter pub get
+Check pubspec.yaml lines 30–56
+
+7- Run the Application
+Connect an Android device or start an emulator
+
+Run:
+flutter run
+
+
+ Required Permissions
+ The app requires the following permissions:
+
+ 1-Camera access
+
+ 2-Storage access for media files
+
+ 3- Internet access
+
+ Troubleshooting
+1. flutter doctor shows errors
+Follow suggestions shown by the command
+
+Make sure environment variables (e.g. PATH) are correctly configured
+
+2. Dependency conflicts
+bash
+Copy
+Edit
+flutter clean
+flutter pub get
+Check version compatibility in pubspec.yaml
+
+3. Firebase configuration issues
+Ensure google-services.json or GoogleService-Info.plist is placed in the correct directory
+
+Make sure package name / bundle ID matches your Firebase project
+
+4. Supabase connection errors
+Verify Supabase URL and API key in main.dart
+
+Check internet connection and Supabase service status
+
+5. Build fails due to Android SDK issues
+Open Android Studio → SDK Manager
+
+Install any missing components
+
+Ensure Android SDK version matches the one used in the project
+
+7. App crashes on startup
+Check logs for specific error messages
