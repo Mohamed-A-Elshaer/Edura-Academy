@@ -4,11 +4,19 @@
 ## Project Overview
 
 **Edura** is a mobile educational platform that allows instructors to upload and manage courses, while enabling students to browse, watch, and follow courses directly from their smartphones. It aims to simplify access to educational content with a user-friendly interface, organized course structures, and smooth video playback for remote and self-paced learning.
-Edura enables:
 
-- Instructors to manage and upload educational content.
-- Students to learn remotely through mobile devices.
-- Smooth video playback with intuitive UI.
+
+ ##User Roles in Edura
+Edura supports three main user roles to ensure a structured and secure learning environment:
+
+ Student:
+Can browse, purchase, and watch courses based on their interests and career goals.
+
+ Instructor:
+Responsible for creating and uploading educational content. Instructors submit courses for review before publication.
+
+ Admin:
+Reviews all submitted courses and decides whether to approve or reject them, ensuring quality and 
 
 ---
 
@@ -145,3 +153,11 @@ Ensure Android SDK version matches the one used in the project
 
 7. App crashes on startup
 Check logs for specific error messages
+
+------
+Users accounts for testing
+
+Use the following accounts for testing the application!
+1-Email:ayhagabadr@gmail.com, Password:Hello123 --> A STUDENT ACCOUNT
+2-Email:ayhagabadradmin@gmail.com, Password:Hello123 --> AN ADMIN ACCOUNT
+3-Email:instructorgamed@gmail.com, Password:Hello123 --> AN INSTRUCTOR ACCOUNT
