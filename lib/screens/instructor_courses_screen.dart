@@ -64,6 +64,7 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
     TextEditingController descController = TextEditingController(text: course.description);
     TextEditingController categoryController = TextEditingController(text: course.category);
     TextEditingController priceController = TextEditingController(text: course.price.toString());
+    bool isLoading = false;
     List<String> categories = [
       "Graphic Design",
       "Arts & Humanities",
@@ -78,61 +79,91 @@ class _InstructorCoursesScreenState extends State<InstructorCoursesScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Edit Course Information"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildTextField(nameController, "Course Name"),
-            _buildTextField(descController, "Description"),
-            DropdownButtonFormField<String>(
-              value: selectedCategory,
-              decoration: InputDecoration(
-                labelText: 'Category',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text("Edit Course Information"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildTextField(nameController, "Course Name"),
+                  _buildTextField(descController, "Description"),
+                  DropdownButtonFormField<String>(
+                    value: selectedCategory,
+                    decoration: InputDecoration(
+                      labelText: 'Category',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    ),
+                    items: categories.map((String category) {
+                      return DropdownMenuItem<String>(
+                        value: category,
+                        child: Text(category,style: TextStyle(color: Colors.black),),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        selectedCategory = newValue;
+                        categoryController.text = newValue;
+                      }
+                    },
+                  ),
+                  _buildTextField(priceController, "Price", isNumeric: true),
+                ],
               ),
-              items: categories.map((String category) {
-                return DropdownMenuItem<String>(
-                  value: category,
-                  child: Text(category,style: TextStyle(color: Colors.black),),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  selectedCategory = newValue;
-                  categoryController.text = newValue;
-                }
-              },
-            ),
-            _buildTextField(priceController, "Price", isNumeric: true),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
-          TextButton(
-            onPressed: () async {
-              double? parsedPrice = double.tryParse(priceController.text);
-              if (parsedPrice == null) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Invalid price format")));
-                return;
-              }
-              await Appwrite_service.updateCourse(
-                course.id,
-                course.title,
-                nameController.text,
-                descController.text,
-                  selectedCategory,
-                  parsedPrice,
-                context
-               );
-              Navigator.pop(context);
-              _fetchCourses();
-            },
-            child: Text("Update"),
-          ),
-        ],
-      ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: Text("Cancel")),
+                isLoading
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                        ),
+                      )
+                    : TextButton(
+                        onPressed: () async {
+                          double? parsedPrice = double.tryParse(priceController.text);
+                          if (parsedPrice == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Invalid price format")));
+                            return;
+                          }
+                          setState(() => isLoading = true);
+                          try {
+                            await Appwrite_service.updateCourse(
+                              course.id,
+                              course.title,
+                              nameController.text,
+                              descController.text,
+                              selectedCategory,
+                              parsedPrice,
+                              context
+                            );
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              _fetchCourses();
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              setState(() => isLoading = false);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Failed to update course: $e"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        child: Text("Update"),
+                      ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

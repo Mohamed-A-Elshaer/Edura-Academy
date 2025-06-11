@@ -176,6 +176,7 @@ class _ManageVideosScreenState extends State<ManageVideosScreen> {
     String? selectedVideoPath;
     VideoPlayerController? _videoController;
     int videoDurationInMinutes = 0;
+    bool isLoading = false;
 
     FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.video);
 
@@ -242,20 +243,45 @@ class _ManageVideosScreenState extends State<ManageVideosScreen> {
                   },
                   child: Text('Cancel'),
                 ),
-                TextButton(
-                  onPressed: () async {
-                    if (videoTitleController.text.isNotEmpty && selectedVideoPath != null) {
-                      await addVideoToSection(
-                        sectionIndex,
-                        videoTitleController.text,
-                        selectedVideoPath!,
-                        videoDurationInMinutes,
-                      );
-                      _videoController?.dispose();
-                    }
-                  },
-                  child: Text('Add'),
-                ),
+                isLoading
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                        ),
+                      )
+                    : TextButton(
+                        onPressed: () async {
+                          if (videoTitleController.text.isNotEmpty && selectedVideoPath != null) {
+                            setState(() => isLoading = true);
+                            try {
+                              await addVideoToSection(
+                                sectionIndex,
+                                videoTitleController.text,
+                                selectedVideoPath!,
+                                videoDurationInMinutes,
+                              );
+                              _videoController?.dispose();
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                setState(() => isLoading = false);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Failed to add video: $e"),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        },
+                        child: Text('Add'),
+                      ),
               ],
             );
           },
@@ -721,25 +747,43 @@ class _ManageVideosScreenState extends State<ManageVideosScreen> {
   }
 
   void _confirmDeleteSection(int sectionIndex) {
+    bool isLoading = false;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Delete Section"),
-        content: const Text("Are you sure you want to delete this section and all its videos?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await handleDeleteSection(sectionIndex);
-            },
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Delete Section"),
+              content: const Text("Are you sure you want to delete this section and all its videos?"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                isLoading
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                        ),
+                      )
+                    : TextButton(
+                        onPressed: () async {
+                          setState(() => isLoading = true);
+                          Navigator.pop(context);
+                          await handleDeleteSection(sectionIndex);
+                        },
+                        child: const Text("Delete", style: TextStyle(color: Colors.red)),
+                      ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -966,73 +1010,90 @@ class _ManageVideosScreenState extends State<ManageVideosScreen> {
       ) {
     final TextEditingController _titleController =
     TextEditingController(text: oldVideoTitle.replaceFirst(RegExp(r'^\d+-\s*'), ''));
+    bool isLoading = false;
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text("Edit video's title"),
-          content: TextField(
-            controller: _titleController,
-            decoration: const InputDecoration(hintText: "Enter the new title"),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () async {
-                String newTitlePart = _titleController.text.trim();
-                if (newTitlePart.isNotEmpty) {
-                  try {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Renaming video, please wait..."),
-                        backgroundColor: Colors.blueAccent,
-                        duration: Duration(seconds: 5),
-                      ),
-                    );
-
-                    // Extract number prefix (e.g., "01-")
-                    final numberPrefix = RegExp(r'^(\d+)-').firstMatch(oldVideoTitle)?.group(1) ?? '01';
-                    final newFullTitle = '$numberPrefix- $newTitlePart';
-
-                    await renameVideo(
-                      courseId: courseId,
-                      oldVideoTitle: oldVideoTitle,
-                      newVideoTitle: newTitlePart, // Just the base name
-                      courseTitle: courseTitle,
-                      sectionTitle: sectionTitle,
-                      fileId: fileId,
-                    );
-
-                    if (context.mounted) {
-                      await fetchSectionsAndVideos();
-                      onRenameSuccess(newFullTitle);
-                      Navigator.pop(context);
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Video has been renamed successfully!"),
-                          backgroundColor: Colors.green,
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Edit video's title"),
+              content: TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(hintText: "Enter the new title"),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                isLoading
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
                         ),
-                      );
-                    }
-                  } catch (e) {
-                    print("❌ Error renaming video: $e");
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("Failed to rename video: $e"),
-                        backgroundColor: Colors.red,
+                      )
+                    : TextButton(
+                        onPressed: () async {
+                          String newTitlePart = _titleController.text.trim();
+                          if (newTitlePart.isNotEmpty) {
+                            try {
+                              setState(() => isLoading = true);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Renaming video, please wait..."),
+                                  backgroundColor: Colors.blueAccent,
+                                  duration: Duration(seconds: 5),
+                                ),
+                              );
+
+                              final numberPrefix = RegExp(r'^(\d+)-').firstMatch(oldVideoTitle)?.group(1) ?? '01';
+                              final newFullTitle = '$numberPrefix- $newTitlePart';
+
+                              await renameVideo(
+                                courseId: courseId,
+                                oldVideoTitle: oldVideoTitle,
+                                newVideoTitle: newTitlePart,
+                                courseTitle: courseTitle,
+                                sectionTitle: sectionTitle,
+                                fileId: fileId,
+                              );
+
+                              if (context.mounted) {
+                                await fetchSectionsAndVideos();
+                                onRenameSuccess(newFullTitle);
+                                Navigator.pop(context);
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Video has been renamed successfully!"),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              print("❌ Error renaming video: $e");
+                              if (context.mounted) {
+                                setState(() => isLoading = false);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Failed to rename video: $e"),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        },
+                        child: const Text("Edit"),
                       ),
-                    );
-                  }
-                }
-              },
-              child: const Text("Edit"),
-            ),
-          ],
+              ],
+            );
+          },
         );
       },
     );
@@ -1146,35 +1207,52 @@ class _ManageVideosScreenState extends State<ManageVideosScreen> {
 
   void _showAddSectionDialog(BuildContext context) {
     TextEditingController _sectionTitleController = TextEditingController();
+    bool isLoading = false;
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text("Add a New Section"),
-          content: TextField(
-            controller: _sectionTitleController,
-            decoration: InputDecoration(
-              hintText: "Enter the section title",
-              border: OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Cancel", style: TextStyle(color: Colors.red)),
-            ),
-            TextButton(
-              onPressed: () {
-                String sectionTitle = _sectionTitleController.text.trim();
-                if (sectionTitle.isNotEmpty) {
-                  addSection(sectionTitle);
-                  Navigator.pop(context);
-                }
-              },
-              child: Text("Add", style: TextStyle(color: Colors.blue)),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text("Add a New Section"),
+              content: TextField(
+                controller: _sectionTitleController,
+                decoration: InputDecoration(
+                  hintText: "Enter the section title",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Cancel", style: TextStyle(color: Colors.red)),
+                ),
+                isLoading
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                        ),
+                      )
+                    : TextButton(
+                        onPressed: () async {
+                          String sectionTitle = _sectionTitleController.text.trim();
+                          if (sectionTitle.isNotEmpty) {
+                            setState(() => isLoading = true);
+                            await addSection(sectionTitle);
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          }
+                        },
+                        child: Text("Add", style: TextStyle(color: Colors.blue)),
+                      ),
+              ],
+            );
+          },
         );
       },
     );

@@ -1,9 +1,12 @@
+
+import 'dart:typed_data';
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart' as appwrite;
 import 'package:flutter/material.dart';
+
 import 'package:mashrooa_takharog/auth/supaAuth_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'package:http/http.dart' as http;
 import '../screens/instructor_courses_screen.dart';
 
 class Appwrite_service{
@@ -61,45 +64,66 @@ class Appwrite_service{
 
 
 
-  static Future<void> renameFileInStorage(String oldFileId, String newFileName) async {
+  static Future<void> renameCourseFilesInStorage({
+    required String oldCourseName,
+    required String newCourseName,
+  }) async {
     try {
-      print("🔄 Renaming file: $oldFileId → $newFileName");
-
-      String bucketId = '67ac838900066b15fc99'; // Replace with your actual bucket ID
-
-      // Step 1: Get the existing file
+      final String bucketId = '67ac838900066b15fc99'; // Your actual bucket ID
       final fileList = await storage.listFiles(bucketId: bucketId);
-      final file = fileList.files.firstWhere(
-            (f) => f.$id == oldFileId,
-        orElse: () => throw Exception("File not found: $oldFileId"),
-      );
 
-      // Step 2: Download file bytes
-      final fileBytes = await storage.getFileView(
-        bucketId: bucketId,
-        fileId: oldFileId,
-      );
+      final matchingFiles = fileList.files.where((file) => file.name.contains(oldCourseName)).toList();
 
-      print("✅ File downloaded successfully: ${fileBytes.length} bytes");
+      if (matchingFiles.isEmpty) {
+        print("ℹ️ No files found for course: $oldCourseName");
+        return;
+      }
 
-      // Step 3: Upload file with new name
-      final newFile = await storage.createFile(
-        bucketId: bucketId,
-        fileId: ID.unique(), // Generate a new unique ID
-        file: InputFile.fromBytes(
-          bytes: fileBytes,
-          filename: newFileName,
-        ),
-      );
+      print("🔍 Found ${matchingFiles.length} file(s) to rename.");
 
-      print("✅ File uploaded with new name: ${newFile.$id}");
+      for (var file in matchingFiles) {
+        try {
+          // Step 1: Download file
+          final http.Response response = (await storage.getFileDownload(
+            bucketId: bucketId,
+            fileId: file.$id,
+          )) as http.Response;
 
-      // Step 4: Delete old file
-      await storage.deleteFile(bucketId: bucketId, fileId: oldFileId);
-      print("🗑️ Old file deleted: $oldFileId");
+          if (response.statusCode != 200) {
+            print("⚠️ Skipping file (download failed): ${file.name}");
+            continue;
+          }
+
+          final List<int> fileBytes = response.bodyBytes;
+
+          // Step 2: Construct new filename
+          String newFileName = file.name.replaceFirst(oldCourseName, newCourseName);
+
+          // Step 3: Upload file with new name
+          final newFile = await storage.createFile(
+            bucketId: bucketId,
+            fileId: ID.unique(),
+            file: InputFile.fromBytes(
+              bytes: fileBytes,
+              filename: newFileName,
+            ),
+          );
+
+          print("✅ File renamed and uploaded: ${file.name} → $newFileName");
+
+          // Step 4: Delete old file
+          await storage.deleteFile(bucketId: bucketId, fileId: file.$id);
+          print("🗑️ Old file deleted: ${file.name}");
+
+        } catch (e) {
+          print("❌ Error processing file '${file.name}': $e");
+        }
+      }
+
+      print("✅ All matching files renamed successfully.");
 
     } catch (e) {
-      print("❌ Error renaming file: $e");
+      print("❌ Error renaming course files: $e");
     }
   }
 
@@ -132,7 +156,7 @@ class Appwrite_service{
         String oldFileName = file.name;
         String newFileName = oldFileName.replaceAll(formattedOldTitle, formattedNewTitle);
 
-        await renameFileInStorage(file.$id, newFileName);
+        await renameCourseFilesInStorage(oldCourseName: oldFileName, newCourseName: newFileName);
       }
       final oldFolderName = oldName.replaceAll(' ', '_');
       final newFolderName = newName.replaceAll(' ', '_');
