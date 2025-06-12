@@ -155,19 +155,23 @@ class AddCoursePageState extends State<AddCoursePage> {
     }
 
     try {
+      // Get temporary directory for file operations
+      final tempDir = await getTemporaryDirectory();
+      final tempPath = tempDir.path;
+
+      // Upload course cover image to Supabase
       try {
         final supabase = Supabase.instance.client;
-
         final courseTitleFormatted = courseTitle.replaceAll(' ', '_');
         final coverFilePath = "$courseTitleFormatted/course_cover.jpg";
 
+        // Read the image file
         final fileBytes = await _selectedImage!.readAsBytes();
-        final fileExtension =
-            _selectedImage!.path.split('.').last.toLowerCase();
+        final fileExtension = _selectedImage!.path.split('.').last.toLowerCase();
 
-        // Upload the image with upsert to allow overwriting
+        // Upload the image
         await supabase.storage
-            .from('profiles') // You can change this to 'courses' if needed
+            .from('profiles')
             .uploadBinary(
               coverFilePath,
               fileBytes,
@@ -177,9 +181,7 @@ class AddCoursePageState extends State<AddCoursePage> {
               ),
             );
 
-        // Get public URL and add a timestamp for cache busting
-        String publicURL =
-            supabase.storage.from('profiles').getPublicUrl(coverFilePath);
+        String publicURL = supabase.storage.from('profiles').getPublicUrl(coverFilePath);
         publicURL = Uri.parse(publicURL).replace(queryParameters: {
           't': DateTime.now().millisecondsSinceEpoch.toString()
         }).toString();
@@ -187,38 +189,47 @@ class AddCoursePageState extends State<AddCoursePage> {
         coverImageUrl = publicURL;
       } catch (e) {
         print("❌ Failed to upload image to Supabase: $e");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Failed to upload image to Supabase: $e"),
-            backgroundColor: Colors.red,
-          ),
-        );
+        throw Exception('Failed to upload course cover image: $e');
       }
 
+      // Upload videos to Appwrite
       for (int i = 0; i < allVideos.length; i++) {
         var sectionTitle = allVideos[i]['section'];
         var video = allVideos[i]['video'];
 
         String sectionFolder = sectionTitle.replaceAll(" ", "_").toLowerCase();
-        File file = File(video['videoPath']);
-        String fileName = video['title'].replaceAll(" ", "_").toLowerCase();
-        String formattedIndex =
-            (i + 1).toString().padLeft(2, '0'); // 01، 02، 03...
+        String originalVideoPath = video['videoPath'];
+        
+        // Create a temporary copy of the video file
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${originalVideoPath.split('/').last}';
+        final tempVideoPath = '$tempPath/$fileName';
+        final tempVideoFile = File(tempVideoPath);
+        
+        // Copy the video file to our temporary directory
+        await tempVideoFile.writeAsBytes(await File(originalVideoPath).readAsBytes());
 
+        String videoFileName = video['title'].replaceAll(" ", "_").toLowerCase();
+        String formattedIndex = (i + 1).toString().padLeft(2, '0');
         String formattedTitle = "$formattedIndex- ${video['title']}";
         videoTitles.add(formattedTitle);
-        // اسم الفيديو في التخزين يحتوي الترقيم العام
-        String filePath =
-            "$courseFolder/$sectionFolder/${formattedIndex}-_$fileName.mp4";
+        
+        String filePath = "$courseFolder/$sectionFolder/${formattedIndex}-_$videoFileName.mp4";
 
-        var response = await storage.createFile(
-          bucketId: bucketId,
-          fileId: ID.unique(),
-          file: InputFile.fromPath(path: file.path, filename: filePath),
-        );
+        try {
+          var response = await storage.createFile(
+            bucketId: bucketId,
+            fileId: ID.unique(),
+            file: InputFile.fromPath(path: tempVideoPath, filename: filePath),
+          );
 
-        video['videoUrl'] =
-            response.$id; // حفظ الـ ID فقط بدون الترقيم في الـ UI
+          video['videoUrl'] = response.$id;
+          
+          // Clean up the temporary file
+          await tempVideoFile.delete();
+        } catch (e) {
+          print("❌ Failed to upload video: $e");
+          throw Exception('Failed to upload video: $e');
+        }
       }
 
       // 3- **Store Course Data in Appwrite Database**
@@ -581,14 +592,33 @@ class AddCoursePageState extends State<AddCoursePage> {
     );
   }
 
-// Method to pick an image from gallery
   Future<void> _pickImage() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = file_conflict.File(pickedFile.path) as File?;
-      });
+    try {
+      final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        // Get the temporary directory
+        final tempDir = await getTemporaryDirectory();
+        final tempPath = tempDir.path;
+        
+        // Create a unique filename
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${pickedFile.name}';
+        final savedImage = File('$tempPath/$fileName');
+        
+        // Copy the picked file to our temporary directory
+        await savedImage.writeAsBytes(await pickedFile.readAsBytes());
+        
+        setState(() {
+          _selectedImage = savedImage;
+        });
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error selecting image: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
