@@ -549,7 +549,41 @@ class _ManageVideosScreenState extends State<ManageVideosScreen> {
         elevation: 0,
       ),
       body: sections.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? Stack(
+              children: [
+                const Center(
+                  child: Text(
+                    "No sections or videos available",
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                // Bottom Add Section Button
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    width: double.infinity,
+                    height: 55,
+                    margin: const EdgeInsets.only(bottom: 10),
+                    child: ElevatedButton(
+                      onPressed: () => _showAddSectionDialog(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 5),
+                      ),
+                      child: const Text(
+                        "Add a New Section",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
           : Stack(
         children: [
           Padding(

@@ -1,4 +1,3 @@
-
 import 'dart:typed_data';
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart' as appwrite;
@@ -64,68 +63,7 @@ class Appwrite_service{
 
 
 
-  static Future<void> renameCourseFilesInStorage({
-    required String oldCourseName,
-    required String newCourseName,
-  }) async {
-    try {
-      final String bucketId = '67ac838900066b15fc99'; // Your actual bucket ID
-      final fileList = await storage.listFiles(bucketId: bucketId);
-
-      final matchingFiles = fileList.files.where((file) => file.name.contains(oldCourseName)).toList();
-
-      if (matchingFiles.isEmpty) {
-        print("ℹ️ No files found for course: $oldCourseName");
-        return;
-      }
-
-      print("🔍 Found ${matchingFiles.length} file(s) to rename.");
-
-      for (var file in matchingFiles) {
-        try {
-          // Step 1: Download file
-          final http.Response response = (await storage.getFileDownload(
-            bucketId: bucketId,
-            fileId: file.$id,
-          )) as http.Response;
-
-          if (response.statusCode != 200) {
-            print("⚠️ Skipping file (download failed): ${file.name}");
-            continue;
-          }
-
-          final List<int> fileBytes = response.bodyBytes;
-
-          // Step 2: Construct new filename
-          String newFileName = file.name.replaceFirst(oldCourseName, newCourseName);
-
-          // Step 3: Upload file with new name
-          final newFile = await storage.createFile(
-            bucketId: bucketId,
-            fileId: ID.unique(),
-            file: InputFile.fromBytes(
-              bytes: fileBytes,
-              filename: newFileName,
-            ),
-          );
-
-          print("✅ File renamed and uploaded: ${file.name} → $newFileName");
-
-          // Step 4: Delete old file
-          await storage.deleteFile(bucketId: bucketId, fileId: file.$id);
-          print("🗑️ Old file deleted: ${file.name}");
-
-        } catch (e) {
-          print("❌ Error processing file '${file.name}': $e");
-        }
-      }
-
-      print("✅ All matching files renamed successfully.");
-
-    } catch (e) {
-      print("❌ Error renaming course files: $e");
-    }
-  }
+  
 
 
 
@@ -147,47 +85,106 @@ class Appwrite_service{
   /// Rename all files that contain the old course name
   static Future<void> renameAllCourseFiles(String oldName, String newName) async {
     try {
-      String formattedOldTitle = oldName.replaceAll(' ', '_').toLowerCase();
-      String formattedNewTitle = newName.replaceAll(' ', '_').toLowerCase();
+      String formattedOldTitle = oldName.replaceAll(' ', '_');
+      String formattedNewTitle = newName.replaceAll(' ', '_');
 
-      List<appwrite.File> filesToRename = await getAllRelatedFiles(oldName);
+      print("🔄 Starting file rename process");
+      print("Old name: $formattedOldTitle");
+      print("New name: $formattedNewTitle");
 
-      for (appwrite.File file in filesToRename) {
-        String oldFileName = file.name;
-        String newFileName = oldFileName.replaceAll(formattedOldTitle, formattedNewTitle);
+      // Get all files from the bucket
+      final result = await storage.listFiles(bucketId: '67ac838900066b15fc99');
+      
+      // Filter files that belong to this course
+      final filesToRename = result.files.where((file) => 
+        file.name.toLowerCase().startsWith('${formattedOldTitle.toLowerCase()}/')
+      ).toList();
 
-        await renameCourseFilesInStorage(oldCourseName: oldFileName, newCourseName: newFileName);
+      print("📁 Found ${filesToRename.length} files to rename");
+
+      for (var file in filesToRename) {
+        try {
+          // Download the file - Appwrite returns Uint8List directly
+          final Uint8List fileBytes = await storage.getFileDownload(
+            bucketId: '67ac838900066b15fc99',
+            fileId: file.$id,
+          );
+
+          // Create new file path by replacing the old course name with the new one
+          // Use case-insensitive replacement for the course title part
+          String newFilePath = file.name.replaceFirst(
+            RegExp(formattedOldTitle, caseSensitive: false),
+            formattedNewTitle.toLowerCase()
+          );
+          
+          print("📝 Renaming: ${file.name} -> $newFilePath");
+
+          // Upload the file with the new path
+          await storage.createFile(
+            bucketId: '67ac838900066b15fc99',
+            fileId: ID.unique(),
+            file: InputFile.fromBytes(
+              bytes: fileBytes,
+              filename: newFilePath,
+            ),
+          );
+
+          // Delete the old file
+          await storage.deleteFile(
+            bucketId: '67ac838900066b15fc99',
+            fileId: file.$id,
+          );
+
+          print("✅ Successfully renamed: ${file.name}");
+        } catch (e) {
+          print("❌ Error processing file ${file.name}: $e");
+        }
       }
-      final oldFolderName = oldName.replaceAll(' ', '_');
-      final newFolderName = newName.replaceAll(' ', '_');
 
-      // List all files in the old folder
-      final oldFiles = await SupaAuthService.supabase.storage.from('profiles').list(path: oldFolderName);
+      // Handle Supabase storage files
+      final oldFolderName = formattedOldTitle;
+      final newFolderName = formattedNewTitle;
 
-      // Move each file to the new folder
-      for (var file in oldFiles) {
-        final oldFilePath = '$oldFolderName/${file.name}';
-        final newFilePath = '$newFolderName/${file.name}';
+      try {
+        // List all files in the old folder
+        final oldFiles = await SupaAuthService.supabase.storage
+            .from('profiles')
+            .list(path: oldFolderName);
 
-        // Download the file
-        final fileBytes = await  SupaAuthService.supabase.storage.from('profiles').download(oldFilePath);
+        // Move each file to the new folder
+        for (var file in oldFiles) {
+          final oldFilePath = '$oldFolderName/${file.name}';
+          final newFilePath = '$newFolderName/${file.name}';
 
-        // Upload the file to the new location
-        await SupaAuthService.supabase.storage.from('profiles').uploadBinary(
-          newFilePath,
-          fileBytes,
-          fileOptions:  const FileOptions(upsert: true),
-        );
+          // Download the file
+          final fileBytes = await SupaAuthService.supabase.storage
+              .from('profiles')
+              .download(oldFilePath);
 
-        // Delete the old file
-        await SupaAuthService.supabase.storage.from('profiles').remove([oldFilePath]);
+          // Upload to new location
+          await SupaAuthService.supabase.storage
+              .from('profiles')
+              .uploadBinary(
+                newFilePath,
+                fileBytes,
+                fileOptions: const FileOptions(upsert: true),
+              );
+
+          // Delete old file
+          await SupaAuthService.supabase.storage
+              .from('profiles')
+              .remove([oldFilePath]);
+        }
+
+        print("✅ Supabase files renamed successfully");
+      } catch (e) {
+        print("❌ Error renaming Supabase files: $e");
       }
 
-      print("✅ Folder renamed from $oldFolderName to $newFolderName");
-
-      print("✅ All course files renamed successfully.");
+      print("✅ All course files renamed successfully");
     } catch (e) {
-      print("❌ Error renaming course files: $e");
+      print("❌ Error in renameAllCourseFiles: $e");
+      throw e;
     }
   }
 

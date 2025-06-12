@@ -314,13 +314,56 @@ class _AdminCourseApprovalScreenState extends State<AdminCourseApprovalScreen> {
                                               children: [
                                                 Row(
                                                   children: [
-                                                    Text(
-                                                      course['title'] ??
-                                                          'Untitled Course',
-                                                      style: const TextStyle(
-                                                        fontSize: 18,
-                                                        fontWeight:
-                                                            FontWeight.bold,
+                                                    Expanded(
+                                                      child: GestureDetector(
+                                                        onTap: () {
+                                                          if ((course['title']?.length ?? 0) > 26) {
+                                                            showDialog(
+                                                              context: context,
+                                                              builder: (context) => AlertDialog(
+                                                                title: const Text('Course Title'),
+                                                                content: Text(
+                                                                  course['title'] ?? 'Untitled Course',
+                                                                  style: const TextStyle(
+                                                                    fontSize: 16,
+                                                                  ),
+                                                                ),
+                                                                actions: [
+                                                                  TextButton(
+                                                                    onPressed: () => Navigator.pop(context),
+                                                                    child: const Text('Close'),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            );
+                                                          }
+                                                        },
+                                                        child: Row(
+                                                          children: [
+                                                            Expanded(
+                                                              child: Text(
+                                                                course['title'] ??
+                                                                    'Untitled Course',
+                                                                style: const TextStyle(
+                                                                  fontSize: 18,
+                                                                  fontWeight:
+                                                                      FontWeight.bold,
+                                                                ),
+                                                                overflow: TextOverflow.ellipsis,
+                                                                maxLines: 2,
+                                                              ),
+                                                            ),
+                                                            if ((course['title']?.length ?? 0) > 26)
+                                                              const Padding(
+                                                                padding: EdgeInsets.only(left: 4),
+                                                                child: Icon(
+                                                                  Icons.expand_more,
+                                                                  size: 20,
+                                                                  color: Colors.grey,
+                                                                ),
+                                                              ),
+                                                          ],
+                                                        ),
                                                       ),
                                                     ),
                                                     const SizedBox(width: 8),
