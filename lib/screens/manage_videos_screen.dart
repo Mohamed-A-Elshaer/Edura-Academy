@@ -616,7 +616,7 @@ class _ManageVideosScreenState extends State<ManageVideosScreen> {
                             radius: 13,
                             backgroundColor: Colors.blue,
                             child: Text(
-                              (sectionIndex + 1).toString(), // Dynamic number
+                              (sectionIndex + 1).toString(),
                               style: const TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,
@@ -624,11 +624,43 @@ class _ManageVideosScreenState extends State<ManageVideosScreen> {
                             ),
                           ),
                           SizedBox(width: 5,),
-                          Text(
-                            section['title'],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: section['title'].length > 11 ? () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Section Title'),
+                                    content: Text(section['title']),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('Close'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              } : null,
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      section['title'],
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (section['title'].length > 11)
+                                    const Icon(
+                                      Icons.expand_more,
+                                      size: 20,
+                                      color: Colors.grey,
+                                    ),
+                                ],
+                              ),
                             ),
                           ),
                           const Spacer(),
